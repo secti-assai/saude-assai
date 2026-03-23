@@ -76,20 +76,23 @@ O Saúde Assaí opera em arquitetura de microsserviços, com um API Gateway cent
 
 ## **2.2 Pilha Tecnológica**
 
-| **Camada**                   | **Tecnologia / Detalhe**                                           |
-| ---------------------------- | ------------------------------------------------------------------ |
-| Back-end API                 | Node.js 20+ (NestJS) com TypeScript - REST + WebSocket             |
-| Banco de Dados Principal     | PostgreSQL 15 - servidor municipal existente                       |
-| Banco de Dados PEC (leitura) | PostgreSQL do e-SUS PEC - acesso DW via schema dw\_\*              |
-| Integração PEC (escrita)     | LEDI APS 7.3.3 - Apache Thrift via TCP (porta padrão PEC) ou XML   |
-| Front-end Web                | React 18 + TypeScript + Tailwind CSS - PWA                         |
-| Autenticação                 | JWT (RS256) + 2FA para servidores de saúde; SSO via Gov.Assaí      |
-| Mensageria / Filas           | Redis + Bull (filas de prescrição, entregas, notificações)         |
-| Notificações                 | WhatsApp Business API (agendamentos, confirmações, status entrega) |
-| Monitoramento Infraestrutura | Prometheus + Grafana                                               |
-| Logs de Auditoria            | Tabela audit_log imutável + rotação para arquivo comprimido mensal |
-| Assinatura Digital           | ICP-Brasil (médicos) via biblioteca Node.js node-pkijs             |
-| Armazenamento de Documentos  | MinIO (S3-compatível) hospedado localmente - prontuários PDF       |
+## 2.2 Pilha Tecnológica (Ecossistema Laravel)
+
+| **Camada** | **Tecnologia / Detalhe** |
+| ---------------------------- | ------------------------------------------------------------------------------------- |
+| **Back-end Framework** | Laravel 11+ (PHP 8.3) - Estrutura robusta com Eloquent ORM                            |
+| **Comunicação API** | REST (Laravel API Resources) + Laravel Reverb (WebSockets nativo)                     |
+| **Banco de Dados Principal** | PostgreSQL 15 - servidor municipal existente                                          |
+| **Banco de Dados PEC** | PostgreSQL do e-SUS PEC - Acesso via conexão secundária (ReadOnly)                    |
+| **Integração PEC (escrita)** | LEDI APS 7.3.3 - Integração via Guzzle (XML) ou PHP Thrift bindings                   |
+| **Front-end Web** | Inertia.js + React 18 + Tailwind CSS - Experiência SPA em Monólito                    |
+| **Autenticação / SSO** | Laravel Fortify + Socialite (SSO Gov.Assaí) + Laravel Sanctum (Tokens)                |
+| **Mensageria / Filas** | Redis + Laravel Horizon (Monitoramento de filas de prescrição e entregas)             |
+| **Notificações** | Laravel Notifications (WhatsApp Business API via Twilio ou Custom Driver)             |
+| **Monitoramento Infra** | Laravel Pulse (Dashboard de saúde) + Prometheus/Grafana                               |
+| **Logs de Auditoria** | Spatie Laravel Activitylog (Tabela imutável + rotação de logs mensal)                 |
+| **Assinatura Digital** | ICP-Brasil (médicos) via OpenSSL/Signer ou integração com API externa                 |
+| **Armazenamento Doc.** | Laravel Filesystem (S3 Driver) conectado localmente - Prontuários PDF             |
 
 ## **2.3 Integração com o Gov.Assaí**
 

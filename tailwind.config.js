@@ -12,7 +12,23 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Manrope', ...defaultTheme.fontFamily.sans],
+            },
+            colors: {
+                sa: {
+                    primary: '#0a8f7b',
+                    'primary-deep': '#056e60',
+                    'primary-light': '#e8f5f1',
+                    accent: '#2db5ff',
+                    'accent-light': '#e5f4ff',
+                    ink: '#071b2a',
+                    'ink-soft': '#3d5a6f',
+                    paper: '#f0f6fb',
+                },
+            },
+            borderRadius: {
+                '2xl': '1rem',
+                '3xl': '1.5rem',
             },
         },
     },

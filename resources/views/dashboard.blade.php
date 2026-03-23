@@ -1,39 +1,63 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Painel Gestor (M8)</h2>
+        <div class="sa-page-header">
+            <h2 class="sa-page-title">Dashboard</h2>
+            <p class="sa-page-subtitle">Visão geral da rede municipal de saúde</p>
+        </div>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                @foreach ($kpis as $key => $value)
-                    <div class="bg-white p-4 rounded shadow">
-                        <p class="text-xs text-gray-500">{{ str_replace('_', ' ', strtoupper($key)) }}</p>
-                        <p class="text-2xl font-bold">{{ $value }}</p>
-                    </div>
-                @endforeach
+    <div class="space-y-6">
+        {{-- KPI Cards --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="sa-kpi sa-fade-in">
+                <div class="sa-kpi-label">Atendimentos</div>
+                <div class="sa-kpi-value" style="color: var(--sa-primary);">{{ $stats['atendimentos'] ?? 0 }}</div>
             </div>
+            <div class="sa-kpi sa-fade-in">
+                <div class="sa-kpi-label">Triagens</div>
+                <div class="sa-kpi-value" style="color: var(--sa-info);">{{ $stats['triagens'] ?? 0 }}</div>
+            </div>
+            <div class="sa-kpi sa-fade-in">
+                <div class="sa-kpi-label">Prescrições</div>
+                <div class="sa-kpi-value" style="color: var(--sa-accent);">{{ $stats['prescricoes'] ?? 0 }}</div>
+            </div>
+            <div class="sa-kpi sa-fade-in">
+                <div class="sa-kpi-label">Dispensações</div>
+                <div class="sa-kpi-value" style="color: var(--sa-success);">{{ $stats['dispensacoes'] ?? 0 }}</div>
+            </div>
+        </div>
 
-            <div class="bg-white p-4 rounded shadow">
-                <h3 class="font-semibold mb-3">Uso por Servidor</h3>
-                <table class="w-full text-sm">
+        {{-- Usage Table --}}
+        <div class="sa-card sa-fade-in">
+            <div class="sa-card-header">
+                <h3 class="sa-card-title">Uso por Servidor</h3>
+                <span class="sa-badge sa-badge-gray">{{ count($usage) }} servidores</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="sa-table">
                     <thead>
-                        <tr class="text-left border-b">
+                        <tr>
                             <th>Servidor</th>
                             <th>Perfil</th>
-                            <th>Triagens</th>
-                            <th>Prescricoes</th>
+                            <th class="text-center">Ações</th>
+                            <th>Último Acesso</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($usage as $row)
-                            <tr class="border-b">
-                                <td>{{ $row->name }}</td>
-                                <td>{{ $row->role }}</td>
-                                <td>{{ $row->triages_count }}</td>
-                                <td>{{ $row->prescriptions_count }}</td>
+                        @forelse ($usage as $row)
+                            <tr>
+                                <td class="font-medium text-gray-900">{{ $row['name'] }}</td>
+                                <td>
+                                    <span class="sa-badge sa-badge-primary">{{ str_replace('_', ' ', $row['role']) }}</span>
+                                </td>
+                                <td class="text-center font-semibold">{{ $row['actions'] }}</td>
+                                <td class="text-gray-500 text-xs">{{ $row['last'] ?? '—' }}</td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-gray-400 py-8">Nenhum dado registrado ainda.</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

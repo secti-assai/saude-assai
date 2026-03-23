@@ -1,111 +1,122 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl">M7 - Prontuário Hospitalar Digital</h2>
-        <p class="text-sm text-gray-600 mt-1">Registro clínico estruturado com SOAP, diagnósticos e desfecho</p>
+        <div class="sa-page-header">
+            <h2 class="sa-page-title">Atendimento Hospitalar</h2>
+            <p class="sa-page-subtitle">Prontuário SOAP e condutas clínicas</p>
+        </div>
     </x-slot>
-    <div class="py-6 max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+
+    <div class="space-y-6">
         @if (session('status'))
-            <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
-                <strong>✓ Sucesso:</strong> {{ session('status') }}
+            <div class="sa-alert-success sa-fade-in">
+                <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-sm font-medium">{{ session('status') }}</span>
             </div>
         @endif
 
-        @forelse ($attendances as $attendance)
-            <form method="POST" action="{{ route('hospital.store', $attendance) }}" class="bg-white rounded-lg shadow-md border border-gray-100">
-                @csrf
-
-                <!-- Cabeçalho -->
-                <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-5 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">{{ $attendance->citizen->full_name }}</h3>
-                    <div class="text-sm text-gray-600 mt-1">Atendimento #{{ $attendance->id }} | Data: {{ $attendance->created_at->format('d/m/Y H:i') }}</div>
-                </div>
-
-                <div class="p-6 space-y-6">
-                    <!-- Painel Esquerdo: Triagem (Resumo) -->
-                    <div class="grid md:grid-cols-3 gap-4">
-                        <div class="md:col-span-1 bg-blue-50 p-4 rounded-lg border border-blue-200">
-                            <h4 class="font-semibold text-blue-900 mb-3">📋 Triagem</h4>
-                            @if ($attendance->triage)
-                                <div class="space-y-2 text-sm">
-                                    <div><strong>Consciência:</strong> <span class="text-blue-700">{{ $attendance->triage->consciousness_level ?? 'N/A' }}</span></div>
-                                    <div><strong>PA:</strong> <span class="text-blue-700">{{ $attendance->triage->systolic_pressure ?? '--' }}/{{ $attendance->triage->diastolic_pressure ?? '--' }}</span></div>
-                                    <div><strong>FC:</strong> <span class="text-blue-700">{{ $attendance->triage->heart_rate ?? '--' }} bpm</span></div>
-                                    <div><strong>SpO₂:</strong> <span class="text-blue-700">{{ $attendance->triage->spo2 ?? '--' }}%</span></div>
-                                    <div><strong>T°:</strong> <span class="text-blue-700">{{ $attendance->triage->temperature ?? '--' }}°C</span></div>
-                                    <div><strong>Glicemia:</strong> <span class="text-blue-700">{{ $attendance->triage->hgt ?? '--' }} mg/dL</span></div>
+        @forelse ($attendances as $a)
+            <div class="sa-card sa-fade-in">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    {{-- Triage Summary Sidebar --}}
+                    <div class="lg:col-span-1">
+                        <div class="bg-gray-50 rounded-xl p-4 space-y-3 sticky top-6">
+                            <div class="flex items-center justify-between">
+                                <span class="inline-flex items-center justify-center w-10 h-8 rounded-lg bg-sa-primary/10 text-sa-primary font-bold text-sm">
+                                    {{ $a->queue_password }}
+                                </span>
+                                @if ($a->triage)
+                                    @php
+                                        $manMap = [
+                                            'VERMELHO' => 'bg-red-500 text-white',
+                                            'LARANJA'  => 'bg-orange-500 text-white',
+                                            'AMARELO'  => 'bg-yellow-400 text-yellow-900',
+                                            'VERDE'    => 'bg-green-500 text-white',
+                                            'AZUL'     => 'bg-blue-500 text-white',
+                                        ];
+                                    @endphp
+                                    <span class="sa-badge {{ $manMap[$a->triage->manchester] ?? 'sa-badge-gray' }}">
+                                        {{ $a->triage->manchester }}
+                                    </span>
+                                @endif
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-900 text-sm">{{ $a->patient_name }}</h4>
+                                <p class="text-xs text-gray-500">{{ $a->cpf ?? 'CPF não informado' }}</p>
+                            </div>
+                            @if ($a->triage)
+                                <div class="border-t border-gray-200 pt-3 space-y-2 text-xs text-gray-600">
+                                    <div class="flex justify-between"><span class="text-gray-400">PA</span><span class="font-medium">{{ $a->triage->blood_pressure ?? '—' }}</span></div>
+                                    <div class="flex justify-between"><span class="text-gray-400">FC</span><span class="font-medium">{{ $a->triage->heart_rate ?? '—' }} bpm</span></div>
+                                    <div class="flex justify-between"><span class="text-gray-400">Temp</span><span class="font-medium">{{ $a->triage->temperature ?? '—' }} °C</span></div>
+                                    <div class="flex justify-between"><span class="text-gray-400">SpO₂</span><span class="font-medium">{{ $a->triage->oxygen_saturation ?? '—' }}%</span></div>
                                 </div>
-                            @else
-                                <p class="text-sm text-gray-600">Triagem não realizada</p>
+                                @if ($a->triage->complaint)
+                                    <div class="border-t border-gray-200 pt-3">
+                                        <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Queixa</p>
+                                        <p class="text-xs text-gray-700">{{ $a->triage->complaint }}</p>
+                                    </div>
+                                @endif
                             @endif
                         </div>
-
-                        <!-- Painel Direito: Avaliação e Diagnósticos -->
-                        <div class="md:col-span-2 space-y-4">
-                            <!-- SOAP -->
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <h4 class="font-semibold text-gray-800 mb-3">📝 Avaliação Clínica (SOAP)</h4>
-                                <div class="grid md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Subjetivo (S)</label>
-                                        <textarea name="soap_objective" placeholder="Queixa principal e história do paciente" class="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500" rows="3" required></textarea>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Objetivo (O)</label>
-                                        <textarea name="soap_assessment" placeholder="Achados do exame físico e complementares" class="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500" rows="3" required></textarea>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Diagnósticos -->
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <h4 class="font-semibold text-gray-800 mb-3">🏷️ Diagnósticos</h4>
-                                <div class="grid md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Diagnóstico Principal</label>
-                                        <textarea name="diagnosis" placeholder="Descrição da condição clínica" class="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500" rows="2" required></textarea>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">CID-10 Principal</label>
-                                        <input type="text" name="cid_10" placeholder="Código CID-10" class="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500" required>
-                                        <small class="text-xs text-gray-500 mt-1">Ex: A00.0, E10.1</small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Orientações e Desfecho -->
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <h4 class="font-semibold text-gray-800 mb-3">📋 Plano (P) e Desfecho</h4>
-                                <div class="grid md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Orientações e Medicações</label>
-                                        <textarea name="guidance" placeholder="Prescrições, medicamentos, retornos agendados, etc" class="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500" rows="3"></textarea>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Desfecho do Atendimento</label>
-                                        <select name="outcome" class="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500" required>
-                                            <option value="">-- Selecione --</option>
-                                            <option value="ALTA">✓ Alta Ambulatorial</option>
-                                            <option value="INTERNACAO">🏥 Internação</option>
-                                            <option value="TRANSFERENCIA">↪️ Transferência</option>
-                                            <option value="OBITO">✗ Óbito</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
-                    <!-- Botão de Submissão -->
-                    <div class="flex gap-3 pt-4 border-t border-gray-200">
-                        <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold rounded px-4 py-2 transition">
-                            💾 Salvar Prontuário
-                        </button>
+                    {{-- SOAP Form --}}
+                    <div class="lg:col-span-3">
+                        <form method="POST" action="{{ route('hospital.store', $a) }}" class="space-y-5">
+                            @csrf
+
+                            {{-- SOAP Sections --}}
+                            @php
+                                $soapSections = [
+                                    ['key' => 'subjective', 'label' => 'S — Subjetivo', 'desc' => 'Relato do paciente, queixas, história...', 'color' => 'text-blue-600'],
+                                    ['key' => 'objective', 'label' => 'O — Objetivo', 'desc' => 'Exame físico, dados mensuráveis...', 'color' => 'text-emerald-600'],
+                                    ['key' => 'assessment', 'label' => 'A — Avaliação', 'desc' => 'Hipótese diagnóstica, CID...', 'color' => 'text-purple-600'],
+                                    ['key' => 'plan', 'label' => 'P — Plano', 'desc' => 'Condutas, exames, encaminhamentos...', 'color' => 'text-orange-600'],
+                                ];
+                            @endphp
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach ($soapSections as $s)
+                                    <div>
+                                        <label class="sa-label {{ $s['color'] }}">{{ $s['label'] }}</label>
+                                        <textarea name="{{ $s['key'] }}" rows="4" class="sa-input" placeholder="{{ $s['desc'] }}"></textarea>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            {{-- Diagnosis + Outcome --}}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="sa-label">Diagnóstico / CID-10</label>
+                                    <input name="diagnosis" class="sa-input" placeholder="Ex: J06 – IVAS">
+                                </div>
+                                <div>
+                                    <label class="sa-label">Desfecho</label>
+                                    <select name="outcome" class="sa-select">
+                                        <option value="">Selecione...</option>
+                                        <option value="ALTA">🏠 Alta</option>
+                                        <option value="INTERNACAO">🏥 Internação</option>
+                                        <option value="ENCAMINHAMENTO">➡️ Encaminhamento</option>
+                                        <option value="OBITO">⚫ Óbito</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end pt-2">
+                                <button type="submit" class="sa-btn-primary">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                                    Salvar Prontuário
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            </form>
+            </div>
         @empty
-            <div class="bg-white p-8 rounded-lg shadow-md text-center text-gray-500">
-                <p>Nenhum paciente pendente de atendimento hospitalar</p>
+            <div class="sa-card text-center py-12">
+                <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18"/></svg>
+                <p class="text-gray-500 font-medium">Nenhum paciente aguardando atendimento hospitalar.</p>
+                <p class="text-gray-400 text-sm mt-1">Pacientes com triagem concluída aparecerão aqui.</p>
             </div>
         @endforelse
     </div>
