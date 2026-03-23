@@ -15,6 +15,21 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('reception.index')" :active="request()->routeIs('reception.*')">
+                        {{ __('Recepcao') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('triage.index')" :active="request()->routeIs('triage.*')">
+                        {{ __('Triagem') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('prescriptions.index')" :active="request()->routeIs('prescriptions.*')">
+                        {{ __('Prescricoes') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('pharmacy.index')" :active="request()->routeIs('pharmacy.*')">
+                        {{ __('Farmacia') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('hospital.index')" :active="request()->routeIs('hospital.*')">
+                        {{ __('Hospital') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -69,6 +84,21 @@
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('reception.index')" :active="request()->routeIs('reception.*')">
+                {{ __('Recepcao') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('triage.index')" :active="request()->routeIs('triage.*')">
+                {{ __('Triagem') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('prescriptions.index')" :active="request()->routeIs('prescriptions.*')">
+                {{ __('Prescricoes') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('pharmacy.index')" :active="request()->routeIs('pharmacy.*')">
+                {{ __('Farmacia') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('hospital.index')" :active="request()->routeIs('hospital.*')">
+                {{ __('Hospital') }}
             </x-responsive-nav-link>
         </div>
 

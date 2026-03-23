@@ -6,20 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('ledi_queues', function (Blueprint $table) {
             $table->id();
+            $table->string('resource_type');
+            $table->unsignedBigInteger('resource_id');
+            $table->string('ledger_type');
+            $table->json('payload');
+            $table->string('status')->default('PENDENTE');
+            $table->integer('attempts')->default(0);
+            $table->text('last_error')->nullable();
+            $table->timestamp('processed_at')->nullable();
             $table->timestamps();
+            $table->index(['resource_type', 'resource_id']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('ledi_queues');

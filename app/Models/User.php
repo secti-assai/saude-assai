@@ -2,31 +2,64 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable([
+    'name',
+    'email',
+    'password',
+    'role',
+    'registration',
+    'crm',
+    'health_unit_id',
+    'two_factor_enabled',
+])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    public const ROLE_ADMIN = 'admin_secti';
+    public const ROLE_GESTOR = 'gestor';
+    public const ROLE_RECEPCAO = 'recepcionista';
+    public const ROLE_ENFERMAGEM = 'enfermeiro';
+    public const ROLE_MEDICO_UBS = 'medico_ubs';
+    public const ROLE_MEDICO_HOSPITAL = 'medico_hospital';
+    public const ROLE_FARMACIA = 'farmaceutico';
+    public const ROLE_ENTREGADOR = 'entregador';
+    public const ROLE_AUDITOR = 'auditor';
+
+    /** @use HasFactory<UserFactory> */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'two_factor_enabled' => 'boolean',
+            'first_login_at' => 'datetime',
+            'last_logout_at' => 'datetime',
         ];
+    }
+
+    public function healthUnit(): BelongsTo
+    {
+        return $this->belongsTo(HealthUnit::class);
+    }
+
+    public function prescriptions(): HasMany
+    {
+        return $this->hasMany(Prescription::class, 'doctor_user_id');
+    }
+
+    public function triages(): HasMany
+    {
+        return $this->hasMany(Triage::class, 'nurse_user_id');
     }
 }

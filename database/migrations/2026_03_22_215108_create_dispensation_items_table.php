@@ -6,20 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('dispensation_items', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('dispensation_id');
+            $table->unsignedBigInteger('medication_id');
+            $table->string('batch')->nullable();
+            $table->date('expiry_date')->nullable();
+            $table->integer('quantity')->default(1);
             $table->timestamps();
+
+            $table->index('dispensation_id');
+            $table->index('medication_id');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('dispensation_items');

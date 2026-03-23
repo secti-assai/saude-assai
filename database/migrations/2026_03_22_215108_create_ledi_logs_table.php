@@ -6,20 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('ledi_logs', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('ledi_queue_id')->nullable();
+            $table->string('status');
+            $table->text('response')->nullable();
             $table->timestamps();
+
+            $table->index('ledi_queue_id');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('ledi_logs');
