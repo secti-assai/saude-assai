@@ -207,7 +207,7 @@
                     <h2 class="text-3xl font-bold font-sora text-[var(--gov-primary-dark)]">Destaques de Notícias</h2>
                     <p class="text-gray-500 mt-2 font-medium">Acompanhe as últimas campanhas e novidades oficiais</p>
                 </div>
-                <a href="#" class="hidden md:inline-flex items-center text-[var(--gov-primary)] font-bold hover:underline">
+                <a href="{{ route('portal.news.index') }}" class="hidden md:inline-flex items-center text-[var(--gov-primary)] font-bold hover:underline">
                     Ver todas as notícias
                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </a>
@@ -221,7 +221,7 @@
 
                 <!-- Main Left (Large) -->
                 @if($mainNews)
-                <div class="lg:col-span-7 relative rounded-2xl overflow-hidden shadow-lg group block h-[400px] md:h-[500px]">
+                <a href="{{ route('portal.news.show', $mainNews->id) }}" class="lg:col-span-7 relative rounded-2xl overflow-hidden shadow-lg group block h-[400px] md:h-[500px]">
                     <img src="https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1200&q=80" alt="News Image" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                     <div class="absolute inset-0 news-card-main flex flex-col justify-end p-6 md:p-8">
                         <span class="bg-[var(--gov-accent)] text-yellow-900 text-xs font-bold uppercase tracking-wider py-1 px-3 rounded w-max mb-4">
@@ -238,7 +238,7 @@
                             {{ optional($mainNews->published_at)->format('d/m/Y') ?? 'Atualizado recentemente' }}
                         </div>
                     </div>
-                </div>
+                </a>
                 @else
                 <div class="lg:col-span-7 bg-white rounded-2xl shadow border border-gray-100 flex items-center justify-center h-[400px]">
                     <p class="text-gray-500">Nenhuma notícia em destaque.</p>
@@ -248,7 +248,7 @@
                 <!-- Smaller Right Side -->
                 <div class="lg:col-span-5 flex flex-col space-y-4">
                     @forelse($sideItems as $item)
-                    <a href="#" class="flex bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group h-[125px] md:h-[155px]">
+                    <a href="{{ route('portal.news.show', $item->id) }}" class="flex bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group h-[125px] md:h-[155px]">
                         <div class="w-1/3 shrink-0 overflow-hidden relative">
                             <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                         </div>
@@ -276,7 +276,7 @@
             </div>
             
             <div class="mt-6 text-center md:hidden">
-                <a href="#" class="inline-flex items-center text-[var(--gov-primary)] font-bold hover:underline">
+                <a href="{{ route('portal.news.index') }}" class="inline-flex items-center text-[var(--gov-primary)] font-bold hover:underline">
                     Ver todas as notícias
                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </a>
@@ -303,6 +303,9 @@
                 <!-- Robust Ficha Oficial -->
                 <div class="bg-white border rounded-lg border-gray-200 shadow-sm hover:shadow-lg transition flex flex-col">
                     <div class="p-1 min-h-[8px] bg-[var(--gov-primary)] w-full rounded-t-lg"></div>
+                    @if($unit->photo_path)
+                        <img src="{{ Storage::url($unit->photo_path) }}" alt="Foto de {{ $unit->name }}" class="w-full h-48 object-cover">
+                    @endif
                     <div class="p-6 flex-1">
                         <div class="flex items-start justify-between">
                             <span class="bg-teal-50 text-teal-700 text-[10px] font-bold uppercase tracking-wider py-1 px-2 rounded border border-teal-100">
@@ -310,6 +313,9 @@
                             </span>
                         </div>
                         <h4 class="text-xl font-bold font-sora text-gray-800 mt-3 mb-1">{{ $unit->name }}</h4>
+                        @if($unit->description)
+                            <p class="text-sm text-gray-500 mt-2 mb-4 line-clamp-2" title="{{ $unit->description }}">{{ $unit->description }}</p>
+                        @endif
                         
                         <div class="mt-4 space-y-3">
                             <div class="flex items-start text-sm text-gray-600">
@@ -327,7 +333,7 @@
                         </div>
                     </div>
                     <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 w-full text-center">
-                        <a href="#" class="text-sm font-bold text-[var(--gov-primary)] hover:text-[var(--gov-primary-dark)]">Ver no Mapa &rarr;</a>
+                        <a href="{{ $unit->maps_link ?: 'https://maps.google.com/?q=' . urlencode($unit->address . ', Assaí - PR') }}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold text-[var(--gov-primary)] hover:text-[var(--gov-primary-dark)]">Ver no Mapa &rarr;</a>
                     </div>
                 </div>
                 @empty
@@ -338,7 +344,7 @@
             </div>
             
             <div class="mt-10 text-center">
-               <a href="#" class="inline-flex justify-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+               <a href="{{ route('portal.units') }}" class="inline-flex justify-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                     Consultar todas as unidades
                </a>
             </div>

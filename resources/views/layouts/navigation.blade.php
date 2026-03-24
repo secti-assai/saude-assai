@@ -11,7 +11,8 @@
         ['route' => 'hospital.index', 'match' => 'hospital.*', 'label' => 'Hospital', 'icon' => 'building-office', 'roles' => 'medico_hospital,enfermeiro,admin_secti'],
         ['route' => 'deliveries.index', 'match' => 'deliveries.*', 'label' => 'Entregas', 'icon' => 'truck', 'roles' => 'entregador,admin_secti,farmaceutico'],
         ['route' => 'reports.conformity', 'match' => 'reports.*', 'label' => 'Relatórios', 'icon' => 'chart-pie', 'roles' => 'admin_secti,gestor,auditor'],
-        ['route' => 'admin.users', 'match' => 'admin.users', 'label' => 'Administração', 'icon' => 'cog-6-tooth', 'roles' => 'admin_secti'],
+        ['route' => 'admin.users', 'match' => 'admin.users', 'label' => 'Usuários', 'icon' => 'users', 'roles' => 'admin_secti'],
+        ['route' => 'admin.health-units.index', 'match' => 'admin.health-units.*', 'label' => 'Unidades de Saúde', 'icon' => 'building-office-2', 'roles' => 'admin_secti,gestor'],
         ['route' => 'admin.portal', 'match' => 'admin.portal', 'label' => 'Portal / Notícias', 'icon' => 'globe-alt', 'roles' => 'admin_secti,gestor'],
     ];
 @endphp

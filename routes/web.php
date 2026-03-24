@@ -14,7 +14,9 @@ use App\Http\Controllers\TriageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PortalController::class, 'index'])->name('portal.home');
-Route::get('/unidades', [PortalController::class, 'index'])->name('portal.units');
+Route::get('/noticias', [PortalController::class, 'newsIndex'])->name('portal.news.index');
+Route::get('/noticia/{id}', [PortalController::class, 'showNews'])->name('portal.news.show');
+Route::get('/unidades', [PortalController::class, 'units'])->name('portal.units');
 Route::get('/remedio-em-casa', [PortalController::class, 'index'])->name('portal.delivery');
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -30,12 +32,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::middleware('role:admin_secti')->group(function () {
+        Route::resource('admin/health-units', App\Http\Controllers\Admin\HealthUnitController::class, ['as' => 'admin']);
         Route::get('/admin/usuarios', [AdminController::class, 'users'])->name('admin.users');
         Route::post('/admin/usuarios', [AdminController::class, 'storeUser'])->name('admin.users.store');
         Route::post('/admin/usuarios/{user}', [AdminController::class, 'destroy'])->name('admin.users.destroy');
         
         Route::get('/admin/conteudos', [PortalController::class, 'adminIndex'])->name('admin.portal');
         Route::post('/admin/conteudos', [PortalController::class, 'store'])->name('admin.portal.store');
+        Route::get('/admin/conteudos/{content}/edit', [PortalController::class, 'edit'])->name('admin.portal.edit');
+        Route::put('/admin/conteudos/{content}', [PortalController::class, 'update'])->name('admin.portal.update');
         Route::post('/admin/conteudos/{content}', [PortalController::class, 'destroy'])->name('admin.portal.destroy');
     });
 

@@ -51,6 +51,64 @@ class PortalController extends Controller
         return view('admin.portal', compact('contents'));
     }
 
+    public function units(): View
+    {
+        $healthUnits = HealthUnit::where('is_active', true)->orderBy('name')->get();
+        return view('portal.units', compact('healthUnits'));
+    }
+
+    public function showNews($id): View
+    {
+        $news = PortalContent::findOrFail($id);
+        
+        $otherNews = PortalContent::where('published', true)
+            ->where('id', '!=', $id)
+            ->where('type', 'like', '%not%')
+            ->latest('published_at')
+            ->take(3)
+            ->get();
+
+        return view('portal.news.show', compact('news', 'otherNews'));
+    }
+
+    public function newsIndex(): View
+    {
+        $news = PortalContent::where('published', true)
+            ->where(function($query) {
+                $query->where('type', 'like', '%notícia%')
+                      ->orWhere('type', 'like', '%not%')
+                      ->orWhere('type', 'like', '%campanha%');
+            })
+            ->latest('published_at')
+            ->paginate(12);
+
+        return view('portal.news.index', compact('news'));
+    }
+
+    public function edit(PortalContent $content): View
+    {
+        return view('admin.portal-edit', compact('content'));
+    }
+
+    public function update(Request $request, PortalContent $content): RedirectResponse
+    {
+        $data = $request->validate([
+            'type' => ['required', 'string', 'max:50'],
+            'title' => ['required', 'string', 'max:255'],
+            'body' => ['nullable', 'string'],
+            'published' => ['nullable', 'boolean'],
+        ]);
+
+        $content->update([
+            ...$data,
+            'published' => (bool) ($data['published'] ?? true),
+        ]);
+
+        $this->audit->log($request, 'M2', 'ATUALIZAR_CONTEUDO', PortalContent::class, (string) $content->id);
+
+        return redirect()->route('admin.portal')->with('status', 'Conteúdo atualizado com sucesso.');
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
