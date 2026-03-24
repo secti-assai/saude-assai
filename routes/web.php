@@ -20,6 +20,11 @@ Route::get('/unidades', [PortalController::class, 'units'])->name('portal.units'
 Route::get('/remedio-em-casa', [PortalController::class, 'index'])->name('portal.delivery');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/2fa/setup', [\App\Http\Controllers\TwoFactorController::class, 'setup'])->name('2fa.setup');
+    Route::post('/2fa/enable', [\App\Http\Controllers\TwoFactorController::class, 'enable'])->name('2fa.enable');
+});
+
+Route::middleware(['auth', 'verified', '2fa'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -66,7 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('role:medico_hospital,enfermeiro,admin_secti')->group(function () {
         Route::get('/hospital', [HospitalController::class, 'index'])->name('hospital.index');
-        Route::post('/hospital/{attendance}', [HospitalController::class, 'store'])->name('hospital.store');
+        Route::post('/hospital', [HospitalController::class, 'store'])->name('hospital.store');
     });
 
     Route::middleware('role:entregador,admin_secti,farmaceutico')->group(function () {

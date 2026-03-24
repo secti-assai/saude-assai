@@ -299,7 +299,7 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @forelse ($healthUnits as $unit)
+                @forelse($healthUnits as $unit)
                 <!-- Robust Ficha Oficial -->
                 <div class="bg-white border rounded-lg border-gray-200 shadow-sm hover:shadow-lg transition flex flex-col">
                     <div class="p-1 min-h-[8px] bg-[var(--gov-primary)] w-full rounded-t-lg"></div>

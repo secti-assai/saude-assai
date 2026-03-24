@@ -33,13 +33,15 @@ class PrescriptionController extends Controller
     {
         $data = $request->validate([
             'attendance_id' => ['required', 'exists:attendances,id'],
-            'medication_id' => ['required', 'exists:medications,id'],
-            'dosage' => ['nullable', 'string'],
-            'frequency' => ['nullable', 'string'],
-            'duration_days' => ['required', 'integer', 'min:1'],
-            'quantity' => ['required', 'integer', 'min:1'],
             'delivery_type' => ['required', 'in:RETIRADA,ENTREGA'],
             'notes' => ['nullable', 'string'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.medication_id' => ['required', 'exists:medications,id'],
+            'items.*.dosage' => ['nullable', 'string'],
+            'items.*.frequency' => ['nullable', 'string'],
+            'items.*.administration_route' => ['nullable', 'string'],
+            'items.*.duration_days' => ['required', 'integer', 'min:1'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
         ]);
 
         $attendance = Attendance::with('citizen')->findOrFail((int) $data['attendance_id']);
@@ -54,15 +56,18 @@ class PrescriptionController extends Controller
             'signed_at' => now(),
         ]);
 
-        PrescriptionItem::create([
-            'prescription_id' => $prescription->id,
-            'medication_id' => (int) $data['medication_id'],
-            'dosage' => $data['dosage'] ?? null,
-            'frequency' => $data['frequency'] ?? null,
-            'administration_route' => 'VO',
-            'duration_days' => (int) $data['duration_days'],
-            'quantity' => (int) $data['quantity'],
-        ]);
+        // Criar todos os itens da prescrição
+        foreach ($data['items'] as $item) {
+            PrescriptionItem::create([
+                'prescription_id' => $prescription->id,
+                'medication_id' => (int) $item['medication_id'],
+                'dosage' => $item['dosage'] ?? null,
+                'frequency' => $item['frequency'] ?? null,
+                'administration_route' => $item['administration_route'] ?? 'VO',
+                'duration_days' => (int) $item['duration_days'],
+                'quantity' => (int) $item['quantity'],
+            ]);
+        }
 
         if ($data['delivery_type'] === 'ENTREGA') {
             Delivery::create([

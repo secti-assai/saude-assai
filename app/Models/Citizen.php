@@ -16,7 +16,10 @@ class Citizen extends Model
         'full_name',
         'social_name',
         'birth_date',
-        'gender',
+        'sexo',
+        'genero',
+        'raca_cor',
+        'gov_assai_id',
         'address',
         'is_resident_assai',
         'residence_validated_at',
@@ -27,6 +30,9 @@ class Citizen extends Model
     protected function casts(): array
     {
         return [
+            'cpf' => 'encrypted',
+            'cns' => 'encrypted',
+            'email' => 'encrypted',
             'birth_date' => 'date',
             'is_resident_assai' => 'boolean',
             'residence_validated_at' => 'datetime',
