@@ -46,4 +46,17 @@ class AdminController extends Controller
 
         return back()->with('status', 'Usuario criado com sucesso.');
     }
+
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        if ($user->id === $request->user()->id) {
+            return back()->withErrors(['email' => 'VocÃª nÃ£o pode excluir seu prÃ³prio usuÃ¡rio.']);
+        }
+
+        $this->audit->log($request, 'M2', 'DELETAR_USUARIO', User::class, $user->id);
+        $user->delete();
+
+        return back()->with('status', 'Usuario removido com sucesso.');
+    }
 }
+

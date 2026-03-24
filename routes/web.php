@@ -14,6 +14,8 @@ use App\Http\Controllers\TriageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PortalController::class, 'index'])->name('portal.home');
+Route::get('/unidades', [PortalController::class, 'index'])->name('portal.units');
+Route::get('/remedio-em-casa', [PortalController::class, 'index'])->name('portal.delivery');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -30,7 +32,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:admin_secti')->group(function () {
         Route::get('/admin/usuarios', [AdminController::class, 'users'])->name('admin.users');
         Route::post('/admin/usuarios', [AdminController::class, 'storeUser'])->name('admin.users.store');
+        Route::post('/admin/usuarios/{user}', [AdminController::class, 'destroy'])->name('admin.users.destroy');
+        
+        Route::get('/admin/conteudos', [PortalController::class, 'adminIndex'])->name('admin.portal');
         Route::post('/admin/conteudos', [PortalController::class, 'store'])->name('admin.portal.store');
+        Route::post('/admin/conteudos/{content}', [PortalController::class, 'destroy'])->name('admin.portal.destroy');
     });
 
     Route::middleware('role:recepcionista,admin_secti')->group(function () {

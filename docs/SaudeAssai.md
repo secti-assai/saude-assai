@@ -80,8 +80,8 @@ O Saúde Assaí opera em arquitetura de microsserviços, com um API Gateway cent
 
 | **Camada** | **Tecnologia / Detalhe** |
 | ---------------------------- | ------------------------------------------------------------------------------------- |
-| **Back-end Framework** | Laravel 11+ (PHP 8.3) - Estrutura robusta com Eloquent ORM                            |
-| **Comunicação API** | REST (Laravel API Resources) + Laravel Reverb (WebSockets nativo)                     |
+| **Back-end Framework** | Laravel 10+ (PHP 8.2+) - Estrutura robusta com Eloquent ORM                            |
+| **Comunicação API** | REST (Laravel API Resources)                      |
 | **Banco de Dados Principal** | PostgreSQL 15 - servidor municipal existente                                          |
 | **Banco de Dados PEC** | PostgreSQL do e-SUS PEC - Acesso via conexão secundária (ReadOnly)                    |
 | **Integração PEC (escrita)** | LEDI APS 7.3.3 - Integração via Guzzle (XML) ou PHP Thrift bindings                   |
@@ -92,7 +92,7 @@ O Saúde Assaí opera em arquitetura de microsserviços, com um API Gateway cent
 | **Monitoramento Infra** | Laravel Pulse (Dashboard de saúde) + Prometheus/Grafana                               |
 | **Logs de Auditoria** | Spatie Laravel Activitylog (Tabela imutável + rotação de logs mensal)                 |
 | **Assinatura Digital** | ICP-Brasil (médicos) via OpenSSL/Signer ou integração com API externa                 |
-| **Armazenamento Doc.** | Laravel Filesystem (S3 Driver) conectado localmente - Prontuários PDF             |
+| **Armazenamento Doc.** | Conectado localmente - Prontuários PDF             |
 
 ## **2.3 Integração com o Gov.Assaí**
 

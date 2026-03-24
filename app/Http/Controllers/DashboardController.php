@@ -14,22 +14,28 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
-        $kpis = [
-            'atendimentos_hoje' => Attendance::whereDate('created_at', today())->count(),
-            'fila_ubs' => Attendance::whereIn('status', ['RECEPCAO', 'TRIAGEM_CONCLUIDA'])->count(),
-            'entregas_hoje' => Delivery::whereDate('created_at', today())->count(),
-            'ledis_pendentes' => LediQueue::where('status', 'PENDENTE')->count(),
-            'ledis_enviadas' => LediQueue::where('status', 'ENVIADO')->count(),
-            'triagens_hoje' => Triage::whereDate('created_at', today())->count(),
-            'dispensacoes_hoje' => Dispensation::whereDate('created_at', today())->count(),
+        $stats = [
+            'atendimentos' => Attendance::whereDate('created_at', today())->count(),
+            'triagens' => Triage::whereDate('created_at', today())->count(),
+            'prescricoes' => \App\Models\Prescription::whereDate('created_at', today())->count(),
+            'dispensacoes' => Dispensation::whereDate('created_at', today())->count(),
         ];
 
-        $usage = User::query()
+        $usageRaw = User::query()
             ->select('users.id', 'users.name', 'users.role')
             ->withCount('triages')
             ->withCount('prescriptions')
             ->get();
 
-        return view('dashboard', compact('kpis', 'usage'));
+        $usage = $usageRaw->map(function ($user) {
+            return [
+                'name' => $user->name,
+                'role' => $user->role,
+                'actions' => $user->triages_count + $user->prescriptions_count,
+                'last' => 'Hoje'
+            ];
+        })->toArray();
+
+        return view('dashboard', compact('stats', 'usage'));
     }
 }

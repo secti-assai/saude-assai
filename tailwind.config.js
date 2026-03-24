@@ -7,24 +7,31 @@ export default {
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
+        './resources/js/**/*.tsx',
+        './resources/js/**/*.jsx',
+        './resources/js/**/*.ts',
+        './resources/js/**/*.js',
     ],
 
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Manrope', ...defaultTheme.fontFamily.sans],
+                sans: ['Inter', ...defaultTheme.fontFamily.sans],
             },
             colors: {
-                sa: {
-                    primary: '#0a8f7b',
-                    'primary-deep': '#056e60',
-                    'primary-light': '#e8f5f1',
-                    accent: '#2db5ff',
-                    'accent-light': '#e5f4ff',
-                    ink: '#071b2a',
-                    'ink-soft': '#3d5a6f',
-                    paper: '#f0f6fb',
+                assai: {
+                    primary: '#0D47A1',
+                    secondary: '#1976D2',
+                    accent: '#4CAF50',
+                    surface: '#F3F4F6',
                 },
+                manchester: {
+                    red: '#EF4444',
+                    orange: '#F97316',
+                    yellow: '#EAB308',
+                    green: '#22C55E',
+                    blue: '#3B82F6',
+                }
             },
             borderRadius: {
                 '2xl': '1rem',
@@ -32,6 +39,5 @@ export default {
             },
         },
     },
-
     plugins: [forms],
 };

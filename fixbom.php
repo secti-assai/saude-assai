@@ -1,0 +1,1 @@
+<?php foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator('.')) as $f){if($f->isFile()&&$f->getExtension()==='php'){$c=file_get_contents($f);if(strpos($c,chr(239).chr(187).chr(191))===0){file_put_contents($f,substr($c,3));echo $f->getPathname().PHP_EOL;}}}

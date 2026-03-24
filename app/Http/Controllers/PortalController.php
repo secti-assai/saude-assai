@@ -45,6 +45,12 @@ class PortalController extends Controller
         return view('portal.index', compact('publicMetrics', 'featuredAlert', 'news', 'notices', 'healthUnits'));
     }
 
+    public function adminIndex(): View
+    {
+        $contents = PortalContent::latest()->get();
+        return view('admin.portal', compact('contents'));
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -63,5 +69,13 @@ class PortalController extends Controller
         $this->audit->log($request, 'M2', 'CRIAR_CONTEUDO', PortalContent::class, $content->id);
 
         return back()->with('status', 'Conteudo publicado com sucesso.');
+    }
+
+    public function destroy(Request $request, PortalContent $content): RedirectResponse
+    {
+        $this->audit->log($request, 'M2', 'DELETAR_CONTEUDO', PortalContent::class, $content->id);
+        $content->delete();
+
+        return back()->with('status', 'Conteudo removido com sucesso.');
     }
 }
