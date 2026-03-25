@@ -24,18 +24,34 @@ class PharmacyController extends Controller
 
     public function index(): View
     {
+        $this->authorize('viewAny', Prescription::class);
+
+        $user = auth()->user();
+        $isCentral = in_array($user?->role, ['admin_secti', 'gestor', 'auditor'], true);
+
         $prescriptions = Prescription::with('citizen', 'attendance', 'items.medication')
             ->whereIn('status', ['ASSINADA', 'PENDENTE'])
+            ->when(! $isCentral && $user?->health_unit_id, function ($query) use ($user) {
+                $query->whereHas('attendance', fn ($q) => $q->where('health_unit_id', $user->health_unit_id));
+            })
             ->latest()
             ->get();
 
-        $dispensations = Dispensation::latest()->take(20)->get();
+        $dispensations = Dispensation::query()
+            ->when(! $isCentral && $user?->health_unit_id, function ($query) use ($user) {
+                $query->whereHas('prescription.attendance', fn ($q) => $q->where('health_unit_id', $user->health_unit_id));
+            })
+            ->latest()
+            ->take(20)
+            ->get();
 
         return view('pharmacy.index', compact('prescriptions', 'dispensations'));
     }
 
     public function dispense(Request $request, Prescription $prescription): RedirectResponse
     {
+        $this->authorize('dispense', $prescription);
+
         $residence = $this->govAssai->validateResidence($prescription->citizen->cpf);
         $blocked = $residence === 'NAO_RESIDENTE' && ! $request->boolean('emergency_override');
 

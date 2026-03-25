@@ -15,7 +15,9 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased" style="background: var(--sa-paper);">
+        <body class="font-sans antialiased" style="background: var(--sa-paper);"
+            data-flash-status="{{ session('status') ? e((string) session('status')) : '' }}"
+            data-flash-error="{{ $errors->any() ? e((string) $errors->first()) : '' }}">
         <div class="min-h-screen flex">
             {{-- Sidebar --}}
             @include('layouts.navigation')

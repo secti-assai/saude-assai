@@ -11,8 +11,17 @@ class DispatchLediRecord implements ShouldQueue
 {
     use Queueable;
 
+    public string $queue = 'ledi';
+
+    public int $tries = 5;
+
     public function __construct(public int $lediQueueId)
     {
+    }
+
+    public function backoff(): array
+    {
+        return [5, 15, 30, 60, 120];
     }
 
     public function handle(): void

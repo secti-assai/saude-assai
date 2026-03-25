@@ -53,23 +53,21 @@
             <p class="text-xs text-amber-700 mb-3">
                 Regras de recepcao: so permite prosseguir quando o CPF for validado como residente no Gov.Assai.
             </p>
-            <form method="POST" action="{{ route('reception.store') }}" class="space-y-4">
+            <form method="POST" action="{{ route('reception.store') }}" class="space-y-4" id="reception-form">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="lg:col-span-2">
                         <label class="sa-label">CPF *</label>
-                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                            <input id="cpf" name="cpf" value="{{ old('cpf') }}" class="sa-input" required placeholder="000.000.000-00">
-                            <button
-                                type="button"
-                                id="btn_lookup_cpf"
-                                class="sa-btn-secondary text-sm"
-                                data-url-template="{{ route('reception.citizens.lookup', ['cpf' => '__CPF__']) }}"
-                            >
-                                Consultar CPF
-                            </button>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">A recepcao busca automaticamente os dados do cidadao no Gov.Assai.</p>
+                        <input
+                            id="cpf"
+                            name="cpf"
+                            value="{{ old('cpf') }}"
+                            class="sa-input"
+                            required
+                            placeholder="000.000.000-00"
+                            data-url-template="{{ route('reception.citizens.lookup', ['cpf' => '__CPF__']) }}"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">A recepcao consulta automaticamente o Gov.Assai ao completar os 11 digitos do CPF.</p>
                         <p id="gov_lookup_status" class="text-xs text-gray-500 mt-1"></p>
                     </div>
                     <div>
@@ -108,7 +106,6 @@
                         <input id="birth_date" name="birth_date" value="{{ old('birth_date') }}" type="date" class="sa-input">
                     </div>
                     <div>
-                        <label class="sa-label">Cartão SUS</label>
                         <label class="sa-label">Acidente de Trabalho</label>
                         <select name="work_accident" class="sa-select">
                             <option value="0" @selected(old('work_accident') === '0')>Nao</option>
@@ -121,7 +118,7 @@
                     </div>
                 </div>
                 <div class="flex justify-end pt-2">
-                    <button type="submit" class="sa-btn-primary">
+                    <button type="submit" class="sa-btn-primary" id="reception-submit" disabled>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                         Registrar Atendimento
                     </button>
@@ -193,9 +190,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('reception-form');
             const cpfInput = document.getElementById('cpf');
-            const lookupButton = document.getElementById('btn_lookup_cpf');
+            const submitButton = document.getElementById('reception-submit');
             const lookupStatus = document.getElementById('gov_lookup_status');
+            const careTypeInput = document.querySelector('select[name="care_type"]');
             const fallbackSection = document.getElementById('fallback-section');
             const fallbackName = document.getElementById('fallback-name');
             const fallbackBirth = document.getElementById('fallback-birth');
@@ -203,6 +202,10 @@
             const birthDateInput = document.getElementById('birth_date');
 
             const onlyDigits = (value) => (value || '').replace(/\D+/g, '');
+            let debounceTimer = null;
+            let lastLookupCpf = '';
+            let lookupInFlight = false;
+            let govValidated = false;
 
             const setFallbackVisibility = (showFallback) => {
                 fallbackSection.classList.toggle('hidden', !showFallback);
@@ -215,20 +218,60 @@
                 setFallbackVisibility(true);
             }
 
-            lookupButton.addEventListener('click', async function () {
+            const setStatus = (message, tone) => {
+                const palette = {
+                    neutral: 'text-xs text-gray-500 mt-1',
+                    info: 'text-xs text-blue-600 mt-1',
+                    success: 'text-xs text-green-700 mt-1',
+                    warning: 'text-xs text-amber-700 mt-1',
+                    danger: 'text-xs text-red-600 mt-1',
+                };
+
+                lookupStatus.textContent = message;
+                lookupStatus.className = palette[tone] || palette.neutral;
+            };
+
+            const clearAutofill = () => {
+                fullNameInput.value = '';
+                birthDateInput.value = '';
+                setFallbackVisibility(false);
+            };
+
+            const setSubmitAvailability = () => {
+                const cpf = onlyDigits(cpfInput.value);
+                submitButton.disabled = !(govValidated && cpf.length === 11 && !lookupInFlight);
+                submitButton.classList.toggle('opacity-70', submitButton.disabled);
+                submitButton.classList.toggle('cursor-not-allowed', submitButton.disabled);
+            };
+
+            const invalidateValidationState = () => {
+                govValidated = false;
+                setSubmitAvailability();
+            };
+
+            const performLookup = async () => {
                 const cpf = onlyDigits(cpfInput.value);
 
                 if (cpf.length !== 11) {
-                    lookupStatus.textContent = 'Informe um CPF valido com 11 digitos.';
-                    lookupStatus.className = 'text-xs text-red-600 mt-1';
+                    lastLookupCpf = '';
+                    setStatus('Informe um CPF valido com 11 digitos.', 'danger');
+                    clearAutofill();
+                    invalidateValidationState();
                     return;
                 }
 
-                lookupStatus.textContent = 'Consultando Gov.Assai...';
-                lookupStatus.className = 'text-xs text-blue-600 mt-1';
+                if (lookupInFlight || cpf === lastLookupCpf) {
+                    return;
+                }
+
+                lookupInFlight = true;
+                lastLookupCpf = cpf;
+                invalidateValidationState();
+                setStatus('Consultando Gov.Assai...', 'info');
+                setSubmitAvailability();
 
                 try {
-                    const url = lookupButton.dataset.urlTemplate.replace('__CPF__', cpf);
+                    const url = cpfInput.dataset.urlTemplate.replace('__CPF__', cpf);
                     const response = await fetch(url, {
                         method: 'GET',
                         headers: {
@@ -240,35 +283,76 @@
                     const payload = await response.json();
 
                     if (!response.ok || !payload.success) {
-                        setFallbackVisibility(false);
-                        lookupStatus.textContent = payload.message || 'Nao foi possivel validar CPF no Gov.Assai.';
-                        lookupStatus.className = 'text-xs text-red-600 mt-1';
+                        clearAutofill();
+                        setStatus(payload.message || 'Nao foi possivel validar CPF no Gov.Assai.', 'danger');
+                        invalidateValidationState();
                         return;
                     }
 
                     const cidadao = payload.data?.cidadao ?? {};
-                    if (cidadao.nome) {
-                        fullNameInput.value = cidadao.nome;
-                    }
-                    if (cidadao.data_nascimento) {
-                        birthDateInput.value = cidadao.data_nascimento;
-                    }
+                    fullNameInput.value = cidadao.nome || '';
+                    birthDateInput.value = cidadao.data_nascimento || '';
 
                     const showFallback = !!payload.requires_manual_fields;
                     setFallbackVisibility(showFallback);
+                    govValidated = true;
+                    setSubmitAvailability();
 
-                    lookupStatus.textContent = showFallback
-                        ? 'CPF validado, mas faltam dados obrigatorios. Preencha os campos de fallback.'
-                        : 'CPF validado com dados obrigatorios completos no Gov.Assai.';
-                    lookupStatus.className = showFallback
-                        ? 'text-xs text-amber-700 mt-1'
-                        : 'text-xs text-green-700 mt-1';
+                    if (showFallback) {
+                        setStatus('CPF validado, mas faltam dados obrigatorios. Preencha os campos de fallback.', 'warning');
+                        fullNameInput.focus();
+                        return;
+                    }
+
+                    setStatus('CPF validado com dados obrigatorios completos no Gov.Assai.', 'success');
+                    careTypeInput?.focus();
                 } catch (error) {
-                    setFallbackVisibility(false);
-                    lookupStatus.textContent = 'Erro de comunicacao com Gov.Assai. Tente novamente.';
-                    lookupStatus.className = 'text-xs text-red-600 mt-1';
+                    clearAutofill();
+                    setStatus('Erro de comunicacao com Gov.Assai. Tente novamente.', 'danger');
+                    invalidateValidationState();
+                } finally {
+                    lookupInFlight = false;
+                    setSubmitAvailability();
+                }
+            };
+
+            cpfInput.addEventListener('input', function () {
+                const cpf = onlyDigits(cpfInput.value);
+                if (cpf.length < 11) {
+                    lastLookupCpf = '';
+                    clearAutofill();
+                    invalidateValidationState();
+                    setStatus('Digite o CPF completo para validar no Gov.Assai.', 'neutral');
+                }
+
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+
+                debounceTimer = setTimeout(() => {
+                    if (onlyDigits(cpfInput.value).length === 11) {
+                        performLookup();
+                    }
+                }, 500);
+            });
+
+            cpfInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    performLookup();
                 }
             });
+
+            form.addEventListener('submit', function (event) {
+                if (!govValidated || lookupInFlight) {
+                    event.preventDefault();
+                    setStatus('Aguarde a validacao automatica do CPF no Gov.Assai para continuar.', 'warning');
+                }
+            });
+
+            cpfInput.focus();
+            setStatus('Digite o CPF completo para validar no Gov.Assai.', 'neutral');
+            setSubmitAvailability();
         });
     </script>
 </x-app-layout>

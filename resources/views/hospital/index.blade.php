@@ -40,39 +40,69 @@
                 {{-- 1. IDENTIFICAÇÃO DO PACIENTE --}}
                 <div>
                     <h4 class="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">1. Identificação do Paciente</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                            <label class="sa-label text-blue-800">Paciente Existente</label>
-                            <select name="citizen_id" id="citizen_id" class="sa-select">
-                                <option value="">Selecione na base de dados...</option>
-                                @foreach($citizens as $c)
-                                    <option value="{{ $c->id }}">{{ $c->full_name }} (CPF: {{ $c->cpf ?? 'S/N' }})</option>
-                                @endforeach
-                            </select>
-                            <p class="text-xs text-blue-600 mt-2">Escolha esta opção se o paciente já tem cadastro municipal.</p>
+                    <div class="space-y-4">
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-5">
+                            <label for="patient_search" class="block text-base font-semibold text-slate-800 mb-2">Digite CPF ou Nome para iniciar</label>
+                            <input
+                                type="text"
+                                id="patient_search"
+                                class="sa-input text-lg"
+                                placeholder="Ex: 000.000.000-00 ou nome do paciente"
+                                autocomplete="off"
+                                data-search-url="{{ route('hospital.citizens.search') }}"
+                                data-gov-url-template="{{ route('hospital.citizens.lookup', ['cpf' => '__CPF__']) }}"
+                            >
+
+                            <input type="hidden" name="citizen_id" id="citizen_id" value="{{ old('citizen_id') }}">
+                            <input type="hidden" name="new_citizen_cpf" id="new_citizen_cpf" value="{{ old('new_citizen_cpf') }}">
+
+                            <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                <span class="font-medium">Atalhos:</span>
+                                <span class="rounded bg-white border border-slate-200 px-2 py-1">F2 nova busca</span>
+                                <span class="rounded bg-white border border-slate-200 px-2 py-1">Enter confirmar paciente</span>
+                            </div>
+
+                            <div id="search_feedback" class="mt-3 text-sm text-slate-600"></div>
+                            <div id="search_results" class="mt-3 hidden rounded-lg border border-slate-200 bg-white shadow-sm max-h-72 overflow-y-auto"></div>
                         </div>
-                        
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <label class="sa-label text-gray-700">Ou Cadastre um Novo Paciente Rápido</label>
-                            <div class="space-y-3">
-                                <input type="text" name="new_citizen_name" class="sa-input text-sm" placeholder="Nome Completo" id="new_citizen_name">
-                                <div class="grid grid-cols-2 gap-2">
-                                    <input type="text" name="new_citizen_cpf" id="new_citizen_cpf" class="sa-input text-sm" placeholder="CPF (000.000.000-00)" maxlength="14">
-                                    <input type="date" name="new_citizen_birth" id="new_citizen_birth" class="sa-input text-sm">
+
+                        <div id="patient_state_bar" class="hidden sticky top-4 z-20 rounded-xl border border-sky-200 bg-sky-50 p-3 shadow-sm">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-xs font-semibold uppercase tracking-wide text-sky-700">Paciente ativo</span>
+                                <span id="patient_state_name" class="text-sm font-bold text-slate-900"></span>
+                                <span id="patient_state_source" class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"></span>
+                            </div>
+                        </div>
+
+                        <div id="patient_summary" class="hidden rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                <span id="patient_summary_name" class="text-base font-bold text-slate-900"></span>
+                                <span id="patient_source_badge" class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"></span>
+                            </div>
+                            <div id="patient_summary_meta" class="text-sm text-slate-700"></div>
+                        </div>
+
+                        <div id="quick_registration_fields" class="hidden rounded-xl border border-slate-200 bg-white p-4">
+                            <h5 class="text-sm font-semibold text-slate-800 mb-3">Cadastro Rápido</h5>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label for="new_citizen_name" class="sa-label">Nome Completo</label>
+                                    <input type="text" name="new_citizen_name" id="new_citizen_name" class="sa-input text-sm" value="{{ old('new_citizen_name') }}">
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        id="btn_lookup_cpf"
-                                        class="sa-btn-secondary text-sm"
-                                        data-url-template="{{ route('hospital.citizens.lookup', ['cpf' => '__CPF__']) }}"
-                                    >
-                                        Consultar CPF no Gov.Assai
-                                    </button>
-                                    <span id="gov_lookup_status" class="text-xs text-gray-500"></span>
+                                <div>
+                                    <label for="new_citizen_birth" class="sa-label">Data de Nascimento</label>
+                                    <input type="date" name="new_citizen_birth" id="new_citizen_birth" class="sa-input text-sm" value="{{ old('new_citizen_birth') }}">
+                                </div>
+                                <div>
+                                    <label for="new_citizen_phone" class="sa-label">Telefone para Contato</label>
+                                    <input type="text" name="new_citizen_phone" id="new_citizen_phone" class="sa-input text-sm" value="{{ old('new_citizen_phone') }}" placeholder="(43) 99999-9999">
+                                </div>
+                                <div>
+                                    <label for="new_citizen_address" class="sa-label">Endereco</label>
+                                    <input type="text" name="new_citizen_address" id="new_citizen_address" class="sa-input text-sm" value="{{ old('new_citizen_address') }}" placeholder="Rua, numero, bairro">
                                 </div>
                             </div>
-                            <p class="text-xs text-gray-500 mt-2">Se o CPF nao for de Assai, o atendimento hospitalar continua normalmente com cadastro manual.</p>
+                            <p id="quick_registration_hint" class="mt-2 text-xs text-slate-500">Se nao houver retorno no Gov.Assai, informe nome e data de nascimento para continuar.</p>
                         </div>
                     </div>
                 </div>
@@ -86,7 +116,7 @@
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
                         <div>
                             <label class="sa-label text-xs">PA Sistólica</label>
-                            <input type="number" name="systolic_pressure" class="sa-input text-center" placeholder="Ex: 120">
+                            <input type="number" name="systolic_pressure" id="pa_sistolica" class="sa-input text-center" placeholder="Ex: 120">
                         </div>
                         <div>
                             <label class="sa-label text-xs">PA Diastólica</label>
@@ -233,81 +263,372 @@
     </div>
 
     <script>
-        // UX interaction: disable "existing citizen" se "new citizen" is being typed
         document.addEventListener('DOMContentLoaded', function () {
-            const selectCitizen = document.getElementById('citizen_id');
+            const searchInput = document.getElementById('patient_search');
+            const hiddenCitizenId = document.getElementById('citizen_id');
+            const hiddenCpf = document.getElementById('new_citizen_cpf');
             const newName = document.getElementById('new_citizen_name');
-            const cpfInput = document.getElementById('new_citizen_cpf');
-            const birthInput = document.getElementById('new_citizen_birth');
-            const lookupButton = document.getElementById('btn_lookup_cpf');
-            const lookupStatus = document.getElementById('gov_lookup_status');
+            const newBirth = document.getElementById('new_citizen_birth');
+            const newPhone = document.getElementById('new_citizen_phone');
+            const newAddress = document.getElementById('new_citizen_address');
+            const feedback = document.getElementById('search_feedback');
+            const results = document.getElementById('search_results');
+            const summary = document.getElementById('patient_summary');
+            const summaryName = document.getElementById('patient_summary_name');
+            const summaryMeta = document.getElementById('patient_summary_meta');
+            const sourceBadge = document.getElementById('patient_source_badge');
+            const stateBar = document.getElementById('patient_state_bar');
+            const stateName = document.getElementById('patient_state_name');
+            const stateSource = document.getElementById('patient_state_source');
+            const quickFields = document.getElementById('quick_registration_fields');
+            const quickHint = document.getElementById('quick_registration_hint');
+
+            if (!searchInput) {
+                return;
+            }
 
             const onlyDigits = (value) => (value || '').replace(/\D+/g, '');
-            
-            newName.addEventListener('input', function() {
-                if(this.value.length > 0) {
-                    selectCitizen.value = "";
-                }
-            });
+            const initials = (name) => (name || '')
+                .split(' ')
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((part) => part[0]?.toUpperCase())
+                .join('') || 'SN';
 
-            selectCitizen.addEventListener('change', function() {
-                if(this.value !== "") {
-                    newName.value = "";
-                    cpfInput.value = "";
-                    birthInput.value = "";
-                    lookupStatus.textContent = '';
-                }
-            });
+            let debounceTimer = null;
+            let activeResults = [];
+            let highlightedIndex = 0;
+            let lastResolvedCpf = '';
 
-            lookupButton.addEventListener('click', async function () {
-                const cpf = onlyDigits(cpfInput.value);
+            const setFeedback = (message, tone = 'slate') => {
+                const palette = {
+                    slate: 'text-sm text-slate-600',
+                    blue: 'text-sm text-blue-700',
+                    green: 'text-sm text-green-700',
+                    amber: 'text-sm text-amber-700',
+                    red: 'text-sm text-red-700',
+                };
+                feedback.className = palette[tone] || palette.slate;
+                feedback.textContent = message;
+            };
 
-                if (cpf.length !== 11) {
-                    lookupStatus.textContent = 'Informe um CPF valido com 11 digitos.';
-                    lookupStatus.className = 'text-xs text-red-600';
+            const showSummary = (payload) => {
+                summary.classList.remove('hidden');
+                summaryName.textContent = payload.name || 'Paciente sem nome';
+                summaryMeta.textContent = [payload.cpf, payload.birthDate].filter(Boolean).join(' | ');
+                stateBar.classList.remove('hidden');
+                stateName.textContent = payload.name || 'Paciente sem nome';
+
+                if (payload.source === 'LOCAL') {
+                    sourceBadge.className = 'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold bg-blue-100 text-blue-800';
+                    sourceBadge.textContent = 'Cadastro Local';
+                    stateSource.className = 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-blue-100 text-blue-800';
+                    stateSource.textContent = 'Cadastro Local';
                     return;
                 }
 
-                lookupStatus.textContent = 'Consultando Gov.Assai...';
-                lookupStatus.className = 'text-xs text-blue-600';
+                if (payload.source === 'GOV') {
+                    sourceBadge.className = 'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold bg-emerald-100 text-emerald-800';
+                    sourceBadge.textContent = 'Verificado pelo Municipio';
+                    stateSource.className = 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-800';
+                    stateSource.textContent = 'Verificado pelo Municipio';
+                    return;
+                }
 
-                const url = lookupButton.dataset.urlTemplate.replace('__CPF__', cpf);
+                sourceBadge.className = 'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold bg-amber-100 text-amber-800';
+                sourceBadge.textContent = 'Cadastro Manual';
+                stateSource.className = 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-amber-100 text-amber-800';
+                stateSource.textContent = 'Cadastro Manual';
+            };
+
+            const clearSummary = () => {
+                summary.classList.add('hidden');
+                summaryName.textContent = '';
+                summaryMeta.textContent = '';
+                sourceBadge.textContent = '';
+                stateBar.classList.add('hidden');
+                stateName.textContent = '';
+                stateSource.textContent = '';
+            };
+
+            const showQuickFields = (show, readOnly = false) => {
+                quickFields.classList.toggle('hidden', !show);
+                [newName, newBirth].forEach((field) => {
+                    field.readOnly = readOnly;
+                    field.classList.toggle('bg-slate-100', readOnly);
+                });
+            };
+
+            const resetSelection = () => {
+                hiddenCitizenId.value = '';
+                hiddenCpf.value = '';
+                newName.value = '';
+                newBirth.value = '';
+                newPhone.value = '';
+                newAddress.value = '';
+                clearSummary();
+                showQuickFields(false, false);
+                quickHint.textContent = 'Se nao houver retorno no Gov.Assai, informe nome e data de nascimento para continuar.';
+            };
+
+            const hideResults = () => {
+                results.innerHTML = '';
+                results.classList.add('hidden');
+                activeResults = [];
+                highlightedIndex = 0;
+            };
+
+            const selectLocalCitizen = (citizen) => {
+                hiddenCitizenId.value = citizen.id;
+                hiddenCpf.value = '';
+                newName.value = '';
+                newBirth.value = '';
+                newPhone.value = '';
+                newAddress.value = '';
+                showQuickFields(false, false);
+                showSummary({
+                    name: citizen.full_name,
+                    cpf: citizen.cpf,
+                    birthDate: citizen.birth_date,
+                    source: 'LOCAL',
+                });
+                searchInput.value = citizen.full_name;
+                setFeedback('Paciente encontrado na base local. Pressione Enter para confirmar e continuar.', 'green');
+                hideResults();
+
+                const systolic = document.getElementById('pa_sistolica');
+                if (systolic) {
+                    systolic.focus();
+                }
+            };
+
+            const activateManualScenario = (cpfDigits) => {
+                hiddenCitizenId.value = '';
+                hiddenCpf.value = cpfDigits;
+                newName.value = '';
+                newBirth.value = '';
+                showQuickFields(true, false);
+                quickHint.textContent = 'Paciente nao localizado na base local nem no Gov.Assai. Complete os campos para cadastro manual.';
+                showSummary({
+                    name: 'Novo paciente',
+                    cpf: cpfDigits,
+                    birthDate: '',
+                    source: 'MANUAL',
+                });
+                setFeedback('CPF nao localizado. Cadastro manual liberado.', 'amber');
+                newName.focus();
+            };
+
+            const activateGovScenario = (cpfDigits, payload) => {
+                const citizen = payload?.data?.cidadao ?? {};
+                const address = payload?.data?.endereco ?? {};
+
+                hiddenCitizenId.value = '';
+                hiddenCpf.value = cpfDigits;
+                newName.value = citizen.nome || '';
+                newBirth.value = citizen.data_nascimento || '';
+                newPhone.value = citizen.telefone || '';
+                newAddress.value = [address.logradouro, address.numero, address.bairro].filter(Boolean).join(', ');
+
+                showQuickFields(true, true);
+                quickHint.textContent = 'Dados validados no Gov.Assai. Confirme telefone/endereco e prossiga.';
+                showSummary({
+                    name: citizen.nome || 'Paciente validado no Gov.Assai',
+                    cpf: cpfDigits,
+                    birthDate: citizen.data_nascimento || '',
+                    source: 'GOV',
+                });
+                setFeedback('Paciente validado no Gov.Assai. Cadastro rapido preenchido automaticamente.', 'green');
+                newPhone.focus();
+            };
+
+            const renderResults = (items) => {
+                activeResults = items;
+                highlightedIndex = 0;
+
+                if (!items.length) {
+                    hideResults();
+                    return;
+                }
+
+                const html = items.map((item, index) => {
+                    const selectedClass = index === highlightedIndex ? 'bg-slate-100' : '';
+                    return `
+                        <button type="button" class="w-full text-left px-3 py-2 border-b border-slate-100 hover:bg-slate-50 ${selectedClass}" data-result-index="${index}">
+                            <div class="flex items-center gap-3">
+                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-700">${initials(item.full_name)}</span>
+                                <span>
+                                    <span class="block text-sm font-semibold text-slate-900">${item.full_name}</span>
+                                    <span class="block text-xs text-slate-500">${item.cpf || 'CPF nao informado'} ${item.birth_date ? `| Nasc: ${item.birth_date}` : ''}</span>
+                                </span>
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+
+                results.innerHTML = html;
+                results.classList.remove('hidden');
+
+                results.querySelectorAll('[data-result-index]').forEach((button) => {
+                    button.addEventListener('click', () => {
+                        const idx = Number(button.dataset.resultIndex || 0);
+                        const selected = activeResults[idx];
+                        if (selected) {
+                            selectLocalCitizen(selected);
+                        }
+                    });
+                });
+            };
+
+            const fetchLocalCandidates = async (term) => {
+                const url = new URL(searchInput.dataset.searchUrl, window.location.origin);
+                url.searchParams.set('q', term);
+
+                const response = await fetch(url.toString(), {
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                const payload = await response.json();
+                return Array.isArray(payload?.data) ? payload.data : [];
+            };
+
+            const fetchGovByCpf = async (cpfDigits) => {
+                const url = searchInput.dataset.govUrlTemplate.replace('__CPF__', cpfDigits);
+                const response = await fetch(url, {
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                const payload = await response.json();
+                return { ok: response.ok, payload };
+            };
+
+            const resolveCpfFlow = async (cpfDigits) => {
+                if (cpfDigits.length !== 11 || cpfDigits === lastResolvedCpf) {
+                    return;
+                }
+
+                lastResolvedCpf = cpfDigits;
+                setFeedback('Consultando base local e Gov.Assai...', 'blue');
 
                 try {
-                    const response = await fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                    });
+                    const [localList, govResult] = await Promise.all([
+                        fetchLocalCandidates(cpfDigits),
+                        fetchGovByCpf(cpfDigits),
+                    ]);
 
-                    const payload = await response.json();
-
-                    if (response.ok && payload.success) {
-                        const cidadao = payload.data?.cidadao ?? {};
-
-                        if (!newName.value && cidadao.nome) {
-                            newName.value = cidadao.nome;
-                        }
-
-                        if (!birthInput.value && cidadao.data_nascimento) {
-                            birthInput.value = cidadao.data_nascimento;
-                        }
-
-                        selectCitizen.value = '';
-                        lookupStatus.textContent = 'CPF localizado. Dados preenchidos automaticamente.';
-                        lookupStatus.className = 'text-xs text-green-600';
+                    const exactLocal = localList.length > 0 ? localList[0] : null;
+                    if (exactLocal) {
+                        selectLocalCitizen(exactLocal);
                         return;
                     }
 
-                    lookupStatus.textContent = payload.message || 'CPF nao encontrado no Gov.Assai. Continue com cadastro manual.';
-                    lookupStatus.className = 'text-xs text-amber-700';
+                    if (govResult.ok && govResult.payload?.success) {
+                        activateGovScenario(cpfDigits, govResult.payload);
+                        return;
+                    }
+
+                    activateManualScenario(cpfDigits);
                 } catch (error) {
-                    lookupStatus.textContent = 'Falha ao consultar Gov.Assai. Continue com cadastro manual.';
-                    lookupStatus.className = 'text-xs text-amber-700';
+                    setFeedback('Falha na consulta automatica. Continue com cadastro manual.', 'amber');
+                    activateManualScenario(cpfDigits);
+                }
+            };
+
+            const handleSearchInput = async () => {
+                const term = searchInput.value.trim();
+                const digits = onlyDigits(term);
+
+                if (!term) {
+                    resetSelection();
+                    hideResults();
+                    setFeedback('Digite CPF ou Nome para iniciar a busca.', 'slate');
+                    lastResolvedCpf = '';
+                    return;
+                }
+
+                if (digits.length === 11) {
+                    hideResults();
+                    resolveCpfFlow(digits);
+                    return;
+                }
+
+                hiddenCitizenId.value = '';
+                hiddenCpf.value = '';
+                clearSummary();
+                showQuickFields(false, false);
+                setFeedback('Buscando pacientes por nome...', 'blue');
+
+                try {
+                    const list = await fetchLocalCandidates(term);
+                    if (list.length) {
+                        setFeedback('Selecione um paciente da lista ou continue digitando o CPF completo.', 'slate');
+                    } else {
+                        setFeedback('Nenhum paciente encontrado para este nome.', 'amber');
+                    }
+                    renderResults(list);
+                } catch (error) {
+                    setFeedback('Falha ao consultar base local. Tente novamente.', 'red');
+                    hideResults();
+                }
+            };
+
+            searchInput.addEventListener('input', () => {
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+
+                debounceTimer = setTimeout(handleSearchInput, 500);
+            });
+
+            searchInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    if (!results.classList.contains('hidden') && activeResults.length > 0) {
+                        event.preventDefault();
+                        const selected = activeResults[highlightedIndex] || activeResults[0];
+                        if (selected) {
+                            selectLocalCitizen(selected);
+                        }
+                    }
+                }
+
+                if (event.key === 'ArrowDown' && activeResults.length > 0) {
+                    event.preventDefault();
+                    highlightedIndex = Math.min(highlightedIndex + 1, activeResults.length - 1);
+                    renderResults(activeResults);
+                }
+
+                if (event.key === 'ArrowUp' && activeResults.length > 0) {
+                    event.preventDefault();
+                    highlightedIndex = Math.max(highlightedIndex - 1, 0);
+                    renderResults(activeResults);
                 }
             });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'F2') {
+                    event.preventDefault();
+                    searchInput.value = '';
+                    resetSelection();
+                    hideResults();
+                    setFeedback('Nova busca iniciada. Digite CPF ou nome.', 'slate');
+                    searchInput.focus();
+                }
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!results.contains(event.target) && event.target !== searchInput) {
+                    hideResults();
+                }
+            });
+
+            setFeedback('Digite CPF ou Nome para iniciar a busca. O cursor ja esta pronto para atendimento.', 'slate');
+            searchInput.focus();
         });
     </script>
 </x-app-layout>

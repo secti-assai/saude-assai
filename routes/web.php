@@ -62,6 +62,7 @@ Route::middleware(['auth', 'verified', '2fa'])->group(function () {
 
     Route::middleware('role:medico_ubs,medico_hospital,admin_secti')->group(function () {
         Route::get('/prescricoes', [PrescriptionController::class, 'index'])->name('prescriptions.index');
+        Route::get('/prescricoes/atendimentos/search', [PrescriptionController::class, 'searchAttendances'])->name('prescriptions.attendances.search');
         Route::post('/prescricoes', [PrescriptionController::class, 'store'])->name('prescriptions.store');
     });
 
@@ -72,6 +73,7 @@ Route::middleware(['auth', 'verified', '2fa'])->group(function () {
 
     Route::middleware('role:medico_hospital,enfermeiro,admin_secti')->group(function () {
         Route::get('/hospital', [HospitalController::class, 'index'])->name('hospital.index');
+        Route::get('/hospital/cidadaos/search', [HospitalController::class, 'searchCitizens'])->name('hospital.citizens.search');
         Route::get('/hospital/cidadaos/cpf/{cpf}', [HospitalController::class, 'lookupCitizenByCpf'])->name('hospital.citizens.lookup');
         Route::post('/hospital', [HospitalController::class, 'store'])->name('hospital.store');
     });

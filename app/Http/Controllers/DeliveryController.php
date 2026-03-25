@@ -16,7 +16,15 @@ class DeliveryController extends Controller
 
     public function index(): View
     {
+        $this->authorize('viewAny', Delivery::class);
+
+        $user = auth()->user();
+        $isCentral = in_array($user?->role, ['admin_secti', 'gestor', 'auditor'], true);
+
         $deliveries = Delivery::with('prescription.citizen', 'prescription.attendance', 'prescription.items.medication')
+            ->when(! $isCentral && $user?->health_unit_id, function ($query) use ($user) {
+                $query->whereHas('prescription.attendance', fn ($q) => $q->where('health_unit_id', $user->health_unit_id));
+            })
             ->latest()
             ->get();
 
@@ -25,6 +33,8 @@ class DeliveryController extends Controller
 
     public function updateStatus(Request $request, Delivery $delivery): RedirectResponse
     {
+        $this->authorize('update', $delivery);
+
         $data = $request->validate([
             'status' => ['required', 'in:PENDENTE,EM_ROTA,ENTREGUE,FALHA'],
             'failure_reason' => ['nullable', 'string'],

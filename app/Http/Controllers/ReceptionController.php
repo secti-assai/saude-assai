@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SyncCitizenFromGovAssaiJob;
 use App\Jobs\DispatchLediRecord;
 use App\Models\Attendance;
 use App\Models\Citizen;
@@ -24,8 +25,21 @@ class ReceptionController extends Controller
 
     public function index(): View
     {
-        $attendances = Attendance::with('citizen')->latest()->take(20)->get();
-        $units = HealthUnit::where('is_active', true)->orderBy('name')->get();
+        $this->authorize('viewAny', Attendance::class);
+
+        $user = auth()->user();
+        $isCentral = in_array($user?->role, ['admin_secti', 'gestor', 'auditor'], true);
+
+        $attendances = Attendance::with('citizen')
+            ->when(! $isCentral && $user?->health_unit_id, fn ($query) => $query->where('health_unit_id', $user->health_unit_id))
+            ->latest()
+            ->take(20)
+            ->get();
+
+        $units = HealthUnit::where('is_active', true)
+            ->when(! $isCentral && $user?->health_unit_id, fn ($query) => $query->where('id', $user->health_unit_id))
+            ->orderBy('name')
+            ->get();
 
         return view('reception.index', compact('attendances', 'units'));
     }
@@ -63,6 +77,8 @@ class ReceptionController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', Attendance::class);
+
         $data = $request->validate([
             'cpf' => ['required', 'regex:/^(\d{11}|\d{3}\.\d{3}\.\d{3}-\d{2})$/'],
             'cns' => ['nullable', 'string', 'max:15'],
@@ -129,6 +145,7 @@ class ReceptionController extends Controller
             ['cpf_hash' => $cpfHash],
             [
                 'full_name' => $resolvedName,
+                'cpf' => $data['cpf'],
                 'cpf_hash' => $cpfHash,
                 'birth_date' => $resolvedBirthDate,
                 'cns' => $resolvedCns,
@@ -138,9 +155,13 @@ class ReceptionController extends Controller
             ]
         );
 
+        SyncCitizenFromGovAssaiJob::dispatch($citizen->id);
+
         $attendance = Attendance::create([
             'citizen_id' => $citizen->id,
-            'health_unit_id' => (int) $data['health_unit_id'],
+            'health_unit_id' => in_array($request->user()?->role, ['admin_secti', 'gestor', 'auditor'], true)
+                ? (int) $data['health_unit_id']
+                : (int) ($request->user()?->health_unit_id ?? $data['health_unit_id']),
             'reception_user_id' => $request->user()?->id,
             'care_type' => $data['care_type'],
             'queue_password' => 'A'.str_pad((string) random_int(1, 999), 3, '0', STR_PAD_LEFT),

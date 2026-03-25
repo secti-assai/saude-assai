@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SyncCitizenFromGovAssaiJob;
 use App\Jobs\DispatchLediRecord;
 use App\Models\Attendance;
 use App\Models\Citizen;
@@ -13,6 +14,7 @@ use App\Services\GovAssaiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class HospitalController extends Controller
@@ -26,16 +28,50 @@ class HospitalController extends Controller
 
     public function index(): View
     {
-        // Carrega todos os cidadãos (MVP) e os registros do plantão atual.
-        // Módulo 100% isolado (Não importa $attendance da Recepção/Triage UBS).
-        $citizens = Citizen::orderBy('full_name')->get();
+        $user = auth()->user();
+        $isCentral = in_array($user?->role, ['admin_secti', 'gestor', 'auditor'], true);
         
         $recentRecords = HospitalRecord::with('attendance.citizen')
+            ->when(! $isCentral && $user?->health_unit_id, function ($query) use ($user) {
+                $query->whereHas('attendance', fn ($q) => $q->where('health_unit_id', $user->health_unit_id));
+            })
             ->latest('signed_at')
             ->take(15)
             ->get();
 
-        return view('hospital.index', compact('citizens', 'recentRecords'));
+        return view('hospital.index', compact('recentRecords'));
+    }
+
+    public function searchCitizens(Request $request): JsonResponse
+    {
+        $term = trim((string) $request->query('q', ''));
+        if ($term === '') {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $user = $request->user();
+        $isCentral = in_array($user?->role, ['admin_secti', 'gestor', 'auditor'], true);
+        $normalizedCpf = $this->govAssai->normalizeCpf($term);
+
+        $citizens = Citizen::query()
+            ->when(! $isCentral && $user?->health_unit_id, function ($query) use ($user) {
+                $query->whereHas('attendances', fn ($q) => $q->where('health_unit_id', $user->health_unit_id));
+            })
+            ->where(function ($query) use ($term, $normalizedCpf) {
+                $query->where('full_name', 'ilike', '%'.$term.'%');
+
+                if (strlen($normalizedCpf) === 11) {
+                    $query->orWhere('cpf_hash', hash('sha256', $normalizedCpf));
+                }
+            })
+            ->orderBy('full_name')
+            ->limit(12)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->mapCitizenSearchPayload($citizens),
+        ]);
     }
 
     public function lookupCitizenByCpf(Request $request, string $cpf): JsonResponse
@@ -86,6 +122,8 @@ class HospitalController extends Controller
             'new_citizen_name' => ['nullable', 'string', 'max:255', 'required_without_all:citizen_id,new_citizen_cpf'],
             'new_citizen_cpf' => ['required_without:citizen_id', 'nullable', 'string', 'regex:/^(\d{11}|\d{3}\.\d{3}\.\d{3}-\d{2})$/'],
             'new_citizen_birth' => ['nullable', 'date', 'required_without_all:citizen_id,new_citizen_cpf'],
+            'new_citizen_phone' => ['nullable', 'string', 'max:30'],
+            'new_citizen_address' => ['nullable', 'string', 'max:255'],
             
             // 2. Sinais Vitais (Triagem Expressa)
             'systolic_pressure' => ['nullable', 'numeric'],
@@ -130,19 +168,27 @@ class HospitalController extends Controller
                     ->withInput();
             }
 
-            $citizen = Citizen::create([
-                'full_name' => $resolvedName,
-                'cpf' => $normalizedCpf,
-                'cpf_hash' => hash('sha256', $normalizedCpf),
-                'birth_date' => $resolvedBirthDate,
-                'social_name' => $govCitizenData['social_name'] ?? null,
-                'sexo' => $govCitizenData['sexo'] ?? null,
-                'phone' => $govCitizenData['phone'] ?? null,
-                'email' => $govCitizenData['email'] ?? null,
-                'cns' => $govCitizenData['cns'] ?? null,
-                'is_resident_assai' => (bool) ($govCitizenData['is_resident_assai'] ?? false),
-                'residence_validated_at' => now(),
-            ]);
+            $citizen = Citizen::updateOrCreate(
+                ['cpf_hash' => hash('sha256', $normalizedCpf)],
+                [
+                    'full_name' => $resolvedName,
+                    'cpf' => $normalizedCpf,
+                    'cpf_hash' => hash('sha256', $normalizedCpf),
+                    'birth_date' => $resolvedBirthDate,
+                    'social_name' => $govCitizenData['social_name'] ?? null,
+                    'sexo' => $govCitizenData['sexo'] ?? null,
+                    'phone' => $data['new_citizen_phone'] ?? ($govCitizenData['phone'] ?? null),
+                    'address' => $data['new_citizen_address'] ?? ($govCitizenData['address'] ?? null),
+                    'email' => $govCitizenData['email'] ?? null,
+                    'cns' => $govCitizenData['cns'] ?? null,
+                    'is_resident_assai' => (bool) ($govCitizenData['is_resident_assai'] ?? false),
+                    'residence_validated_at' => $govLookup['success'] ? now() : null,
+                ]
+            );
+        }
+
+        if (! empty($citizen->cpf)) {
+            SyncCitizenFromGovAssaiJob::dispatch($citizen->id);
         }
 
         // Passo 2: Criar Atendimento Próprio (HOSPITALAR - Encerrado automaticamente pois a conduta já será feita)
@@ -217,5 +263,33 @@ class HospitalController extends Controller
         $this->audit->log($request, 'M7', 'PRONTUARIO_HOSPITALAR_UNIFICADO', HospitalRecord::class, $record->id);
 
         return redirect()->route('hospital.index')->with('status', 'Atendimento hospitalar completo registrado com sucesso!');
+    }
+
+    private function mapCitizenSearchPayload(Collection $citizens): array
+    {
+        return $citizens->map(function (Citizen $citizen) {
+            return [
+                'id' => $citizen->id,
+                'full_name' => $citizen->full_name,
+                'birth_date' => $citizen->birth_date?->format('Y-m-d'),
+                'cpf' => $this->maskCpf($citizen->cpf),
+                'is_resident_assai' => (bool) $citizen->is_resident_assai,
+                'source' => 'LOCAL',
+            ];
+        })->all();
+    }
+
+    private function maskCpf(?string $cpf): ?string
+    {
+        if ($cpf === null || $cpf === '') {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $cpf);
+        if (strlen($digits) !== 11) {
+            return $cpf;
+        }
+
+        return substr($digits, 0, 3).'.***.***-'.substr($digits, -2);
     }
 }

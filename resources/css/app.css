@@ -257,4 +257,46 @@
     .sa-progress-bar {
         @apply h-full rounded-full transition-all duration-500;
     }
+
+    .sa-toast-container {
+        @apply fixed top-4 right-4 z-[100] flex flex-col gap-2;
+        width: min(92vw, 360px);
+    }
+
+    .sa-toast {
+        @apply rounded-xl px-4 py-3 text-sm font-medium shadow-lg border transition-all duration-200;
+        transform: translateY(-8px);
+        opacity: 0;
+    }
+
+    .sa-toast.is-visible {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .sa-toast-success {
+        @apply bg-green-50 text-green-800 border-green-200;
+    }
+
+    .sa-toast-error {
+        @apply bg-red-50 text-red-800 border-red-200;
+    }
+
+    .sa-toast-info {
+        @apply bg-blue-50 text-blue-800 border-blue-200;
+    }
+
+    .sa-loading-dot {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top-color: rgba(255, 255, 255, 1);
+        border-radius: 999px;
+        display: inline-block;
+        animation: sa-spin 0.8s linear infinite;
+    }
+
+    @keyframes sa-spin {
+        to { transform: rotate(360deg); }
+    }
 }

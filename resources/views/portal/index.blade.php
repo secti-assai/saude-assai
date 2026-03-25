@@ -57,7 +57,7 @@
         }
     </style>
 </head>
-<body class="antialiased flex flex-col min-h-screen">
+<body class="antialiased flex flex-col min-h-screen overflow-x-hidden">
 
     <!-- Top Header / Gov Bar -->
     <div class="bg-gray-100 border-b border-gray-200 text-sm hidden md:block">
@@ -78,20 +78,21 @@
     <!-- Main Navigation -->
     <nav class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-20 items-center">
+            <div class="flex justify-between h-16 md:h-20 items-center gap-3">
                 <div class="flex items-center space-x-3">
-                    <svg class="w-10 h-10 text-[var(--gov-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-8 h-8 md:w-10 md:h-10 text-[var(--gov-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
                     <div>
-                        <h1 class="text-2xl font-bold font-sora text-[var(--gov-primary)] leading-none">Saúde Assaí</h1>
-                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-widest">Secretaria Municipal</span>
+                        <h1 class="text-xl md:text-2xl font-bold font-sora text-[var(--gov-primary)] leading-none">Saúde Assaí</h1>
+                        <span class="hidden sm:block text-xs font-semibold text-gray-500 uppercase tracking-widest">Secretaria Municipal</span>
                     </div>
                 </div>
                 <div>
-                    <a href="{{ route('login') }}" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-semibold rounded-md text-white bg-[var(--gov-primary)] hover:bg-[var(--gov-primary-dark)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--gov-primary)]">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
-                        Acesso Profissional
+                    <a href="{{ route('login') }}" class="inline-flex items-center justify-center px-3 md:px-4 py-2 border border-transparent text-xs md:text-sm font-semibold rounded-md text-white bg-[var(--gov-primary)] hover:bg-[var(--gov-primary-dark)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--gov-primary)]">
+                        <svg class="w-4 h-4 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                        <span class="hidden md:inline">Acesso Profissional</span>
+                        <span class="md:hidden ml-1">Entrar</span>
                     </a>
                 </div>
             </div>
@@ -119,22 +120,22 @@
     @endif
 
     <!-- Hero Section -->
-    <section class="hero-bg py-24 lg:py-32 relative">
+    <section class="hero-bg py-16 md:py-24 lg:py-32 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white font-sora tracking-tight mb-6 drop-shadow-lg">
+            <h1 class="text-3xl md:text-5xl lg:text-6xl font-extrabold text-white font-sora tracking-tight mb-6 drop-shadow-lg">
                 Acesso à Saúde de Qualidade <br class="hidden md:block">para todos os Assaienses
             </h1>
-            <p class="text-lg md:text-xl text-[var(--gov-secondary)] mb-10 max-w-2xl mx-auto font-light">
+            <p class="text-base md:text-xl text-[var(--gov-secondary)] mb-8 md:mb-10 max-w-2xl mx-auto font-light">
                 Encontre unidades de atendimento, agende consultas, acesse comunicados oficiais e serviços da Secretaria de Saúde de forma rápida e digital.
             </p>
             
             <!-- Central Search Bar -->
-            <div class="max-w-3xl mx-auto bg-white rounded-lg p-2 shadow-2xl flex items-center">
-                <div class="px-4 text-gray-400">
+            <div class="max-w-3xl mx-auto bg-white rounded-lg p-2 shadow-2xl flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0">
+                <div class="px-2 sm:px-4 text-gray-400 self-start sm:self-auto">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
-                <input type="text" placeholder="O que você precisa encontrar? (Ex: Vacinas, Consultas, Medicamentos)" class="w-full py-4 text-gray-700 border-none bg-transparent placeholder-gray-400 text-lg font-medium leading-tight focus:ring-0">
-                <button class="bg-[var(--gov-accent)] hover:bg-yellow-500 text-yellow-900 font-bold px-8 py-4 rounded-md transition-colors whitespace-nowrap">
+                <input type="text" placeholder="Vacinas, consultas, medicamentos..." class="w-full py-3 sm:py-4 text-gray-700 border-none bg-transparent placeholder-gray-400 text-base sm:text-lg font-medium leading-tight focus:ring-0">
+                <button class="w-full sm:w-auto bg-[var(--gov-accent)] hover:bg-yellow-500 text-yellow-900 font-bold px-6 sm:px-8 py-3 sm:py-4 rounded-md transition-colors whitespace-nowrap">
                     Buscar
                 </button>
             </div>
@@ -202,7 +203,7 @@
     <!-- News & Campaigns -->
     <section class="py-16 bg-gray-50 border-y border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-end mb-8">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-3 mb-8">
                 <div>
                     <h2 class="text-3xl font-bold font-sora text-[var(--gov-primary-dark)]">Destaques de Notícias</h2>
                     <p class="text-gray-500 mt-2 font-medium">Acompanhe as últimas campanhas e novidades oficiais</p>
@@ -221,7 +222,7 @@
 
                 <!-- Main Left (Large) -->
                 @if($mainNews)
-                <a href="{{ route('portal.news.show', $mainNews->id) }}" class="lg:col-span-7 relative rounded-2xl overflow-hidden shadow-lg group block h-[400px] md:h-[500px]">
+                <a href="{{ route('portal.news.show', $mainNews->id) }}" class="lg:col-span-7 relative rounded-2xl overflow-hidden shadow-lg group block h-[320px] md:h-[500px]">
                     <img src="https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1200&q=80" alt="News Image" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                     <div class="absolute inset-0 news-card-main flex flex-col justify-end p-6 md:p-8">
                         <span class="bg-[var(--gov-accent)] text-yellow-900 text-xs font-bold uppercase tracking-wider py-1 px-3 rounded w-max mb-4">
@@ -248,8 +249,8 @@
                 <!-- Smaller Right Side -->
                 <div class="lg:col-span-5 flex flex-col space-y-4">
                     @forelse($sideItems as $item)
-                    <a href="{{ route('portal.news.show', $item->id) }}" class="flex bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group h-[125px] md:h-[155px]">
-                        <div class="w-1/3 shrink-0 overflow-hidden relative">
+                    <a href="{{ route('portal.news.show', $item->id) }}" class="flex bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group min-h-[120px] md:h-[155px]">
+                        <div class="w-1/3 shrink-0 overflow-hidden relative min-h-[120px]">
                             <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                         </div>
                         <div class="p-4 flex flex-col justify-between w-2/3">

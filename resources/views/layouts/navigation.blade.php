@@ -59,7 +59,7 @@
                 <p class="text-white text-sm font-medium truncate">{{ $user->name }}</p>
                 <p class="text-gray-400 text-[11px] truncate">{{ str_replace('_', ' ', ucfirst($role)) }}</p>
             </div>
-            <x-dropdown align="bottom-end" width="48">
+            <x-dropdown align="top-end" width="48">
                 <x-slot name="trigger">
                     <button class="text-gray-400 hover:text-white transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">

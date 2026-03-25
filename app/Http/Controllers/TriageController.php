@@ -23,13 +23,24 @@ class TriageController extends Controller
 
     public function index(): View
     {
-        $attendances = Attendance::with('citizen')->doesntHave('triage')->latest()->get();
+        $this->authorize('viewAny', Attendance::class);
+
+        $user = auth()->user();
+        $isCentral = in_array($user?->role, ['admin_secti', 'gestor', 'auditor'], true);
+
+        $attendances = Attendance::with('citizen')
+            ->doesntHave('triage')
+            ->when(! $isCentral && $user?->health_unit_id, fn ($query) => $query->where('health_unit_id', $user->health_unit_id))
+            ->latest()
+            ->get();
 
         return view('triage.index', compact('attendances'));
     }
 
     public function store(Request $request, Attendance $attendance): RedirectResponse
     {
+        $this->authorize('triage', $attendance);
+
         $data = $request->validate([
             'nursing_history' => ['nullable', 'string'],
             'consciousness_level' => ['required', 'string'],

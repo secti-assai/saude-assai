@@ -24,12 +24,21 @@
                     @csrf
                     <div>
                         <label class="sa-label">Paciente *</label>
-                        <select name="attendance_id" class="sa-select" required>
-                            <option value="">Selecione o paciente...</option>
-                            @foreach($attendances as $a)
-                                <option value="{{ $a->id }}">{{ $a->queue_password }} — {{ $a->citizen->full_name ?? '—' }}</option>
-                            @endforeach
-                        </select>
+                        <input
+                            type="text"
+                            id="attendance_search"
+                            class="sa-input"
+                            placeholder="Digite nome, CPF ou senha para buscar"
+                            autocomplete="off"
+                            data-search-url="{{ route('prescriptions.attendances.search') }}"
+                        >
+                        <input type="hidden" name="attendance_id" id="attendance_id" required>
+                        <div id="attendance_feedback" class="text-xs text-gray-500 mt-1">Comece digitando para localizar o paciente sem abrir lista longa.</div>
+                        <div id="attendance_results" class="hidden mt-2 rounded-lg border border-slate-200 bg-white shadow-sm max-h-64 overflow-y-auto"></div>
+                        <div id="attendance_selected" class="hidden mt-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                            <p id="attendance_selected_name" class="text-sm font-semibold text-slate-900"></p>
+                            <p id="attendance_selected_meta" class="text-xs text-slate-600 mt-1"></p>
+                        </div>
                     </div>
 
                     <div>
@@ -54,12 +63,22 @@
                                     <button type="button" onclick="removePrescriptionItem(this)" class="text-xs text-red-500 hover:underline hidden remove-btn">Remover</button>
                                 </div>
                                 <div>
-                                    <select name="items[0][medication_id]" class="sa-select text-sm" required>
-                                        <option value="">Medicamento...</option>
+                                    <select name="items[0][medication_id]" class="sa-select text-sm">
+                                        <option value="">Selecionar medicamento existente...</option>
                                         @foreach($medications as $med)
                                             <option value="{{ $med->id }}">{{ $med->name }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                                <div class="rounded border border-dashed border-slate-300 bg-white p-2">
+                                    <p class="text-[11px] font-semibold text-slate-500 mb-2">Ou cadastre um novo medicamento rapido</p>
+                                    <div class="space-y-2">
+                                        <input name="items[0][new_medication_name]" class="sa-input text-sm" placeholder="Nome do novo medicamento">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input name="items[0][new_medication_presentation]" class="sa-input text-sm" placeholder="Apresentacao (ex: comprimido)">
+                                            <input name="items[0][new_medication_concentration]" class="sa-input text-sm" placeholder="Concentracao (ex: 500mg)">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2">
                                     <input name="items[0][dosage]" class="sa-input text-sm" placeholder="Dosagem (ex: 500mg)">
@@ -158,6 +177,145 @@
         let itemIndex = 1;
         const medicationOptions = `@foreach($medications as $med)<option value="{{ $med->id }}">{{ $med->name }}</option>@endforeach`;
 
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('attendance_search');
+            const hiddenAttendanceId = document.getElementById('attendance_id');
+            const feedback = document.getElementById('attendance_feedback');
+            const results = document.getElementById('attendance_results');
+            const selectedCard = document.getElementById('attendance_selected');
+            const selectedName = document.getElementById('attendance_selected_name');
+            const selectedMeta = document.getElementById('attendance_selected_meta');
+
+            let debounceTimer = null;
+            let items = [];
+            let activeIndex = 0;
+
+            const setFeedback = (text, type = 'text-gray-500') => {
+                feedback.className = `text-xs mt-1 ${type}`;
+                feedback.textContent = text;
+            };
+
+            const hideResults = () => {
+                results.classList.add('hidden');
+                results.innerHTML = '';
+                items = [];
+                activeIndex = 0;
+            };
+
+            const selectAttendance = (attendance) => {
+                hiddenAttendanceId.value = attendance.id;
+                searchInput.value = attendance.citizen_name || '';
+                selectedCard.classList.remove('hidden');
+                selectedName.textContent = `${attendance.queue_password} — ${attendance.citizen_name || 'Paciente sem nome'}`;
+                selectedMeta.textContent = `${attendance.citizen_cpf || 'CPF nao informado'} · ${attendance.care_type || '-'} · ${attendance.status || '-'} · ${attendance.arrived_at || '-'}`;
+                setFeedback('Paciente selecionado. Continue com os itens da prescricao.', 'text-green-700');
+                hideResults();
+            };
+
+            const renderResults = (list) => {
+                items = list;
+                activeIndex = 0;
+
+                if (!list.length) {
+                    hideResults();
+                    setFeedback('Nenhum atendimento encontrado para o termo informado.', 'text-amber-700');
+                    return;
+                }
+
+                results.innerHTML = list.map((item, idx) => `
+                    <button type="button" class="w-full text-left px-3 py-2 border-b border-slate-100 hover:bg-slate-50 ${idx === activeIndex ? 'bg-slate-100' : ''}" data-idx="${idx}">
+                        <div class="text-sm font-semibold text-slate-900">${item.queue_password} — ${item.citizen_name || 'Paciente sem nome'}</div>
+                        <div class="text-xs text-slate-500">${item.citizen_cpf || 'CPF nao informado'} · ${item.care_type || '-'} · ${item.status || '-'}</div>
+                    </button>
+                `).join('');
+
+                results.classList.remove('hidden');
+
+                results.querySelectorAll('[data-idx]').forEach((button) => {
+                    button.addEventListener('click', () => {
+                        const idx = Number(button.dataset.idx || 0);
+                        if (items[idx]) {
+                            selectAttendance(items[idx]);
+                        }
+                    });
+                });
+            };
+
+            const fetchAttendances = async (term) => {
+                const url = new URL(searchInput.dataset.searchUrl, window.location.origin);
+                url.searchParams.set('q', term);
+
+                const response = await fetch(url.toString(), {
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                const payload = await response.json();
+                return Array.isArray(payload?.data) ? payload.data : [];
+            };
+
+            const runSearch = async () => {
+                const term = (searchInput.value || '').trim();
+                hiddenAttendanceId.value = '';
+                selectedCard.classList.add('hidden');
+
+                if (term.length < 2) {
+                    hideResults();
+                    setFeedback('Digite ao menos 2 caracteres para buscar paciente.', 'text-gray-500');
+                    return;
+                }
+
+                setFeedback('Buscando atendimentos...', 'text-blue-600');
+
+                try {
+                    const list = await fetchAttendances(term);
+                    renderResults(list);
+                    if (list.length) {
+                        setFeedback('Selecione um paciente da lista para prescrever.', 'text-slate-600');
+                    }
+                } catch (e) {
+                    hideResults();
+                    setFeedback('Falha ao buscar atendimentos. Tente novamente.', 'text-red-600');
+                }
+            };
+
+            searchInput.addEventListener('input', () => {
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+                debounceTimer = setTimeout(runSearch, 350);
+            });
+
+            searchInput.addEventListener('keydown', (event) => {
+                if (event.key === 'ArrowDown' && items.length > 0) {
+                    event.preventDefault();
+                    activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                    renderResults(items);
+                }
+
+                if (event.key === 'ArrowUp' && items.length > 0) {
+                    event.preventDefault();
+                    activeIndex = Math.max(activeIndex - 1, 0);
+                    renderResults(items);
+                }
+
+                if (event.key === 'Enter' && items.length > 0) {
+                    event.preventDefault();
+                    selectAttendance(items[activeIndex] || items[0]);
+                }
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!results.contains(event.target) && event.target !== searchInput) {
+                    hideResults();
+                }
+            });
+
+            searchInput.focus();
+        });
+
         function addPrescriptionItem() {
             const container = document.getElementById('prescription-items');
             const idx = itemIndex++;
@@ -170,10 +328,20 @@
                     <button type="button" onclick="removePrescriptionItem(this)" class="text-xs text-red-500 hover:underline">Remover</button>
                 </div>
                 <div>
-                    <select name="items[${idx}][medication_id]" class="sa-select text-sm" required>
-                        <option value="">Medicamento...</option>
+                    <select name="items[${idx}][medication_id]" class="sa-select text-sm">
+                        <option value="">Selecionar medicamento existente...</option>
                         ${medicationOptions}
                     </select>
+                </div>
+                <div class="rounded border border-dashed border-slate-300 bg-white p-2">
+                    <p class="text-[11px] font-semibold text-slate-500 mb-2">Ou cadastre um novo medicamento rapido</p>
+                    <div class="space-y-2">
+                        <input name="items[${idx}][new_medication_name]" class="sa-input text-sm" placeholder="Nome do novo medicamento">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input name="items[${idx}][new_medication_presentation]" class="sa-input text-sm" placeholder="Apresentacao (ex: comprimido)">
+                            <input name="items[${idx}][new_medication_concentration]" class="sa-input text-sm" placeholder="Concentracao (ex: 500mg)">
+                        </div>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <input name="items[${idx}][dosage]" class="sa-input text-sm" placeholder="Dosagem (ex: 500mg)">
