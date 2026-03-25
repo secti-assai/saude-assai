@@ -106,10 +106,7 @@ class PrescriptionController extends Controller
             'delivery_type' => ['required', 'in:RETIRADA,ENTREGA'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.medication_id' => ['nullable', 'exists:medications,id'],
-            'items.*.new_medication_name' => ['nullable', 'string', 'max:255'],
-            'items.*.new_medication_presentation' => ['nullable', 'string', 'max:120'],
-            'items.*.new_medication_concentration' => ['nullable', 'string', 'max:120'],
+            'items.*.medication_name' => ['required', 'string', 'max:255'],
             'items.*.dosage' => ['nullable', 'string'],
             'items.*.frequency' => ['nullable', 'string'],
             'items.*.administration_route' => ['nullable', 'string'],
@@ -117,16 +114,7 @@ class PrescriptionController extends Controller
             'items.*.quantity' => ['required', 'integer', 'min:1'],
         ]);
 
-        foreach ($data['items'] as $index => $item) {
-            $hasMedicationId = ! empty($item['medication_id']);
-            $hasNewMedication = trim((string) ($item['new_medication_name'] ?? '')) !== '';
-
-            if (! $hasMedicationId && ! $hasNewMedication) {
-                throw ValidationException::withMessages([
-                    "items.$index.medication_id" => 'Selecione um medicamento existente ou informe um novo medicamento.',
-                ]);
-            }
-        }
+        // Não exige mais medication_id ou new_medication_name
 
         $attendance = Attendance::with('citizen')->findOrFail((int) $data['attendance_id']);
         $this->authorize('prescribe', $attendance);
@@ -147,11 +135,17 @@ class PrescriptionController extends Controller
 
         // Criar todos os itens da prescrição
         foreach ($data['items'] as $item) {
-            $medicationId = $this->resolveMedicationId($item);
+            // Busca ou cria o medicamento pelo nome
+            $medication = Medication::where('name', trim($item['medication_name']))->first();
 
+            if (!$medication) {
+                throw ValidationException::withMessages([
+                'items' => 'Medicamento inválido ou não cadastrado.'
+                ]);
+            }
             PrescriptionItem::create([
                 'prescription_id' => $prescription->id,
-                'medication_id' => $medicationId,
+                'medication_id' => $medication->id,
                 'dosage' => $item['dosage'] ?? null,
                 'frequency' => $item['frequency'] ?? null,
                 'administration_route' => $item['administration_route'] ?? 'VO',

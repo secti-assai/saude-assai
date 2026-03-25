@@ -47,4 +47,9 @@ class Attendance extends Model
     {
         return $this->hasOne(HospitalRecord::class);
     }
+
+    public function calls()
+    {
+        return $this->hasMany(Call::class);
+    }
 }

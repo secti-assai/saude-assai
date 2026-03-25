@@ -8,6 +8,7 @@ use App\Models\DispensationItem;
 use App\Models\LediQueue;
 use App\Models\Prescription;
 use App\Models\StockItem;
+use App\Models\Delivery;
 use App\Services\AuditService;
 use App\Services\GovAssaiService;
 use Illuminate\Http\RedirectResponse;
@@ -85,6 +86,20 @@ class PharmacyController extends Controller
             }
 
             $prescription->update(['status' => 'DISPENSADA']);
+
+            // 👇 INÍCIO DA NOVA AUTOMAÇÃO DE ENTREGA 👇
+            // Busca se existe uma entrega pendente atrelada a esta receita
+            $delivery = Delivery::where('prescription_id', $prescription->id)
+                ->whereIn('status', ['PENDENTE', 'Pendente']) 
+                ->first();
+
+            if ($delivery) {
+                // Atualiza o status para "Em Rota". 
+                // Obs: Coloquei 'Em Rota' baseado no seu print, mas se no seu banco 
+                // salva como 'EM_ROTA' (tudo maiúsculo), é só alterar aqui!
+                $delivery->update(['status' => 'Em Rota']);
+            }
+            // 👆 FIM DA NOVA AUTOMAÇÃO DE ENTREGA 👆
         }
 
         $queue = LediQueue::create([
@@ -97,6 +112,6 @@ class PharmacyController extends Controller
         DispatchLediRecord::dispatch($queue->id);
         $this->audit->log($request, 'M6', 'DISPENSACAO', Dispensation::class, $dispensation->id);
 
-        return back()->with('status', $blocked ? 'Dispensacao bloqueada por residencia.' : 'Dispensacao concluida.');
+        return back()->with('status', $blocked ? 'Dispensacao bloqueada por residencia.' : 'Dispensacao concluida. Medicamentos liberados.');
     }
 }

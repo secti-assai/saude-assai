@@ -51,6 +51,9 @@ class GovAssaiService
 
         try {
             $response = Http::acceptJson()
+            //REMOVER IMPORTANTE
+            ->withoutVerifying() // ✅ IGNORA O SSL LOCALMENTE
+            //REMOVA
                 ->timeout((int) config('services.gov_assai.timeout', 10))
                 ->connectTimeout((int) config('services.gov_assai.connect_timeout', 5))
                 ->retry([200, 500], throw: false)

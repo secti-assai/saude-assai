@@ -9,8 +9,10 @@
     <div class="space-y-6">
         <div class="bg-amber-50 border-l-4 border-amber-500 rounded-md p-4 sa-fade-in">
             <div class="flex items-start gap-3">
-                <svg class="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg class="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                    stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
                     <h3 class="text-sm font-semibold text-amber-900">Regra obrigatoria da Recepcao</h3>
@@ -35,8 +37,10 @@
         {{-- Success Alert --}}
         @if (session('status'))
             <div class="sa-alert-success sa-fade-in">
-                <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="text-sm font-medium">{{ session('status') }}</span>
             </div>
@@ -46,7 +50,11 @@
         <div class="sa-card sa-fade-in">
             <div class="sa-card-header">
                 <h3 class="sa-card-title">
-                    <svg class="w-5 h-5 inline-block mr-1 text-sa-primary" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z"/></svg>
+                    <svg class="w-5 h-5 inline-block mr-1 text-sa-primary" fill="none" stroke="currentColor"
+                        stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                    </svg>
                     Novo Atendimento
                 </h3>
             </div>
@@ -58,21 +66,17 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="lg:col-span-2">
                         <label class="sa-label">CPF *</label>
-                        <input
-                            id="cpf"
-                            name="cpf"
-                            value="{{ old('cpf') }}"
-                            class="sa-input"
-                            required
+                        <input id="cpf" name="cpf" value="{{ old('cpf') }}" class="sa-input" required
                             placeholder="000.000.000-00"
-                            data-url-template="{{ route('reception.citizens.lookup', ['cpf' => '__CPF__']) }}"
-                        >
-                        <p class="text-xs text-gray-500 mt-1">A recepcao consulta automaticamente o Gov.Assai ao completar os 11 digitos do CPF.</p>
+                            data-url-template="{{ route('reception.citizens.lookup', ['cpf' => '__CPF__']) }}">
+                        <p class="text-xs text-gray-500 mt-1">A recepcao consulta automaticamente o Gov.Assai ao
+                            completar os 11 digitos do CPF.</p>
                         <p id="gov_lookup_status" class="text-xs text-gray-500 mt-1"></p>
                     </div>
                     <div>
                         <label class="sa-label">Cartão SUS</label>
-                        <input name="cns" value="{{ old('cns') }}" class="sa-input" placeholder="Somente se Gov.Assai nao retornar">
+                        <input name="cns" value="{{ old('cns') }}" class="sa-input"
+                            placeholder="Somente se Gov.Assai nao retornar">
                     </div>
                     <div>
                         <label class="sa-label">Tipo de Atendimento *</label>
@@ -95,15 +99,18 @@
                         </select>
                     </div>
                     <div id="fallback-section" class="lg:col-span-3 mt-2 pt-3 border-t border-gray-200 hidden">
-                        <p class="text-xs text-gray-600 mb-3">Preencha abaixo apenas se o Gov.Assai nao retornar nome ou data de nascimento:</p>
+                        <p class="text-xs text-gray-600 mb-3">Preencha abaixo apenas se o Gov.Assai nao retornar nome ou
+                            data de nascimento:</p>
                     </div>
                     <div id="fallback-name" class="hidden">
                         <label class="sa-label">Nome Completo (fallback)</label>
-                        <input id="full_name" name="full_name" value="{{ old('full_name') }}" class="sa-input" placeholder="Somente se solicitado pelo sistema">
+                        <input id="full_name" name="full_name" value="{{ old('full_name') }}" class="sa-input"
+                            placeholder="Somente se solicitado pelo sistema">
                     </div>
                     <div id="fallback-birth" class="hidden">
                         <label class="sa-label">Data de Nascimento (fallback)</label>
-                        <input id="birth_date" name="birth_date" value="{{ old('birth_date') }}" type="date" class="sa-input">
+                        <input id="birth_date" name="birth_date" value="{{ old('birth_date') }}" type="date"
+                            class="sa-input">
                     </div>
                     <div>
                         <label class="sa-label">Acidente de Trabalho</label>
@@ -114,12 +121,15 @@
                     </div>
                     <div class="lg:col-span-2">
                         <label class="sa-label">Resumo do Motivo</label>
-                        <input name="summary_reason" value="{{ old('summary_reason') }}" class="sa-input" placeholder="Queixa principal resumida">
+                        <input name="summary_reason" value="{{ old('summary_reason') }}" class="sa-input"
+                            placeholder="Queixa principal resumida">
                     </div>
                 </div>
                 <div class="flex justify-end pt-2">
                     <button type="submit" class="sa-btn-primary" id="reception-submit" disabled>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
                         Registrar Atendimento
                     </button>
                 </div>
@@ -127,69 +137,103 @@
         </div>
 
         {{-- Queue Table --}}
-        <div class="sa-card sa-fade-in">
-            <div class="sa-card-header">
+        <div class="sa-card-header flex flex-wrap items-center justify-between gap-4">
+            <div>
                 <h3 class="sa-card-title">Fila de Hoje</h3>
                 <span class="sa-badge sa-badge-info">{{ $attendances->count() }} pacientes</span>
             </div>
-            <div class="overflow-x-auto">
-                <table class="sa-table">
-                    <thead>
-                        <tr>
-                            <th>Senha</th>
-                            <th>Paciente</th>
-                            <th>CPF</th>
-                            <th>Residência</th>
-                            <th>Status</th>
-                            <th>Hora</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($attendances as $a)
-                            <tr>
-                                <td>
-                                    <span class="inline-flex items-center justify-center w-12 h-8 rounded-lg bg-sa-primary/10 text-sa-primary font-bold text-sm">
-                                        {{ $a->queue_password }}
-                                    </span>
-                                </td>
-                                <td class="font-medium text-gray-900">{{ $a->citizen->full_name ?? '—' }}</td>
-                                <td class="text-gray-500 text-xs font-mono">{{ $a->citizen->cpf ?? '—' }}</td>
-                                <td>
-                                    @php
-                                        $resColors = [
-                                            'RESIDENTE' => 'sa-badge-success',
-                                            'NAO_RESIDENTE' => 'sa-badge-warning',
-                                            'PENDENTE' => 'sa-badge-gray',
-                                        ];
-                                    @endphp
-                                    <span class="sa-badge {{ $resColors[$a->residence_status] ?? 'sa-badge-gray' }}">{{ $a->residence_status ?? '—' }}</span>
-                                </td>
-                                <td>
-                                    @php
-                                        $statusColors = [
-                                            'AGUARDANDO' => 'sa-badge-warning',
-                                            'TRIAGEM' => 'sa-badge-info',
-                                            'CONSULTA' => 'sa-badge-primary',
-                                            'FINALIZADO' => 'sa-badge-success',
-                                        ];
-                                    @endphp
-                                    <span class="sa-badge {{ $statusColors[$a->status] ?? 'sa-badge-gray' }}">{{ $a->status }}</span>
-                                </td>
-                                <td class="text-gray-500 text-xs">{{ $a->created_at->format('H:i') }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center text-gray-400 py-8">Nenhum atendimento registrado hoje.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+
+            <div class="flex items-center gap-2">
+                <div class="relative">
+                    <input type="text" id="search-input" value="{{ request('search') }}"
+                        placeholder="Buscar paciente por nome..." class="sa-input pr-10" style="min-width: 300px;"
+                        autocomplete="off">
+                </div>
+
+                <select id="status-filter" class="sa-select">
+                    <option value="">Todos os status</option>
+                    <option value="RECEPCAO" @selected(request('status') === 'RECEPCAO')>Recepção</option>
+                    <option value="TRIAGEM_CONCLUIDA" @selected(request('status') === 'TRIAGEM_CONCLUIDA')>Triagem
+                    </option>
+                    <option value="ENCERRADO" @selected(request('status') === 'ENCERRADO')>Encerrado</option>
+                </select>
+
+                <button type="submit" id="search-button" class="sa-btn-primary">
+                    Buscar
+                </button>
+
+                @if(request()->filled('search'))
+                    <a href="{{ route('reception.index') }}" class="text-sm text-red-500 hover:underline">
+                        Limpar
+                    </a>
+                @endif
             </div>
         </div>
     </div>
 
+    <div class="overflow-x-auto">
+        <table class="sa-table">
+            <thead>
+                <tr>
+                    <th>Senha</th>
+                    <th>Paciente</th>
+                    <th>CPF</th>
+                    <th>Residência</th>
+                    <th>Status</th>
+                    <th>Hora</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($attendances as $a)
+                    <tr>
+                        <td>
+                            <span
+                                class="inline-flex items-center justify-center w-12 h-8 rounded-lg bg-sa-primary/10 text-sa-primary font-bold text-sm">
+                                {{ $a->queue_password }}
+                            </span>
+                        </td>
+                        <td class="font-medium text-gray-900">{{ $a->citizen->full_name ?? '—' }}</td>
+                        <td class="text-gray-500 text-xs font-mono">{{ $a->citizen->cpf ?? '—' }}</td>
+                        <td>
+                            @php
+                                $resColors = [
+                                    'RESIDENTE' => 'sa-badge-success',
+                                    'NAO_RESIDENTE' => 'sa-badge-warning',
+                                    'PENDENTE' => 'sa-badge-gray',
+                                ];
+                            @endphp
+                            <span
+                                class="sa-badge {{ $resColors[$a->residence_status] ?? 'sa-badge-gray' }}">{{ $a->residence_status ?? '—' }}</span>
+                        </td>
+                        <td>
+                            @php
+                                $statusColors = [
+                                    'AGUARDANDO' => 'sa-badge-warning',
+                                    'TRIAGEM' => 'sa-badge-info',
+                                    'CONSULTA' => 'sa-badge-primary',
+                                    'FINALIZADO' => 'sa-badge-success',
+                                ];
+                            @endphp
+                            <span
+                                class="sa-badge {{ $statusColors[$a->status] ?? 'sa-badge-gray' }}">{{ $a->status }}</span>
+                        </td>
+                        <td class="text-gray-500 text-xs">{{ $a->created_at->format('H:i') }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center text-gray-400 py-8">Nenhum atendimento registrado hoje.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+
+            // ── CPF / recepção ──────────────────────────────────────────────
             const form = document.getElementById('reception-form');
             const cpfInput = document.getElementById('cpf');
             const submitButton = document.getElementById('reception-submit');
@@ -202,23 +246,21 @@
             const birthDateInput = document.getElementById('birth_date');
 
             const onlyDigits = (value) => (value || '').replace(/\D+/g, '');
+
             let debounceTimer = null;
             let lastLookupCpf = '';
             let lookupInFlight = false;
             let govValidated = false;
 
-            const setFallbackVisibility = (showFallback) => {
-                fallbackSection.classList.toggle('hidden', !showFallback);
-                fallbackName.classList.toggle('hidden', !showFallback);
-                fallbackBirth.classList.toggle('hidden', !showFallback);
+            const setFallbackVisibility = (show) => {
+                fallbackSection?.classList.toggle('hidden', !show);
+                fallbackName?.classList.toggle('hidden', !show);
+                fallbackBirth?.classList.toggle('hidden', !show);
             };
 
-            const hasOldFallbackData = (fullNameInput.value || '').trim() !== '' || birthDateInput.value !== '';
-            if (hasOldFallbackData) {
-                setFallbackVisibility(true);
-            }
-
             const setStatus = (message, tone) => {
+                if (!lookupStatus) return;
+
                 const palette = {
                     neutral: 'text-xs text-gray-500 mt-1',
                     info: 'text-xs text-blue-600 mt-1',
@@ -232,14 +274,19 @@
             };
 
             const clearAutofill = () => {
-                fullNameInput.value = '';
-                birthDateInput.value = '';
+                if (fullNameInput) fullNameInput.value = '';
+                if (birthDateInput) birthDateInput.value = '';
                 setFallbackVisibility(false);
             };
 
             const setSubmitAvailability = () => {
+                if (!submitButton || !cpfInput) return;
+
                 const cpf = onlyDigits(cpfInput.value);
-                submitButton.disabled = !(govValidated && cpf.length === 11 && !lookupInFlight);
+
+                submitButton.disabled =
+                    !(govValidated && cpf.length === 11 && !lookupInFlight);
+
                 submitButton.classList.toggle('opacity-70', submitButton.disabled);
                 submitButton.classList.toggle('cursor-not-allowed', submitButton.disabled);
             };
@@ -250,7 +297,7 @@
             };
 
             const performLookup = async () => {
-                const cpf = onlyDigits(cpfInput.value);
+                const cpf = onlyDigits(cpfInput?.value);
 
                 if (cpf.length !== 11) {
                     lastLookupCpf = '';
@@ -260,9 +307,7 @@
                     return;
                 }
 
-                if (lookupInFlight || cpf === lastLookupCpf) {
-                    return;
-                }
+                if (lookupInFlight || cpf === lastLookupCpf) return;
 
                 lookupInFlight = true;
                 lastLookupCpf = cpf;
@@ -272,6 +317,7 @@
 
                 try {
                     const url = cpfInput.dataset.urlTemplate.replace('__CPF__', cpf);
+
                     const response = await fetch(url, {
                         method: 'GET',
                         headers: {
@@ -284,31 +330,34 @@
 
                     if (!response.ok || !payload.success) {
                         clearAutofill();
-                        setStatus(payload.message || 'Nao foi possivel validar CPF no Gov.Assai.', 'danger');
+                        setStatus(payload.message || 'Erro ao validar CPF.', 'danger');
                         invalidateValidationState();
                         return;
                     }
 
                     const cidadao = payload.data?.cidadao ?? {};
-                    fullNameInput.value = cidadao.nome || '';
-                    birthDateInput.value = cidadao.data_nascimento || '';
+
+                    if (fullNameInput) fullNameInput.value = cidadao.nome || '';
+                    if (birthDateInput) birthDateInput.value = cidadao.data_nascimento || '';
 
                     const showFallback = !!payload.requires_manual_fields;
                     setFallbackVisibility(showFallback);
+
                     govValidated = true;
                     setSubmitAvailability();
 
                     if (showFallback) {
-                        setStatus('CPF validado, mas faltam dados obrigatorios. Preencha os campos de fallback.', 'warning');
-                        fullNameInput.focus();
+                        setStatus('CPF validado, mas faltam dados. Preencha os campos.', 'warning');
+                        fullNameInput?.focus();
                         return;
                     }
 
-                    setStatus('CPF validado com dados obrigatorios completos no Gov.Assai.', 'success');
+                    setStatus('CPF validado com sucesso.', 'success');
                     careTypeInput?.focus();
-                } catch (error) {
+
+                } catch (e) {
                     clearAutofill();
-                    setStatus('Erro de comunicacao com Gov.Assai. Tente novamente.', 'danger');
+                    setStatus('Erro de comunicacao com Gov.Assai.', 'danger');
                     invalidateValidationState();
                 } finally {
                     lookupInFlight = false;
@@ -316,43 +365,97 @@
                 }
             };
 
-            cpfInput.addEventListener('input', function () {
-                const cpf = onlyDigits(cpfInput.value);
-                if (cpf.length < 11) {
-                    lastLookupCpf = '';
-                    clearAutofill();
-                    invalidateValidationState();
-                    setStatus('Digite o CPF completo para validar no Gov.Assai.', 'neutral');
-                }
+            if (cpfInput) {
+                cpfInput.addEventListener('input', function () {
+                    const cpf = onlyDigits(cpfInput.value);
 
-                if (debounceTimer) {
+                    if (cpf.length < 11) {
+                        lastLookupCpf = '';
+                        clearAutofill();
+                        invalidateValidationState();
+                        setStatus('Digite o CPF completo.', 'neutral');
+                    }
+
                     clearTimeout(debounceTimer);
-                }
 
-                debounceTimer = setTimeout(() => {
-                    if (onlyDigits(cpfInput.value).length === 11) {
+                    debounceTimer = setTimeout(() => {
+                        if (onlyDigits(cpfInput.value).length === 11) {
+                            performLookup();
+                        }
+                    }, 500);
+                });
+
+                cpfInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
                         performLookup();
                     }
-                }, 500);
-            });
+                });
 
-            cpfInput.addEventListener('keydown', function (event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    performLookup();
-                }
-            });
+                cpfInput.focus();
+            }
 
-            form.addEventListener('submit', function (event) {
+            form?.addEventListener('submit', function (e) {
                 if (!govValidated || lookupInFlight) {
-                    event.preventDefault();
-                    setStatus('Aguarde a validacao automatica do CPF no Gov.Assai para continuar.', 'warning');
+                    e.preventDefault();
+                    setStatus('Aguarde validacao do CPF.', 'warning');
                 }
             });
 
-            cpfInput.focus();
-            setStatus('Digite o CPF completo para validar no Gov.Assai.', 'neutral');
             setSubmitAvailability();
+
+
+            // ── BUSCA (CORRIGIDA) ────────────────────────────────────────────
+            const searchInput = document.getElementById('search-input');
+            const searchButton = document.getElementById('search-button');
+            const statusFilter = document.getElementById('status-filter');
+
+            const performSearch = () => {
+                const url = new URL(window.location.href);
+
+                const searchVal = searchInput?.value.trim();
+                const statusVal = statusFilter?.value;
+
+                // nome
+                if (searchVal) {
+                    url.searchParams.set('search', searchVal);
+                } else {
+                    url.searchParams.delete('search');
+                }
+
+                // status
+                if (statusVal) {
+                    url.searchParams.set('status', statusVal);
+                } else {
+                    url.searchParams.delete('status');
+                }
+
+                sessionStorage.setItem('scrollY', window.scrollY);
+                window.location.href = url.toString();
+            };
+
+            // botão buscar
+            searchButton?.addEventListener('click', performSearch);
+
+            // ENTER no nome
+            searchInput?.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    performSearch();
+                }
+            });
+
+            // mudança no select (opcional automático)
+            statusFilter?.addEventListener('change', performSearch);
+
+
+            // ── RESTORE SCROLL ───────────────────────────────────────────────
+            const savedScroll = sessionStorage.getItem('scrollY');
+
+            if (savedScroll !== null) {
+                window.scrollTo(0, parseInt(savedScroll));
+                sessionStorage.removeItem('scrollY');
+            }
         });
     </script>
 </x-app-layout>

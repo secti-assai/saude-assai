@@ -5,13 +5,13 @@ namespace App\Jobs;
 use App\Models\Citizen;
 use App\Services\GovAssaiService;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Bus\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
 
 class SyncCitizenFromGovAssaiJob implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, Queueable;
 
-    public string $queue = 'gov_assai';
 
     public int $tries = 5;
 

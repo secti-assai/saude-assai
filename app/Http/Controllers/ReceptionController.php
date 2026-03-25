@@ -23,21 +23,41 @@ class ReceptionController extends Controller
     ) {
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $this->authorize('viewAny', Attendance::class);
 
         $user = auth()->user();
         $isCentral = in_array($user?->role, ['admin_secti', 'gestor', 'auditor'], true);
 
-        $attendances = Attendance::with('citizen')
-            ->when(! $isCentral && $user?->health_unit_id, fn ($query) => $query->where('health_unit_id', $user->health_unit_id))
+        $query = Attendance::with('citizen');
+
+        if (!$isCentral && $user?->health_unit_id) {
+            $query->where('health_unit_id', $user->health_unit_id);
+        }
+
+        // A BUSCA POR NOME:
+        if ($request->filled('search')) {
+            $searchTerm = mb_strtolower($request->search);
+            $query->whereHas('citizen', function ($q) use ($searchTerm) {
+                $q->whereRaw(
+                    "lower(unaccent(full_name)) LIKE lower(unaccent(?))",
+                    ['%' . $searchTerm . '%']
+                );
+            });
+        }
+
+        // filtro por status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $attendances = $query->whereDate('created_at', today())
             ->latest()
-            ->take(20)
             ->get();
 
         $units = HealthUnit::where('is_active', true)
-            ->when(! $isCentral && $user?->health_unit_id, fn ($query) => $query->where('id', $user->health_unit_id))
+            ->when(!$isCentral && $user?->health_unit_id, fn($q) => $q->where('id', $user->health_unit_id))
             ->orderBy('name')
             ->get();
 
@@ -46,7 +66,7 @@ class ReceptionController extends Controller
 
     public function lookupCitizenByCpf(Request $request, string $cpf): JsonResponse
     {
-        if (! $this->govAssai->isValidCpfFormat($cpf)) {
+        if (!$this->govAssai->isValidCpfFormat($cpf)) {
             return response()->json([
                 'success' => false,
                 'message' => 'CPF invalido. Informe 11 digitos ou formato 000.000.000-00.',
@@ -56,7 +76,7 @@ class ReceptionController extends Controller
 
         $result = $this->govAssai->fetchCitizenByCpf($cpf);
 
-        if (! $result['success']) {
+        if (!$result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['message'],
@@ -94,7 +114,7 @@ class ReceptionController extends Controller
 
         $govResult = $this->govAssai->fetchCitizenByCpf($data['cpf']);
 
-        if (! $govResult['success']) {
+        if (!$govResult['success']) {
             $isNotResident = $govResult['status'] === 404;
             $message = $isNotResident
                 ? 'CPF nao localizado no Gov.Assai. Para fluxos de recepcao, o atendimento so pode prosseguir com validacao positiva no Gov.Assai.'
@@ -130,7 +150,7 @@ class ReceptionController extends Controller
             $govAddress['numero'] ?? null,
             $govAddress['bairro'] ?? null,
             $govAddress['distrito'] ?? null,
-        ], fn ($value) => $value !== null && $value !== '')));
+        ], fn($value) => $value !== null && $value !== '')));
         $cpfHash = hash('sha256', $data['cpf']);
 
         if ($resolvedName === '' || $resolvedBirthDate === null) {
@@ -164,7 +184,7 @@ class ReceptionController extends Controller
                 : (int) ($request->user()?->health_unit_id ?? $data['health_unit_id']),
             'reception_user_id' => $request->user()?->id,
             'care_type' => $data['care_type'],
-            'queue_password' => 'A'.str_pad((string) random_int(1, 999), 3, '0', STR_PAD_LEFT),
+            'queue_password' => 'A' . str_pad((string) random_int(1, 999), 3, '0', STR_PAD_LEFT),
             'residence_status' => 'RESIDENTE',
             'summary_reason' => $data['summary_reason'] ?? null,
             'work_accident' => (bool) ($data['work_accident'] ?? false),
@@ -184,4 +204,5 @@ class ReceptionController extends Controller
 
         return back()->with('status', 'Paciente recepcionado e enviado para fila digital.');
     }
+
 }

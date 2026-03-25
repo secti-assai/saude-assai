@@ -7,20 +7,31 @@
     </x-slot>
 
     <div class="space-y-6">
+        {{-- Alertas de Erro/Sucesso --}}
+        @if ($errors->any())
+            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+                <ul class="list-disc pl-5 text-sm text-red-700">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         @if (session('status'))
-            <div class="sa-alert-success sa-fade-in">
-                <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span class="text-sm font-medium">{{ session('status') }}</span>
+            <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4 flex items-center">
+                <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-sm font-medium text-green-800">{{ session('status') }}</span>
             </div>
         @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {{-- Prescription Form --}}
-            <div class="sa-card sa-fade-in lg:col-span-1">
+            {{-- Formulário de Prescrição --}}
+            <div class="sa-card lg:col-span-1">
                 <div class="sa-card-header">
                     <h3 class="sa-card-title">Nova Prescrição</h3>
                 </div>
-                <form method="POST" action="{{ route('prescriptions.store') }}" class="space-y-4" id="prescription-form">
+                <form method="POST" action="{{ route('prescriptions.store') }}" class="p-4 space-y-4" id="prescription-form">
                     @csrf
                     <div>
                         <label class="sa-label">Paciente *</label>
@@ -28,17 +39,12 @@
                             type="text"
                             id="attendance_search"
                             class="sa-input"
-                            placeholder="Digite nome, CPF ou senha para buscar"
+                            placeholder="Digite nome, CPF ou senha"
                             autocomplete="off"
                             data-search-url="{{ route('prescriptions.attendances.search') }}"
                         >
                         <input type="hidden" name="attendance_id" id="attendance_id" required>
-                        <div id="attendance_feedback" class="text-xs text-gray-500 mt-1">Comece digitando para localizar o paciente sem abrir lista longa.</div>
-                        <div id="attendance_results" class="hidden mt-2 rounded-lg border border-slate-200 bg-white shadow-sm max-h-64 overflow-y-auto"></div>
-                        <div id="attendance_selected" class="hidden mt-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                            <p id="attendance_selected_name" class="text-sm font-semibold text-slate-900"></p>
-                            <p id="attendance_selected_meta" class="text-xs text-slate-600 mt-1"></p>
-                        </div>
+                        <div id="attendance_results" class="hidden mt-2 rounded-lg border border-slate-200 bg-white shadow-lg max-h-64 overflow-y-auto z-50"></div>
                     </div>
 
                     <div>
@@ -49,121 +55,79 @@
                         </select>
                     </div>
 
-                    {{-- Itens da Prescrição (múltiplos) --}}
+                    {{-- Itens da Prescrição --}}
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="sa-label mb-0">Medicamentos *</label>
-                            <button type="button" onclick="addPrescriptionItem()" class="text-xs text-sa-primary font-semibold hover:underline">+ Adicionar Item</button>
+                            <button type="button" onclick="addPrescriptionItem()" class="text-xs text-blue-600 font-semibold hover:underline">+ Adicionar Item</button>
                         </div>
                         <div id="prescription-items" class="space-y-3">
-                            {{-- Item 1 (template) --}}
+                            {{-- Item 0 (Template Inicial) --}}
                             <div class="p-3 bg-gray-50 rounded-lg space-y-2 prescription-item" data-index="0">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-bold text-gray-400">Item 1</span>
                                     <button type="button" onclick="removePrescriptionItem(this)" class="text-xs text-red-500 hover:underline hidden remove-btn">Remover</button>
                                 </div>
-                                <div>
-                                    <select name="items[0][medication_id]" class="sa-select text-sm">
-                                        <option value="">Selecionar medicamento existente...</option>
-                                        @foreach($medications as $med)
-                                            <option value="{{ $med->id }}">{{ $med->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="rounded border border-dashed border-slate-300 bg-white p-2">
-                                    <p class="text-[11px] font-semibold text-slate-500 mb-2">Ou cadastre um novo medicamento rapido</p>
-                                    <div class="space-y-2">
-                                        <input name="items[0][new_medication_name]" class="sa-input text-sm" placeholder="Nome do novo medicamento">
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <input name="items[0][new_medication_presentation]" class="sa-input text-sm" placeholder="Apresentacao (ex: comprimido)">
-                                            <input name="items[0][new_medication_concentration]" class="sa-input text-sm" placeholder="Concentracao (ex: 500mg)">
-                                        </div>
+                                <div class="relative">
+                                    <div class="flex gap-2 items-center">
+                                        <input type="text" name="items[0][medication_name]" class="sa-input text-sm medication-autocomplete" placeholder="Buscar medicamento..." autocomplete="off" data-idx="0" required>
+                                        <input type="hidden" name="items[0][medication_id]" class="medication-id-hidden" data-idx="0">
+                                        <button type="button" class="text-xs text-blue-600 font-semibold whitespace-nowrap" onclick="openMedicationModal(0)">Novo</button>
                                     </div>
+                                    <div class="autocomplete-dropdown absolute left-0 right-0 bg-white border rounded shadow-xl z-50 hidden" id="med-dropdown-0"></div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2">
-                                    <input name="items[0][dosage]" class="sa-input text-sm" placeholder="Dosagem (ex: 500mg)">
-                                    <input name="items[0][frequency]" class="sa-input text-sm" placeholder="Frequência (ex: 8/8h)">
+                                    <input name="items[0][dosage]" class="sa-input text-sm" placeholder="Dosagem">
+                                    <input name="items[0][frequency]" class="sa-input text-sm" placeholder="Frequência">
                                 </div>
                                 <div class="grid grid-cols-3 gap-2">
                                     <select name="items[0][administration_route]" class="sa-select text-sm">
-                                        <option value="VO">VO</option>
-                                        <option value="IV">IV</option>
-                                        <option value="IM">IM</option>
-                                        <option value="SC">SC</option>
-                                        <option value="TOPICA">Tópica</option>
-                                        <option value="INALATORIA">Inalatória</option>
+                                        <option value="VO">VO</option><option value="IV">IV</option><option value="IM">IM</option>
+                                        <option value="SC">SC</option><option value="TOPICA">Tópica</option>
                                     </select>
-                                    <input name="items[0][duration_days]" type="number" min="1" class="sa-input text-sm" placeholder="Dias" required>
-                                    <input name="items[0][quantity]" type="number" min="1" class="sa-input text-sm" placeholder="Qtd" required>
+                                    <input name="items[0][duration_days]" type="number" class="sa-input text-sm" placeholder="Dias" required>
+                                    <input name="items[0][quantity]" type="number" class="sa-input text-sm" placeholder="Qtd" required>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div>
-                        <label class="sa-label">Observações</label>
-                        <textarea name="notes" rows="3" class="sa-input" placeholder="Instruções adicionais..."></textarea>
-                    </div>
-                    <button type="submit" class="sa-btn-primary w-full">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                        Prescrever
+                    <button type="submit" class="w-full bg-blue-600 text-black py-2 rounded-lg font-bold hover:bg-blue-700 transition">
+                        Finalizar Prescrição
                     </button>
                 </form>
             </div>
 
-            {{-- Prescriptions Table --}}
-            <div class="sa-card sa-fade-in lg:col-span-2">
-                <div class="sa-card-header">
+            {{-- Tabela de Prescrições Recentes --}}
+            <div class="sa-card lg:col-span-2 overflow-hidden">
+                <div class="sa-card-header flex justify-between items-center">
                     <h3 class="sa-card-title">Prescrições Recentes</h3>
-                    <span class="sa-badge sa-badge-info">{{ $prescriptions->count() }}</span>
+                    <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">{{ $prescriptions->count() }}</span>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="sa-table">
-                        <thead>
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
                             <tr>
-                                <th>Paciente</th>
-                                <th>Medicamentos</th>
-                                <th>Entrega</th>
-                                <th>Status</th>
-                                <th>Hora</th>
+                                <th class="p-3">Paciente</th>
+                                <th class="p-3">Medicamentos</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Hora</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-gray-100">
                             @forelse($prescriptions as $p)
-                                <tr>
-                                    <td class="font-medium text-gray-900">{{ $p->citizen->full_name ?? '—' }}</td>
-                                    <td>
-                                        <div class="space-y-0.5">
-                                            @foreach($p->items as $item)
-                                                <div class="text-xs">
-                                                    <span class="font-medium">{{ $item->medication->name ?? '—' }}</span>
-                                                    <span class="text-gray-400">{{ $item->dosage }} · {{ $item->frequency }}</span>
-                                                </div>
-                                            @endforeach
-                                        </div>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="p-3 font-medium">{{ $p->citizen->full_name ?? '—' }}</td>
+                                    <td class="p-3">
+                                        @foreach($p->items as $item)
+                                            <div class="text-xs">{{ $item->medication->name ?? '—' }} ({{ $item->dosage }})</div>
+                                        @endforeach
                                     </td>
-                                    <td>
-                                        <span class="sa-badge {{ $p->delivery_type === 'ENTREGA' ? 'sa-badge-info' : 'sa-badge-gray' }}">
-                                            {{ $p->delivery_type }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        @php
-                                            $statusMap = [
-                                                'PENDENTE' => 'sa-badge-warning',
-                                                'ASSINADA' => 'sa-badge-primary',
-                                                'DISPENSADA' => 'sa-badge-success',
-                                                'CANCELADA' => 'sa-badge-danger',
-                                            ];
-                                        @endphp
-                                        <span class="sa-badge {{ $statusMap[$p->status] ?? 'sa-badge-gray' }}">{{ $p->status }}</span>
-                                    </td>
-                                    <td class="text-gray-500 text-xs">{{ $p->created_at->format('H:i') }}</td>
+                                    <td class="p-3"><span class="px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">{{ $p->status }}</span></td>
+                                    <td class="p-3 text-xs text-gray-500">{{ $p->created_at->format('H:i') }}</td>
                                 </tr>
                             @empty
-                                <tr>
-                                    <td colspan="5" class="text-center text-gray-400 py-8">Nenhuma prescrição registrada.</td>
-                                </tr>
+                                <tr><td colspan="4" class="p-8 text-center text-gray-400">Nenhuma prescrição hoje.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -172,213 +136,237 @@
         </div>
     </div>
 
-    {{-- JavaScript para adicionar/remover itens --}}
-    <script>
-        let itemIndex = 1;
-        const medicationOptions = `@foreach($medications as $med)<option value="{{ $med->id }}">{{ $med->name }}</option>@endforeach`;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const searchInput = document.getElementById('attendance_search');
-            const hiddenAttendanceId = document.getElementById('attendance_id');
-            const feedback = document.getElementById('attendance_feedback');
-            const results = document.getElementById('attendance_results');
-            const selectedCard = document.getElementById('attendance_selected');
-            const selectedName = document.getElementById('attendance_selected_name');
-            const selectedMeta = document.getElementById('attendance_selected_meta');
-
-            let debounceTimer = null;
-            let items = [];
-            let activeIndex = 0;
-
-            const setFeedback = (text, type = 'text-gray-500') => {
-                feedback.className = `text-xs mt-1 ${type}`;
-                feedback.textContent = text;
-            };
-
-            const hideResults = () => {
-                results.classList.add('hidden');
-                results.innerHTML = '';
-                items = [];
-                activeIndex = 0;
-            };
-
-            const selectAttendance = (attendance) => {
-                hiddenAttendanceId.value = attendance.id;
-                searchInput.value = attendance.citizen_name || '';
-                selectedCard.classList.remove('hidden');
-                selectedName.textContent = `${attendance.queue_password} — ${attendance.citizen_name || 'Paciente sem nome'}`;
-                selectedMeta.textContent = `${attendance.citizen_cpf || 'CPF nao informado'} · ${attendance.care_type || '-'} · ${attendance.status || '-'} · ${attendance.arrived_at || '-'}`;
-                setFeedback('Paciente selecionado. Continue com os itens da prescricao.', 'text-green-700');
-                hideResults();
-            };
-
-            const renderResults = (list) => {
-                items = list;
-                activeIndex = 0;
-
-                if (!list.length) {
-                    hideResults();
-                    setFeedback('Nenhum atendimento encontrado para o termo informado.', 'text-amber-700');
-                    return;
-                }
-
-                results.innerHTML = list.map((item, idx) => `
-                    <button type="button" class="w-full text-left px-3 py-2 border-b border-slate-100 hover:bg-slate-50 ${idx === activeIndex ? 'bg-slate-100' : ''}" data-idx="${idx}">
-                        <div class="text-sm font-semibold text-slate-900">${item.queue_password} — ${item.citizen_name || 'Paciente sem nome'}</div>
-                        <div class="text-xs text-slate-500">${item.citizen_cpf || 'CPF nao informado'} · ${item.care_type || '-'} · ${item.status || '-'}</div>
-                    </button>
-                `).join('');
-
-                results.classList.remove('hidden');
-
-                results.querySelectorAll('[data-idx]').forEach((button) => {
-                    button.addEventListener('click', () => {
-                        const idx = Number(button.dataset.idx || 0);
-                        if (items[idx]) {
-                            selectAttendance(items[idx]);
-                        }
-                    });
-                });
-            };
-
-            const fetchAttendances = async (term) => {
-                const url = new URL(searchInput.dataset.searchUrl, window.location.origin);
-                url.searchParams.set('q', term);
-
-                const response = await fetch(url.toString(), {
-                    headers: {
-                        Accept: 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                });
-
-                const payload = await response.json();
-                return Array.isArray(payload?.data) ? payload.data : [];
-            };
-
-            const runSearch = async () => {
-                const term = (searchInput.value || '').trim();
-                hiddenAttendanceId.value = '';
-                selectedCard.classList.add('hidden');
-
-                if (term.length < 2) {
-                    hideResults();
-                    setFeedback('Digite ao menos 2 caracteres para buscar paciente.', 'text-gray-500');
-                    return;
-                }
-
-                setFeedback('Buscando atendimentos...', 'text-blue-600');
-
-                try {
-                    const list = await fetchAttendances(term);
-                    renderResults(list);
-                    if (list.length) {
-                        setFeedback('Selecione um paciente da lista para prescrever.', 'text-slate-600');
-                    }
-                } catch (e) {
-                    hideResults();
-                    setFeedback('Falha ao buscar atendimentos. Tente novamente.', 'text-red-600');
-                }
-            };
-
-            searchInput.addEventListener('input', () => {
-                if (debounceTimer) {
-                    clearTimeout(debounceTimer);
-                }
-                debounceTimer = setTimeout(runSearch, 350);
-            });
-
-            searchInput.addEventListener('keydown', (event) => {
-                if (event.key === 'ArrowDown' && items.length > 0) {
-                    event.preventDefault();
-                    activeIndex = Math.min(activeIndex + 1, items.length - 1);
-                    renderResults(items);
-                }
-
-                if (event.key === 'ArrowUp' && items.length > 0) {
-                    event.preventDefault();
-                    activeIndex = Math.max(activeIndex - 1, 0);
-                    renderResults(items);
-                }
-
-                if (event.key === 'Enter' && items.length > 0) {
-                    event.preventDefault();
-                    selectAttendance(items[activeIndex] || items[0]);
-                }
-            });
-
-            document.addEventListener('click', (event) => {
-                if (!results.contains(event.target) && event.target !== searchInput) {
-                    hideResults();
-                }
-            });
-
-            searchInput.focus();
-        });
-
-        function addPrescriptionItem() {
-            const container = document.getElementById('prescription-items');
-            const idx = itemIndex++;
-            const div = document.createElement('div');
-            div.className = 'p-3 bg-gray-50 rounded-lg space-y-2 prescription-item';
-            div.dataset.index = idx;
-            div.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-gray-400">Item ${idx + 1}</span>
-                    <button type="button" onclick="removePrescriptionItem(this)" class="text-xs text-red-500 hover:underline">Remover</button>
-                </div>
+    {{-- MODAL PARA NOVO MEDICAMENTO --}}
+    <div id="medication-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-gray-800">Cadastrar Novo Medicamento</h3>
+                <button onclick="closeMedicationModal()" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <form id="medication-modal-form" class="p-4 space-y-4">
+                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                <div id="medication-modal-error" class="hidden p-2 text-xs bg-red-100 text-red-700 rounded"></div>
                 <div>
-                    <select name="items[${idx}][medication_id]" class="sa-select text-sm">
-                        <option value="">Selecionar medicamento existente...</option>
-                        ${medicationOptions}
-                    </select>
+                    <label class="block text-xs font-bold mb-1 text-gray-600">Nome do Medicamento</label>
+                    <input type="text" name="name" class="sa-input" required>
                 </div>
-                <div class="rounded border border-dashed border-slate-300 bg-white p-2">
-                    <p class="text-[11px] font-semibold text-slate-500 mb-2">Ou cadastre um novo medicamento rapido</p>
-                    <div class="space-y-2">
-                        <input name="items[${idx}][new_medication_name]" class="sa-input text-sm" placeholder="Nome do novo medicamento">
-                        <div class="grid grid-cols-2 gap-2">
-                            <input name="items[${idx}][new_medication_presentation]" class="sa-input text-sm" placeholder="Apresentacao (ex: comprimido)">
-                            <input name="items[${idx}][new_medication_concentration]" class="sa-input text-sm" placeholder="Concentracao (ex: 500mg)">
-                        </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold mb-1 text-gray-600">Apresentação</label>
+                        <input type="text" name="presentation" class="sa-input" placeholder="Ex: Comprimido">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1 text-gray-600">Concentração</label>
+                        <input type="text" name="concentration" class="sa-input" placeholder="Ex: 500mg">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <input name="items[${idx}][dosage]" class="sa-input text-sm" placeholder="Dosagem (ex: 500mg)">
-                    <input name="items[${idx}][frequency]" class="sa-input text-sm" placeholder="Frequência (ex: 8/8h)">
+                <div class="flex gap-2 justify-end mt-4">
+                    <button type="button" onclick="closeMedicationModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Salvar</button>
                 </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <select name="items[${idx}][administration_route]" class="sa-select text-sm">
-                        <option value="VO">VO</option>
-                        <option value="IV">IV</option>
-                        <option value="IM">IM</option>
-                        <option value="SC">SC</option>
-                        <option value="TOPICA">Tópica</option>
-                        <option value="INALATORIA">Inalatória</option>
-                    </select>
-                    <input name="items[${idx}][duration_days]" type="number" min="1" class="sa-input text-sm" placeholder="Dias" required>
-                    <input name="items[${idx}][quantity]" type="number" min="1" class="sa-input text-sm" placeholder="Qtd" required>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    // Lista de medicamentos disponível no servidor (usada para autocomplete) - torna global
+    window.MEDICATIONS = @json($medications->map(fn($m) => ['id' => $m->id, 'name' => $m->name]));
+    var MEDICATIONS = window.MEDICATIONS;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('prescription-form');
+        const searchInput = document.getElementById('attendance_search');
+        const hiddenAttendanceId = document.getElementById('attendance_id');
+        const results = document.getElementById('attendance_results');
+
+        form.addEventListener('submit', function (e) {
+    if (!hiddenAttendanceId.value) {
+        e.preventDefault();
+        alert('Selecione um paciente antes de salvar.');
+        return;
+    }
+
+    const items = document.querySelectorAll('.prescription-item');
+    let valid = true;
+
+    items.forEach((item, index) => {
+        const nameInput = item.querySelector('.medication-autocomplete');
+        const idInput = item.querySelector('.medication-id-hidden');
+
+        if (nameInput.value.trim() !== '' && !idInput.value) {
+            valid = false;
+            nameInput.classList.add('border-red-500'); // Destaca o erro
+        } else {
+            nameInput.classList.remove('border-red-500');
+        }
+    });
+
+    if (!valid) {
+        e.preventDefault();
+        alert('Por favor, selecione o medicamento da lista ou cadastre um novo para gerar um ID válido.');
+    }
+    });
+
+        // BUSCA DE PACIENTE (AJAX)
+        let debounceTimer;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(async () => {
+                const term = searchInput.value.trim();
+                if (term.length < 2) { results.classList.add('hidden'); return; }
+
+                const res = await fetch(`${searchInput.dataset.searchUrl}?q=${encodeURIComponent(term)}`);
+                const data = await res.json();
+                
+                results.innerHTML = (data.data || []).map(item => `
+                    <div class="p-3 border-b hover:bg-blue-50 cursor-pointer" onclick="selectPatient('${item.id}', '${item.citizen_name}')">
+                        <div class="text-sm font-bold text-gray-800">${item.citizen_name}</div>
+                        <div class="text-xs text-gray-500">Senha: ${item.queue_password} | CPF: ${item.citizen_cpf}</div>
+                    </div>
+                `).join('');
+                results.classList.remove('hidden');
+            }, 300);
+        });
+
+        window.selectPatient = (id, name) => {
+            hiddenAttendanceId.value = id;
+            searchInput.value = name;
+            results.classList.add('hidden');
+        };
+
+        // FECHAR RESULTADOS AO CLICAR FORA
+        document.addEventListener('click', (e) => {
+            if (!results.contains(e.target) && e.target !== searchInput) results.classList.add('hidden');
+        });
+    });
+
+    // FUNÇÕES DE ITENS DINÂMICOS
+    function addPrescriptionItem() {
+        const container = document.getElementById('prescription-items');
+        const idx = container.querySelectorAll('.prescription-item').length;
+        
+        const div = document.createElement('div');
+        div.className = 'p-3 bg-gray-50 rounded-lg space-y-2 prescription-item';
+        div.innerHTML = `
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-gray-400">Item ${idx + 1}</span>
+                <button type="button" onclick="removePrescriptionItem(this)" class="text-xs text-red-500 hover:underline">Remover</button>
+            </div>
+            <div class="relative">
+                <div class="flex gap-2 items-center">
+                    <input type="text" name="items[${idx}][medication_name]" class="sa-input text-sm medication-autocomplete" placeholder="Buscar medicamento..." autocomplete="off" data-idx="${idx}" required>
+                    <input type="hidden" name="items[${idx}][medication_id]" class="medication-id-hidden" data-idx="${idx}">
+                    <button type="button" class="text-xs text-blue-600 font-semibold whitespace-nowrap" onclick="openMedicationModal(${idx})">Novo</button>
                 </div>
-            `;
-            container.appendChild(div);
-            updateRemoveButtons();
-        }
+                <div class="autocomplete-dropdown absolute left-0 right-0 bg-white border rounded shadow-xl z-50 hidden" id="med-dropdown-${idx}"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <input name="items[${idx}][dosage]" class="sa-input text-sm" placeholder="Dosagem">
+                <input name="items[${idx}][frequency]" class="sa-input text-sm" placeholder="Frequência">
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+                <select name="items[${idx}][administration_route]" class="sa-select text-sm">
+                    <option value="VO">VO</option><option value="IV">IV</option><option value="TOPICA">Tópica</option>
+                </select>
+                <input name="items[${idx}][duration_days]" type="number" class="sa-input text-sm" placeholder="Dias" required>
+                <input name="items[${idx}][quantity]" type="number" class="sa-input text-sm" placeholder="Qtd" required>
+            </div>
+        `;
+        container.appendChild(div);
+    }
 
-        function removePrescriptionItem(btn) {
-            const item = btn.closest('.prescription-item');
-            item.remove();
-            updateRemoveButtons();
-        }
+    function removePrescriptionItem(btn) {
+        btn.closest('.prescription-item').remove();
+    }
 
-        function updateRemoveButtons() {
-            const items = document.querySelectorAll('.prescription-item');
-            items.forEach((item, i) => {
-                const removeBtn = item.querySelector('.remove-btn');
-                if (removeBtn) {
-                    removeBtn.classList.toggle('hidden', items.length <= 1);
-                }
-                item.querySelector('.text-gray-400').textContent = `Item ${i + 1}`;
+    // AUTOCOMPLETE DE MEDICAMENTOS (DELEGAÇÃO DE EVENTO)
+    let medDebounce;
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('medication-autocomplete')) {
+            const input = e.target;
+            const idx = input.dataset.idx;
+            const val = input.value.trim();
+            const dropdown = document.getElementById('med-dropdown-' + idx);
+
+            clearTimeout(medDebounce);
+            if (val.length < 2) { dropdown.classList.add('hidden'); return; }
+
+            medDebounce = setTimeout(() => {
+                // Busca local em MEDICATIONS (precarregada pelo servidor) para evitar rota inexistente
+                const list = MEDICATIONS.filter(m => m.name.toLowerCase().includes(val.toLowerCase())).slice(0, 20);
+
+                dropdown.innerHTML = list.map(m => {
+                    const safeName = (m.name || '').replace(/'/g, "\\'");
+                    return `
+                        <div class="p-2 cursor-pointer hover:bg-blue-50 text-sm border-b" onclick="selectMedication(${idx}, '${m.id}', '${safeName}')">
+                            ${m.name}
+                        </div>
+                    `;
+                }).join('');
+                dropdown.classList.remove('hidden');
+            }, 300);
+        }
+    });
+
+    window.selectMedication = (idx, id, name) => {
+        document.querySelector(`input[name="items[${idx}][medication_name]"]`).value = name;
+        document.querySelector(`input[name="items[${idx}][medication_id]"]`).value = id;
+        document.getElementById('med-dropdown-' + idx).classList.add('hidden');
+    };
+
+    // FUNÇÕES DO MODAL
+    window.openMedicationModal = function(idx) {
+        const modal = document.getElementById('medication-modal');
+        modal.classList.remove('hidden');
+        modal.dataset.activeIdx = idx;
+    };
+
+    window.closeMedicationModal = function() {
+        document.getElementById('medication-modal').classList.add('hidden');
+        document.getElementById('medication-modal-form').reset();
+    };
+
+            document.getElementById('medication-modal-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const idx = document.getElementById('medication-modal').dataset.activeIdx;
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const res = await fetch("{{ route('prescriptions.medications.store') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
             });
+                    if (!res.ok) {
+                        const text = await res.text();
+                        console.error('Erro ao salvar medicamento', res.status, text);
+                        alert('Erro ao salvar medicamento: ' + (text || res.status));
+                        return;
+                    }
+
+                    const json = await res.json();
+
+                    if (json.success || json.id) {
+                        const medObj = { id: json.id, name: json.name };
+                        // adiciona no início da lista local de medicamentos, evitando duplicatas
+                        if (!MEDICATIONS.some(m => String(m.id) === String(medObj.id))) {
+                            MEDICATIONS.unshift(medObj);
+                        }
+                        selectMedication(idx, json.id, json.name);
+                        closeMedicationModal();
+                    } else {
+                        console.error('Resposta inesperada ao salvar medicamento', json);
+                        alert('Erro ao salvar medicamento. Verifique o console para detalhes.');
+                    }
+        } catch (err) {
+            console.error(err);
+            alert('Falha na comunicação com o servidor.');
         }
+    });
     </script>
 </x-app-layout>

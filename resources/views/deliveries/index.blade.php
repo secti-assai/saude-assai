@@ -13,6 +13,35 @@
                 <span class="text-sm font-medium">{{ session('status') }}</span>
             </div>
         @endif
+        
+        @if ($errors->any())
+            <div class="bg-red-50 text-red-700 p-4 rounded-xl text-sm font-medium mb-4 sa-fade-in">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        {{-- Barra de Filtros --}}
+        <div class="bg-white p-4 rounded-xl shadow-sm mb-6 border border-gray-100">
+            <form method="GET" action="{{ route('deliveries.index') }}" class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <input type="text" name="search" placeholder="Buscar por paciente..." value="{{ request('search') }}" class="sa-input w-full">
+                </div>
+                <div>
+                    <select name="status" class="sa-select">
+                        <option value="ativos" {{ request('status', 'ativos') === 'ativos' ? 'selected' : '' }}>Entregas Ativas</option>
+                        <option value="historico" {{ request('status') === 'historico' ? 'selected' : '' }}>Histórico (Concluídas/Falhas)</option>
+                        <option value="todos" {{ request('status') === 'todos' ? 'selected' : '' }}>Todos</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="sa-btn-primary w-full md:w-auto">Filtrar</button>
+                </div>
+            </form>
+        </div>
 
         {{-- Delivery Cards --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -54,44 +83,78 @@
                         </div>
                     </div>
 
-                    {{-- Status Update Form --}}
-                    <form method="POST" action="{{ route('deliveries.update', $d) }}" class="space-y-3">
-                        @csrf
-                        @method('PUT')
+                    {{-- Status Update Form / Concurrency Lock --}}
+                    @php
+                        $isCentral = in_array(auth()->user()->role, ['admin_secti', 'gestor', 'auditor']);
+                        $isLockedByOther = $d->delivery_user_id && $d->delivery_user_id !== auth()->id() && !$isCentral;
+                    @endphp
 
-                        <div class="flex gap-2">
-                            <div class="flex-1">
-                                <select name="status" class="sa-select text-sm">
-                                    <option value="PENDENTE" {{ $d->status === 'PENDENTE' ? 'selected' : '' }}>Pendente</option>
-                                    <option value="EM_ROTA" {{ $d->status === 'EM_ROTA' ? 'selected' : '' }}>Em Rota</option>
-                                    <option value="ENTREGUE" {{ $d->status === 'ENTREGUE' ? 'selected' : '' }}>Entregue</option>
-                                    <option value="FALHA" {{ $d->status === 'FALHA' ? 'selected' : '' }}>Falha</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="sa-btn-primary text-sm">
-                                Atualizar
-                            </button>
+                    @if($isLockedByOther)
+                        <div class="bg-yellow-50 text-yellow-800 text-sm p-3 rounded-lg border border-yellow-200">
+                            🔒 Esta entrega está em rota com outro entregador.
                         </div>
+                    @else
+                        <form method="POST" action="{{ route('deliveries.update', $d) }}" class="space-y-3">
+                            @csrf
+                            @method('PUT')
 
-                        {{-- GPS fields (collapsible) --}}
-                        <details class="text-sm">
-                            <summary class="text-gray-500 cursor-pointer hover:text-gray-700 transition flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                Coordenadas GPS
-                            </summary>
-                            <div class="grid grid-cols-2 gap-2 mt-2">
-                                <input name="gps_lat" class="sa-input text-xs" placeholder="Latitude" value="{{ $d->gps_lat ?? '' }}">
-                                <input name="gps_lng" class="sa-input text-xs" placeholder="Longitude" value="{{ $d->gps_lng ?? '' }}">
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    <select name="status" class="sa-select text-sm" onchange="toggleFailureReason(this)">
+                                        <option value="PENDENTE" {{ $d->status === 'PENDENTE' ? 'selected' : '' }}>Pendente</option>
+                                        <option value="EM_ROTA" {{ $d->status === 'EM_ROTA' ? 'selected' : '' }}>Em Rota (Assumir)</option>
+                                        <option value="ENTREGUE" {{ $d->status === 'ENTREGUE' ? 'selected' : '' }}>Entregue</option>
+                                        <option value="FALHA" {{ $d->status === 'FALHA' ? 'selected' : '' }}>Falha na Entrega</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="sa-btn-primary text-sm">
+                                    Atualizar
+                                </button>
                             </div>
-                        </details>
-                    </form>
+
+                            {{-- Motivo da Falha (Oculto via JS até que FALHA seja selecionado) --}}
+                            <div class="failure-reason-container mt-2 transition-all duration-300" style="display: {{ $d->status === 'FALHA' ? 'block' : 'none' }}">
+                                <input type="text" name="failure_reason" class="sa-input text-xs w-full" placeholder="Ex: Endereço não localizado, Cliente ausente..." value="{{ old('failure_reason', $d->failure_reason) }}">
+                            </div>
+
+                            {{-- GPS fields (collapsible) --}}
+                            <details class="text-sm">
+                                <summary class="text-gray-500 cursor-pointer hover:text-gray-700 transition flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    Coordenadas GPS
+                                </summary>
+                                <div class="grid grid-cols-2 gap-2 mt-2">
+                                    <input name="gps_lat" class="sa-input text-xs" placeholder="Latitude" value="{{ old('gps_lat', $d->gps_lat) }}">
+                                    <input name="gps_lng" class="sa-input text-xs" placeholder="Longitude" value="{{ old('gps_lng', $d->gps_lng) }}">
+                                </div>
+                            </details>
+                        </form>
+                    @endif
                 </div>
             @empty
                 <div class="sa-card col-span-full text-center py-12">
                     <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25"/></svg>
-                    <p class="text-gray-500 font-medium">Nenhuma entrega pendente.</p>
+                    <p class="text-gray-500 font-medium">Nenhuma entrega encontrada.</p>
                 </div>
             @endforelse
         </div>
     </div>
+
+    {{-- Script para exibir/ocultar o motivo da falha dinamicamente --}}
+    <script>
+        function toggleFailureReason(selectElement) {
+            const form = selectElement.closest('form');
+            const reasonContainer = form.querySelector('.failure-reason-container');
+            const reasonInput = form.querySelector('input[name="failure_reason"]');
+            
+            if (selectElement.value === 'FALHA') {
+                reasonContainer.style.display = 'block';
+                reasonInput.setAttribute('required', 'required');
+            } else {
+                reasonContainer.style.display = 'none';
+                reasonInput.removeAttribute('required');
+                reasonInput.value = ''; // Limpa o valor se trocar pra outro status
+            }
+        }
+    </script>
 </x-app-layout>

@@ -5,13 +5,12 @@ namespace App\Jobs;
 use App\Models\LediLog;
 use App\Models\LediQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Bus\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
 
 class DispatchLediRecord implements ShouldQueue
 {
-    use Queueable;
-
-    public string $queue = 'ledi';
+    use Dispatchable, Queueable;
 
     public int $tries = 5;
 

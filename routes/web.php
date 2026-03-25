@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReceptionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TriageController;
+use App\Http\Controllers\CallController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PortalController::class, 'index'])->name('portal.home');
@@ -44,6 +45,8 @@ Route::middleware(['auth', 'verified', '2fa'])->group(function () {
         
         Route::get('/admin/conteudos', [PortalController::class, 'adminIndex'])->name('admin.portal');
         Route::post('/admin/conteudos', [PortalController::class, 'store'])->name('admin.portal.store');
+        Route::post('/admin/conteudos/upload-imagem', [PortalController::class, 'uploadImage'])->name('admin.portal.upload-image');
+        Route::patch('/admin/conteudos/{content}/toggle', [PortalController::class, 'togglePublish'])->name('admin.portal.toggle');
         Route::get('/admin/conteudos/{content}/edit', [PortalController::class, 'edit'])->name('admin.portal.edit');
         Route::put('/admin/conteudos/{content}', [PortalController::class, 'update'])->name('admin.portal.update');
         Route::post('/admin/conteudos/{content}', [PortalController::class, 'destroy'])->name('admin.portal.destroy');
@@ -85,3 +88,11 @@ Route::middleware(['auth', 'verified', '2fa'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// Cadastro rápido de medicamento para prescrições
+use App\Http\Controllers\PrescriptionMedicationController;
+Route::post('/prescriptions/medications', [PrescriptionMedicationController::class, 'store'])->name('prescriptions.medications.store');
+
+
+Route::post('/calls/{attendance}', [CallController::class, 'call'])
+    ->name('calls.call');
