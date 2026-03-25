@@ -22,13 +22,10 @@ class HospitalRecord extends Model
         'signed_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'secondary_cids' => 'array',
-            'signed_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'secondary_cids' => 'array',
+        'signed_at' => 'datetime',
+    ];
 
     public function attendance(): BelongsTo
     {

@@ -19,14 +19,11 @@ class Dispensation extends Model
         'finished_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'blocked' => 'boolean',
-            'started_at' => 'datetime',
-            'finished_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'blocked' => 'boolean',
+        'started_at' => 'datetime',
+        'finished_at' => 'datetime',
+    ];
 
     public function items(): HasMany
     {

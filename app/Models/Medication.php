@@ -8,8 +8,5 @@ class Medication extends Model
 {
     protected $fillable = ['code', 'name', 'presentation', 'concentration', 'is_remume'];
 
-    protected function casts(): array
-    {
-        return ['is_remume' => 'boolean'];
-    }
+    protected $casts = ['is_remume' => 'boolean'];
 }

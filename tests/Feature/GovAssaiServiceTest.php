@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\GovAssaiService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -76,7 +77,9 @@ class GovAssaiServiceTest extends TestCase
         config()->set('services.gov_assai.api_key', 'test-key');
 
         Http::fake([
-            'https://gov-assai.test/api/saude/cidadaos/cpf/*' => Http::failedConnection(),
+            'https://gov-assai.test/api/saude/cidadaos/cpf/*' => function () {
+                throw new ConnectionException('Connection failed');
+            },
         ]);
 
         $service = app(GovAssaiService::class);

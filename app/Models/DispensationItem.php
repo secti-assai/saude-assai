@@ -9,10 +9,7 @@ class DispensationItem extends Model
 {
     protected $fillable = ['dispensation_id', 'medication_id', 'batch', 'expiry_date', 'quantity'];
 
-    protected function casts(): array
-    {
-        return ['expiry_date' => 'date'];
-    }
+    protected $casts = ['expiry_date' => 'date'];
 
     public function dispensation(): BelongsTo
     {

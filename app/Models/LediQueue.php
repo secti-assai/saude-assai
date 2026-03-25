@@ -17,11 +17,8 @@ class LediQueue extends Model
         'processed_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'payload' => 'array',
-            'processed_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'payload' => 'array',
+        'processed_at' => 'datetime',
+    ];
 }

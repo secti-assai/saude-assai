@@ -12,6 +12,12 @@ class PortalContent extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
 
+    protected $casts = [
+        'published' => 'boolean',
+        'published_at' => 'datetime',
+        'metadata' => 'json',
+    ];
+
     protected $guarded = ["id"];
 
     public function getActivitylogOptions(): LogOptions
@@ -19,13 +25,5 @@ class PortalContent extends Model
         return LogOptions::defaults()->logUnguarded();
     }
 
-    protected function casts(): array
-    {
-        return [
-            'published' => 'boolean',
-            'published_at' => 'datetime',
-            'metadata' => 'json',
-        ];
-    }
 }
 

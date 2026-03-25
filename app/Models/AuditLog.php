@@ -8,6 +8,11 @@ class AuditLog extends Model
 {
     public $timestamps = false;
 
+    protected $casts = [
+        'metadata' => 'array',
+        'created_at' => 'datetime',
+    ];
+
     protected $fillable = [
         'user_id',
         'profile',
@@ -20,12 +25,4 @@ class AuditLog extends Model
         'metadata',
         'created_at',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'metadata' => 'array',
-            'created_at' => 'datetime',
-        ];
-    }
 }

@@ -19,10 +19,7 @@ class Prescription extends Model
         'signed_at',
     ];
 
-    protected function casts(): array
-    {
-        return ['signed_at' => 'datetime'];
-    }
+    protected $casts = ['signed_at' => 'datetime'];
 
     public function items(): HasMany
     {

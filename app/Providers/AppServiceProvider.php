@@ -8,7 +8,6 @@ use App\Models\Prescription;
 use App\Policies\AttendancePolicy;
 use App\Policies\DeliveryPolicy;
 use App\Policies\PrescriptionPolicy;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -27,8 +26,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Route::aliasMiddleware('2fa', \App\Http\Middleware\Ensure2FA::class);
-
         Gate::policy(Attendance::class, AttendancePolicy::class);
         Gate::policy(Prescription::class, PrescriptionPolicy::class);
         Gate::policy(Delivery::class, DeliveryPolicy::class);

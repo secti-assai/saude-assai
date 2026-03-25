@@ -19,10 +19,7 @@ class Delivery extends Model
         'confirmed_at',
     ];
 
-    protected function casts(): array
-    {
-        return ['confirmed_at' => 'datetime'];
-    }
+    protected $casts = ['confirmed_at' => 'datetime'];
 
     public function prescription(): BelongsTo
     {

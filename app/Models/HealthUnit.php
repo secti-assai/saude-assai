@@ -19,10 +19,7 @@ class HealthUnit extends Model
         return LogOptions::defaults()->logUnguarded();
     }
 
-    protected function casts(): array
-    {
-        return ['is_active' => 'boolean'];
-    }
+    protected $casts = ['is_active' => 'boolean'];
 
     public function users(): HasMany
     {

@@ -23,13 +23,10 @@ class Attendance extends Model
         'arrived_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'work_accident' => 'boolean',
-            'arrived_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'work_accident' => 'boolean',
+        'arrived_at' => 'datetime',
+    ];
 
     public function citizen(): BelongsTo
     {

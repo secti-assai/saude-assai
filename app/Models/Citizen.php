@@ -10,6 +10,15 @@ class Citizen extends Model
 {
     use SoftDeletes;
 
+    protected $casts = [
+        'cpf' => 'encrypted',
+        'cns' => 'encrypted',
+        'email' => 'encrypted',
+        'birth_date' => 'date',
+        'is_resident_assai' => 'boolean',
+        'residence_validated_at' => 'datetime',
+    ];
+
     protected $fillable = [
         'cpf',
         'cpf_hash',
@@ -27,18 +36,6 @@ class Citizen extends Model
         'phone',
         'email',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'cpf' => 'encrypted',
-            'cns' => 'encrypted',
-            'email' => 'encrypted',
-            'birth_date' => 'date',
-            'is_resident_assai' => 'boolean',
-            'residence_validated_at' => 'datetime',
-        ];
-    }
 
     public function attendances(): HasMany
     {

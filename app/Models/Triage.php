@@ -25,10 +25,7 @@ class Triage extends Model
         'risk_classification',
     ];
 
-    protected function casts(): array
-    {
-        return ['comorbidities' => 'array'];
-    }
+    protected $casts = ['comorbidities' => 'array'];
 
     public function attendance(): BelongsTo
     {
