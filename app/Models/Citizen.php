@@ -12,6 +12,7 @@ class Citizen extends Model
 
     protected $fillable = [
         'cpf',
+        'cpf_hash',
         'cns',
         'full_name',
         'social_name',

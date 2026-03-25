@@ -16,7 +16,9 @@ class DeliveryController extends Controller
 
     public function index(): View
     {
-        $deliveries = Delivery::with('prescription.citizen')->latest()->get();
+        $deliveries = Delivery::with('prescription.citizen', 'prescription.attendance', 'prescription.items.medication')
+            ->latest()
+            ->get();
 
         return view('deliveries.index', compact('deliveries'));
     }

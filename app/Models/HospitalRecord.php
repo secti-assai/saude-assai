@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HospitalRecord extends Model
 {
@@ -27,5 +28,10 @@ class HospitalRecord extends Model
             'secondary_cids' => 'array',
             'signed_at' => 'datetime',
         ];
+    }
+
+    public function attendance(): BelongsTo
+    {
+        return $this->belongsTo(Attendance::class);
     }
 }

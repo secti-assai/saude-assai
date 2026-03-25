@@ -10,13 +10,17 @@ use App\Models\Medication;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Services\AuditService;
+use App\Services\GovAssaiService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PrescriptionController extends Controller
 {
-    public function __construct(private readonly AuditService $audit)
+    public function __construct(
+        private readonly AuditService $audit,
+        private readonly GovAssaiService $govAssai,
+    )
     {
     }
 
@@ -70,10 +74,28 @@ class PrescriptionController extends Controller
         }
 
         if ($data['delivery_type'] === 'ENTREGA') {
+            $address = $attendance->citizen->address;
+
+            if (($address === null || trim($address) === '') && ! empty($attendance->citizen->cpf)) {
+                $govResult = $this->govAssai->fetchCitizenByCpf($attendance->citizen->cpf);
+                $govAddress = data_get($govResult, 'data.endereco', []);
+                $resolvedAddress = trim(implode(', ', array_filter([
+                    $govAddress['logradouro'] ?? null,
+                    $govAddress['numero'] ?? null,
+                    $govAddress['bairro'] ?? null,
+                    $govAddress['distrito'] ?? null,
+                ], fn ($value) => $value !== null && $value !== '')));
+
+                if ($resolvedAddress !== '') {
+                    $address = $resolvedAddress;
+                    $attendance->citizen->update(['address' => $resolvedAddress]);
+                }
+            }
+
             Delivery::create([
                 'prescription_id' => $prescription->id,
                 'status' => 'PENDENTE',
-                'address' => $attendance->citizen->address,
+                'address' => $address,
             ]);
         }
 

@@ -34,6 +34,11 @@ class Prescription extends Model
         return $this->belongsTo(Citizen::class);
     }
 
+    public function attendance(): BelongsTo
+    {
+        return $this->belongsTo(Attendance::class);
+    }
+
     public function dispensation(): HasOne
     {
         return $this->hasOne(Dispensation::class);

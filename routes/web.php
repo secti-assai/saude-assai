@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified', '2fa'])->group(function () {
 
     Route::middleware('role:recepcionista,admin_secti')->group(function () {
         Route::get('/recepcao', [ReceptionController::class, 'index'])->name('reception.index');
+        Route::get('/recepcao/cidadaos/cpf/{cpf}', [ReceptionController::class, 'lookupCitizenByCpf'])->name('reception.citizens.lookup');
         Route::post('/recepcao', [ReceptionController::class, 'store'])->name('reception.store');
     });
 
@@ -71,12 +72,13 @@ Route::middleware(['auth', 'verified', '2fa'])->group(function () {
 
     Route::middleware('role:medico_hospital,enfermeiro,admin_secti')->group(function () {
         Route::get('/hospital', [HospitalController::class, 'index'])->name('hospital.index');
+        Route::get('/hospital/cidadaos/cpf/{cpf}', [HospitalController::class, 'lookupCitizenByCpf'])->name('hospital.citizens.lookup');
         Route::post('/hospital', [HospitalController::class, 'store'])->name('hospital.store');
     });
 
     Route::middleware('role:entregador,admin_secti,farmaceutico')->group(function () {
         Route::get('/entregas', [DeliveryController::class, 'index'])->name('deliveries.index');
-        Route::post('/entregas/{delivery}', [DeliveryController::class, 'updateStatus'])->name('deliveries.update');
+        Route::put('/entregas/{delivery}', [DeliveryController::class, 'updateStatus'])->name('deliveries.update');
     });
 });
 

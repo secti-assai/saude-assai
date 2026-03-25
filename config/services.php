@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'gov_assai' => [
+        'base_url' => env('GOV_ASSAI_BASE_URL'),
+        'api_key' => env('GOV_ASSAI_API_KEY'),
+        'timeout' => env('GOV_ASSAI_TIMEOUT', 10),
+        'connect_timeout' => env('GOV_ASSAI_CONNECT_TIMEOUT', 5),
+    ],
+
 ];

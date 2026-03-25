@@ -24,7 +24,7 @@ class PharmacyController extends Controller
 
     public function index(): View
     {
-        $prescriptions = Prescription::with('citizen', 'items.medication')
+        $prescriptions = Prescription::with('citizen', 'attendance', 'items.medication')
             ->whereIn('status', ['ASSINADA', 'PENDENTE'])
             ->latest()
             ->get();

@@ -20,9 +20,9 @@
                 <div class="sa-card sa-fade-in">
                     <div class="flex items-start justify-between mb-4">
                         <div>
-                            <h4 class="font-bold text-gray-900">{{ $d->prescription->attendance->patient_name ?? '—' }}</h4>
+                            <h4 class="font-bold text-gray-900">{{ $d->prescription->citizen->full_name ?? '—' }}</h4>
                             <p class="text-xs text-gray-500 mt-0.5">
-                                {{ $d->prescription->medication ?? '—' }} · {{ $d->prescription->dosage ?? '' }}
+                                Senha: {{ $d->prescription->attendance->queue_password ?? '—' }}
                             </p>
                         </div>
                         @php
@@ -40,9 +40,17 @@
 
                     {{-- Address --}}
                     <div class="bg-gray-50 rounded-xl p-3 mb-4 text-sm text-gray-600">
+                        <div class="mb-2 space-y-1">
+                            @foreach($d->prescription->items as $item)
+                                <p>
+                                    <span class="font-medium text-gray-700">{{ $item->medication->name ?? 'Medicamento' }}</span>
+                                    <span class="text-gray-500">· {{ $item->dosage ?? 'Dose n/i' }} · {{ $item->frequency ?? 'Frequencia n/i' }} · Qtd: {{ $item->quantity }}</span>
+                                </p>
+                            @endforeach
+                        </div>
                         <div class="flex items-start gap-2">
                             <svg class="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
-                            <span>{{ $d->prescription->attendance->address ?? 'Endereço não informado' }}</span>
+                            <span>{{ $d->address ?? $d->prescription->citizen->address ?? 'Endereco nao informado' }}</span>
                         </div>
                     </div>
 
@@ -72,8 +80,8 @@
                                 Coordenadas GPS
                             </summary>
                             <div class="grid grid-cols-2 gap-2 mt-2">
-                                <input name="latitude" class="sa-input text-xs" placeholder="Latitude" value="{{ $d->latitude ?? '' }}">
-                                <input name="longitude" class="sa-input text-xs" placeholder="Longitude" value="{{ $d->longitude ?? '' }}">
+                                <input name="gps_lat" class="sa-input text-xs" placeholder="Latitude" value="{{ $d->gps_lat ?? '' }}">
+                                <input name="gps_lng" class="sa-input text-xs" placeholder="Longitude" value="{{ $d->gps_lng ?? '' }}">
                             </div>
                         </details>
                     </form>

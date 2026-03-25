@@ -55,13 +55,24 @@
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <label class="sa-label text-gray-700">Ou Cadastre um Novo Paciente Rápido</label>
                             <div class="space-y-3">
-                                <input type="text" name="new_citizen_name" class="sa-input text-sm" placeholder="Nome Completo">
+                                <input type="text" name="new_citizen_name" class="sa-input text-sm" placeholder="Nome Completo" id="new_citizen_name">
                                 <div class="grid grid-cols-2 gap-2">
-                                    <input type="text" name="new_citizen_cpf" class="sa-input text-sm" placeholder="CPF (Apenas números)" maxlength="14">
-                                    <input type="date" name="new_citizen_birth" class="sa-input text-sm">
+                                    <input type="text" name="new_citizen_cpf" id="new_citizen_cpf" class="sa-input text-sm" placeholder="CPF (000.000.000-00)" maxlength="14">
+                                    <input type="date" name="new_citizen_birth" id="new_citizen_birth" class="sa-input text-sm">
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        id="btn_lookup_cpf"
+                                        class="sa-btn-secondary text-sm"
+                                        data-url-template="{{ route('hospital.citizens.lookup', ['cpf' => '__CPF__']) }}"
+                                    >
+                                        Consultar CPF no Gov.Assai
+                                    </button>
+                                    <span id="gov_lookup_status" class="text-xs text-gray-500"></span>
                                 </div>
                             </div>
-                            <p class="text-xs text-gray-500 mt-2">Preencha apenas se não encontrou no campo ao lado.</p>
+                            <p class="text-xs text-gray-500 mt-2">Se o CPF nao for de Assai, o atendimento hospitalar continua normalmente com cadastro manual.</p>
                         </div>
                     </div>
                 </div>
@@ -225,7 +236,13 @@
         // UX interaction: disable "existing citizen" se "new citizen" is being typed
         document.addEventListener('DOMContentLoaded', function () {
             const selectCitizen = document.getElementById('citizen_id');
-            const newName = document.querySelector('input[name="new_citizen_name"]');
+            const newName = document.getElementById('new_citizen_name');
+            const cpfInput = document.getElementById('new_citizen_cpf');
+            const birthInput = document.getElementById('new_citizen_birth');
+            const lookupButton = document.getElementById('btn_lookup_cpf');
+            const lookupStatus = document.getElementById('gov_lookup_status');
+
+            const onlyDigits = (value) => (value || '').replace(/\D+/g, '');
             
             newName.addEventListener('input', function() {
                 if(this.value.length > 0) {
@@ -236,8 +253,59 @@
             selectCitizen.addEventListener('change', function() {
                 if(this.value !== "") {
                     newName.value = "";
-                    document.querySelector('input[name="new_citizen_cpf"]').value = "";
-                    document.querySelector('input[name="new_citizen_birth"]').value = "";
+                    cpfInput.value = "";
+                    birthInput.value = "";
+                    lookupStatus.textContent = '';
+                }
+            });
+
+            lookupButton.addEventListener('click', async function () {
+                const cpf = onlyDigits(cpfInput.value);
+
+                if (cpf.length !== 11) {
+                    lookupStatus.textContent = 'Informe um CPF valido com 11 digitos.';
+                    lookupStatus.className = 'text-xs text-red-600';
+                    return;
+                }
+
+                lookupStatus.textContent = 'Consultando Gov.Assai...';
+                lookupStatus.className = 'text-xs text-blue-600';
+
+                const url = lookupButton.dataset.urlTemplate.replace('__CPF__', cpf);
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    const payload = await response.json();
+
+                    if (response.ok && payload.success) {
+                        const cidadao = payload.data?.cidadao ?? {};
+
+                        if (!newName.value && cidadao.nome) {
+                            newName.value = cidadao.nome;
+                        }
+
+                        if (!birthInput.value && cidadao.data_nascimento) {
+                            birthInput.value = cidadao.data_nascimento;
+                        }
+
+                        selectCitizen.value = '';
+                        lookupStatus.textContent = 'CPF localizado. Dados preenchidos automaticamente.';
+                        lookupStatus.className = 'text-xs text-green-600';
+                        return;
+                    }
+
+                    lookupStatus.textContent = payload.message || 'CPF nao encontrado no Gov.Assai. Continue com cadastro manual.';
+                    lookupStatus.className = 'text-xs text-amber-700';
+                } catch (error) {
+                    lookupStatus.textContent = 'Falha ao consultar Gov.Assai. Continue com cadastro manual.';
+                    lookupStatus.className = 'text-xs text-amber-700';
                 }
             });
         });

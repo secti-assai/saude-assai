@@ -9,13 +9,18 @@ use App\Models\HospitalRecord;
 use App\Models\LediQueue;
 use App\Models\Triage;
 use App\Services\AuditService;
+use App\Services\GovAssaiService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class HospitalController extends Controller
 {
-    public function __construct(private readonly AuditService $audit)
+    public function __construct(
+        private readonly AuditService $audit,
+        private readonly GovAssaiService $govAssai,
+    )
     {
     }
 
@@ -33,14 +38,54 @@ class HospitalController extends Controller
         return view('hospital.index', compact('citizens', 'recentRecords'));
     }
 
+    public function lookupCitizenByCpf(Request $request, string $cpf): JsonResponse
+    {
+        if (! $this->govAssai->isValidCpfFormat($cpf)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'CPF invalido. Informe 11 digitos ou formato 000.000.000-00.',
+                'error_code' => 'INVALID_CPF_FORMAT',
+            ], 400);
+        }
+
+        $result = $this->govAssai->fetchCitizenByCpf($cpf);
+
+        $this->audit->log(
+            $request,
+            'M7',
+            'CONSULTAR_CPF_GOV_ASSAI',
+            Citizen::class,
+            null,
+            [
+                'cpf' => $this->govAssai->normalizeCpf($cpf),
+                'status' => $result['status'],
+                'success' => $result['success'],
+            ]
+        );
+
+        if ($result['success']) {
+            return response()->json([
+                'success' => true,
+                'message' => $result['message'],
+                'data' => $result['data'],
+            ], 200);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => $result['message'],
+            'error_code' => $result['error_code'],
+        ], $result['status']);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
             // 1. Identificação do Paciente
             'citizen_id' => ['nullable', 'exists:citizens,id'],
-            'new_citizen_name' => ['required_without:citizen_id', 'nullable', 'string', 'max:255'],
-            'new_citizen_cpf' => ['required_without:citizen_id', 'nullable', 'string', 'max:14'],
-            'new_citizen_birth' => ['required_without:citizen_id', 'nullable', 'date'],
+            'new_citizen_name' => ['nullable', 'string', 'max:255', 'required_without_all:citizen_id,new_citizen_cpf'],
+            'new_citizen_cpf' => ['required_without:citizen_id', 'nullable', 'string', 'regex:/^(\d{11}|\d{3}\.\d{3}\.\d{3}-\d{2})$/'],
+            'new_citizen_birth' => ['nullable', 'date', 'required_without_all:citizen_id,new_citizen_cpf'],
             
             // 2. Sinais Vitais (Triagem Expressa)
             'systolic_pressure' => ['nullable', 'numeric'],
@@ -68,10 +113,35 @@ class HospitalController extends Controller
         if (!empty($data['citizen_id'])) {
             $citizen = Citizen::find($data['citizen_id']);
         } else {
+            $normalizedCpf = $this->govAssai->normalizeCpf($data['new_citizen_cpf']);
+            $govLookup = $this->govAssai->fetchCitizenByCpf($normalizedCpf);
+            $govCitizenData = $govLookup['success'] && is_array($govLookup['data'])
+                ? $this->govAssai->mapCitizenDataForLocalCreate($govLookup['data'])
+                : [];
+
+            $resolvedName = trim((string) ($data['new_citizen_name'] ?? ($govCitizenData['name'] ?? '')));
+            $resolvedBirthDate = $data['new_citizen_birth'] ?? ($govCitizenData['birth_date'] ?? null);
+
+            if ($resolvedName === '' || $resolvedBirthDate === null) {
+                return back()
+                    ->withErrors([
+                        'new_citizen_name' => 'Nao foi possivel preencher automaticamente. Informe nome e data de nascimento para continuar.',
+                    ])
+                    ->withInput();
+            }
+
             $citizen = Citizen::create([
-                'full_name' => $data['new_citizen_name'],
-                'cpf' => $data['new_citizen_cpf'],
-                'birth_date' => $data['new_citizen_birth'],
+                'full_name' => $resolvedName,
+                'cpf' => $normalizedCpf,
+                'cpf_hash' => hash('sha256', $normalizedCpf),
+                'birth_date' => $resolvedBirthDate,
+                'social_name' => $govCitizenData['social_name'] ?? null,
+                'sexo' => $govCitizenData['sexo'] ?? null,
+                'phone' => $govCitizenData['phone'] ?? null,
+                'email' => $govCitizenData['email'] ?? null,
+                'cns' => $govCitizenData['cns'] ?? null,
+                'is_resident_assai' => (bool) ($govCitizenData['is_resident_assai'] ?? false),
+                'residence_validated_at' => now(),
             ]);
         }
 
@@ -82,6 +152,7 @@ class HospitalController extends Controller
             'reception_user_id' => $request->user()?->id,
             'care_type' => 'HOSPITALAR',
             'queue_password' => 'HOSP-' . rand(1000, 9999), // Senha gerada apenas para tracking interno
+            'residence_status' => $citizen->is_resident_assai ? 'RESIDENTE' : 'NAO_RESIDENTE',
             'status' => 'ENCERRADO',
             'arrived_at' => now(),
         ]);

@@ -25,8 +25,8 @@
                             {{ $a->queue_password }}
                         </span>
                         <div>
-                            <h3 class="font-bold text-gray-900">{{ $a->patient_name }}</h3>
-                            <p class="text-xs text-gray-500">CPF: {{ $a->cpf ?? '—' }} · SUS: {{ $a->sus_card ?? '—' }}</p>
+                            <h3 class="font-bold text-gray-900">{{ $a->citizen->full_name ?? '—' }}</h3>
+                            <p class="text-xs text-gray-500">CPF: {{ $a->citizen->cpf ?? '—' }} · SUS: {{ $a->citizen->cns ?? '—' }}</p>
                         </div>
                     </div>
                     <span class="sa-badge sa-badge-warning">Aguardando Triagem</span>
@@ -44,7 +44,10 @@
                         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                             <div class="bg-gray-50 rounded-xl p-3 text-center">
                                 <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">PA (mmHg)</label>
-                                <input name="blood_pressure" class="sa-input text-center" placeholder="120/80">
+                                <div class="grid grid-cols-2 gap-1">
+                                    <input name="systolic_pressure" type="number" class="sa-input text-center" placeholder="120">
+                                    <input name="diastolic_pressure" type="number" class="sa-input text-center" placeholder="80">
+                                </div>
                             </div>
                             <div class="bg-gray-50 rounded-xl p-3 text-center">
                                 <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">FC (bpm)</label>
@@ -56,12 +59,29 @@
                             </div>
                             <div class="bg-gray-50 rounded-xl p-3 text-center">
                                 <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">SpO₂ (%)</label>
-                                <input name="oxygen_saturation" type="number" class="sa-input text-center" placeholder="98">
+                                <input name="spo2" type="number" class="sa-input text-center" placeholder="98">
                             </div>
                             <div class="bg-gray-50 rounded-xl p-3 text-center">
                                 <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Peso (kg)</label>
                                 <input name="weight" class="sa-input text-center" placeholder="70">
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="sa-label">Nivel de Consciencia *</label>
+                            <select name="consciousness_level" class="sa-select" required>
+                                <option value="">Selecione...</option>
+                                <option value="LUCIDO">Lucido</option>
+                                <option value="CONFUSO">Confuso</option>
+                                <option value="SONOLENTO">Sonolento</option>
+                                <option value="INCONSCIENTE">Inconsciente</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="sa-label">HGT (mg/dL)</label>
+                            <input name="hgt" type="number" class="sa-input" placeholder="100">
                         </div>
                     </div>
 
@@ -95,7 +115,7 @@
                     {{-- Complaint --}}
                     <div>
                         <label class="sa-label">Queixa Principal</label>
-                        <textarea name="complaint" rows="2" class="sa-input" placeholder="Descreva a queixa principal do paciente..."></textarea>
+                        <textarea name="nursing_history" rows="2" class="sa-input" placeholder="Descreva a queixa principal do paciente..."></textarea>
                     </div>
 
                     <div class="flex justify-end pt-2">
