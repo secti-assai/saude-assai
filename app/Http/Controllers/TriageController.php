@@ -31,7 +31,7 @@ class TriageController extends Controller
         $attendances = Attendance::with('citizen')
             ->doesntHave('triage')
             ->when(! $isCentral && $user?->health_unit_id, fn ($query) => $query->where('health_unit_id', $user->health_unit_id))
-            ->latest()
+            ->oldest()
             ->get();
 
         return view('triage.index', compact('attendances'));

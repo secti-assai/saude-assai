@@ -12,6 +12,18 @@ class PortalContent extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
 
+    // app/Models/PortalContent.php
+    protected $fillable = [
+        'title',
+        'type',
+        'excerpt',
+        'body',
+        'cover_image',
+        'published_at',
+        'published',
+        'metadata'
+    ];
+
     protected $casts = [
         'published' => 'boolean',
         'published_at' => 'datetime',
