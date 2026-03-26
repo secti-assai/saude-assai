@@ -17,6 +17,9 @@ class Delivery extends Model
         'failure_reason',
         'signature_data',
         'confirmed_at',
+        'latitude',
+        'longitude',
+        'signature_path',
     ];
 
     protected $casts = ['confirmed_at' => 'datetime'];
