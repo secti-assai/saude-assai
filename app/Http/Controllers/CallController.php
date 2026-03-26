@@ -10,6 +10,10 @@ class CallController extends Controller
 {
     public function call(Request $request, Attendance $attendance)
     {
+        $request->validate([
+            'type' => ['required', 'in:TRIAGEM,ATENDIMENTO'],
+        ]);
+
         $call = \App\Models\Call::create([
             'attendance_id' => $attendance->id,
             'type' => $request->type, // TRIAGEM ou ATENDIMENTO
@@ -22,5 +26,13 @@ class CallController extends Controller
             'success' => true,
             'call' => $call->load('attendance.citizen')
         ]);
+    }
+
+    public function panel($unit)
+    {
+        $unit = \App\Models\HealthUnit::where('id', $unit)
+            ->firstOrFail();
+
+        return view('panel.calls', compact('unit'));
     }
 }
