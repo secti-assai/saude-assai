@@ -23,8 +23,7 @@ class PrescriptionController extends Controller
     public function __construct(
         private readonly AuditService $audit,
         private readonly GovAssaiService $govAssai,
-    )
-    {
+    ) {
     }
 
     public function index(): View
@@ -35,15 +34,15 @@ class PrescriptionController extends Controller
         $isCentral = in_array($user?->role, ['admin_secti', 'gestor', 'auditor'], true);
 
         $prescriptions = Prescription::with('citizen', 'attendance', 'items.medication')
-            ->when(! $isCentral && $user?->health_unit_id, function ($query) use ($user) {
-                $query->whereHas('attendance', fn ($q) => $q->where('health_unit_id', $user->health_unit_id));
+            ->when(!$isCentral && $user?->health_unit_id, function ($query) use ($user) {
+                $query->whereHas('attendance', fn($q) => $q->where('health_unit_id', $user->health_unit_id));
             })
             ->latest()
             ->take(30)
             ->get();
 
         $attendances = Attendance::with('citizen')
-            ->when(! $isCentral && $user?->health_unit_id, fn ($query) => $query->where('health_unit_id', $user->health_unit_id))
+            ->when(!$isCentral && $user?->health_unit_id, fn($query) => $query->where('health_unit_id', $user->health_unit_id))
             ->latest()
             ->take(30)
             ->get();
@@ -66,11 +65,11 @@ class PrescriptionController extends Controller
         $normalizedCpf = $this->govAssai->normalizeCpf($term);
 
         $attendances = Attendance::with('citizen')
-            ->when(! $isCentral && $user?->health_unit_id, fn ($query) => $query->where('health_unit_id', $user->health_unit_id))
+            ->when(!$isCentral && $user?->health_unit_id, fn($query) => $query->where('health_unit_id', $user->health_unit_id))
             ->where(function ($query) use ($term, $normalizedCpf) {
-                $query->where('queue_password', 'ilike', '%'.$term.'%')
+                $query->where('queue_password', 'ilike', '%' . $term . '%')
                     ->orWhereHas('citizen', function ($citizenQuery) use ($term, $normalizedCpf) {
-                        $citizenQuery->where('full_name', 'ilike', '%'.$term.'%');
+                        $citizenQuery->where('full_name', 'ilike', '%' . $term . '%');
 
                         if (strlen($normalizedCpf) === 11) {
                             $citizenQuery->orWhere('cpf_hash', hash('sha256', $normalizedCpf));
@@ -119,7 +118,7 @@ class PrescriptionController extends Controller
         $attendance = Attendance::with('citizen')->findOrFail((int) $data['attendance_id']);
         $this->authorize('prescribe', $attendance);
 
-        if (! empty($attendance->citizen?->cpf)) {
+        if (!empty($attendance->citizen?->cpf)) {
             SyncCitizenFromGovAssaiJob::dispatch($attendance->citizen->id);
         }
 
@@ -140,7 +139,7 @@ class PrescriptionController extends Controller
 
             if (!$medication) {
                 throw ValidationException::withMessages([
-                'items' => 'Medicamento inválido ou não cadastrado.'
+                    'items' => 'Medicamento inválido ou não cadastrado.'
                 ]);
             }
             PrescriptionItem::create([
@@ -157,7 +156,7 @@ class PrescriptionController extends Controller
         if ($data['delivery_type'] === 'ENTREGA') {
             $address = $attendance->citizen->address;
 
-            if (($address === null || trim($address) === '') && ! empty($attendance->citizen->cpf)) {
+            if (($address === null || trim($address) === '') && !empty($attendance->citizen->cpf)) {
                 $govResult = $this->govAssai->fetchCitizenByCpf($attendance->citizen->cpf);
                 $govAddress = data_get($govResult, 'data.endereco', []);
                 $resolvedAddress = trim(implode(', ', array_filter([
@@ -165,7 +164,7 @@ class PrescriptionController extends Controller
                     $govAddress['numero'] ?? null,
                     $govAddress['bairro'] ?? null,
                     $govAddress['distrito'] ?? null,
-                ], fn ($value) => $value !== null && $value !== '')));
+                ], fn($value) => $value !== null && $value !== '')));
 
                 if ($resolvedAddress !== '') {
                     $address = $resolvedAddress;
@@ -190,12 +189,16 @@ class PrescriptionController extends Controller
         DispatchLediRecord::dispatch($queue->id);
         $this->audit->log($request, 'M5', 'PRESCRICAO_DIGITAL', Prescription::class, $prescription->id);
 
+        $attendance->update([
+            'status' => 'ENCERRADO'
+        ]);
+
         return back()->with('status', 'Prescricao digital emitida com sucesso.');
     }
 
     private function resolveMedicationId(array $item): int
     {
-        if (! empty($item['medication_id'])) {
+        if (!empty($item['medication_id'])) {
             return (int) $item['medication_id'];
         }
 
@@ -226,6 +229,6 @@ class PrescriptionController extends Controller
             return $cpf;
         }
 
-        return substr($digits, 0, 3).'.***.***-'.substr($digits, -2);
+        return substr($digits, 0, 3) . '.***.***-' . substr($digits, -2);
     }
 }

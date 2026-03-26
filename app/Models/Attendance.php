@@ -52,4 +52,9 @@ class Attendance extends Model
     {
         return $this->hasMany(Call::class);
     }
+
+    public function healthUnit()
+    {
+        return $this->belongsTo(HealthUnit::class);
+    }
 }

@@ -12,29 +12,23 @@ return new class extends Migration {
     {
         Schema::create('calls', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::create('calls', function (Blueprint $table) {
-            $table->id();
 
             $table->foreignId('attendance_id')->constrained()->cascadeOnDelete();
 
             $table->string('type'); // TRIAGEM | ATENDIMENTO
-            $table->string('room')->nullable(); // sala / guichê
+            $table->string('room')->nullable();
 
             $table->timestamp('called_at')->nullable();
             $table->timestamp('finished_at')->nullable();
 
-            $table->string('status')->default('AGUARDANDO'); // AGUARDANDO | CHAMADO | FINALIZADO
+            $table->string('status')->default('AGUARDANDO');
 
             $table->timestamps();
         });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('calls');
     }
 };

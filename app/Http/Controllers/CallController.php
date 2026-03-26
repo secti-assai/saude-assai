@@ -14,6 +14,7 @@ class CallController extends Controller
 {
     public function call(Request $request, QueueService $queueService, AuditService $auditService)
     {
+
         $doctor = $request->user();
         if (!$doctor instanceof User) {
             return response()->json(['success' => false, 'message' => 'Usuário não autenticado.'], 401);
@@ -63,6 +64,7 @@ class CallController extends Controller
         }
 
         $call = Call::create([
+
             'attendance_id' => $attendance->id,
             'type' => $request->type, // TRIAGEM ou ATENDIMENTO
             'room' => $request->room,
@@ -77,5 +79,13 @@ class CallController extends Controller
             'success' => true,
             'call' => $call->load('attendance.citizen')
         ]);
+    }
+
+    public function panel($unit)
+    {
+        $unit = \App\Models\HealthUnit::where('id', $unit)
+            ->firstOrFail();
+
+        return view('panel.calls', compact('unit'));
     }
 }

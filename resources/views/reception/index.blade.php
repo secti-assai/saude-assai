@@ -181,6 +181,7 @@
                     <th>Residência</th>
                     <th>Status</th>
                     <th>Hora</th>
+                    <th>Ação</th>
                 </tr>
             </thead>
             <tbody>
@@ -218,6 +219,16 @@
                                 class="sa-badge {{ $statusColors[$a->status] ?? 'sa-badge-gray' }}">{{ $a->status }}</span>
                         </td>
                         <td class="text-gray-500 text-xs">{{ $a->created_at->format('H:i') }}</td>
+                        <td>
+                            @if($a->status !== 'ENCERRADO')
+                                <button class="call-btn sa-btn-primary text-xs" data-id="{{ $a->id }}"
+                                    data-name="{{ $a->citizen->full_name }}">
+                                    Chamar
+                                </button>
+                            @else
+                                <span class="text-gray-400 text-xs">Finalizado</span>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
@@ -228,6 +239,39 @@
         </table>
     </div>
     </div>
+    </div>
+
+    <div id="call-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+
+            <h3 class="text-lg font-semibold mb-4">
+                Chamar paciente
+            </h3>
+
+            <p id="call-patient-name" class="text-sm text-gray-600 mb-4"></p>
+
+            <div class="mb-3">
+                <label class="text-xs text-gray-600">Sala / Guichê</label>
+                <input id="call-room" class="sa-input mt-1" placeholder="Ex: Sala 2 ou Guichê 1">
+            </div>
+
+            <div class="space-y-3">
+                <button data-type="TRIAGEM" class="call-type-btn w-full sa-btn-primary text-sm">
+                    🩺 Triagem
+                </button>
+
+                <button data-type="ATENDIMENTO" class="call-type-btn w-full sa-btn-primary text-sm">
+                    👨‍⚕️ Atendimento
+                </button>
+            </div>
+
+            <div class="flex justify-end mt-4">
+                <button id="cancel-call" class="text-sm text-gray-500 hover:underline">
+                    Cancelar
+                </button>
+            </div>
+
+        </div>
     </div>
 
     <script>
@@ -456,6 +500,79 @@
                 window.scrollTo(0, parseInt(savedScroll));
                 sessionStorage.removeItem('scrollY');
             }
+        });
+
+        // ── CHAMADA DE PACIENTE ────────────────────────────────────────────
+        let selectedAttendanceId = null;
+
+        const modal = document.getElementById('call-modal');
+        const patientNameEl = document.getElementById('call-patient-name');
+
+        // abrir modal
+        document.querySelectorAll('.call-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectedAttendanceId = btn.dataset.id;
+
+                if (patientNameEl) {
+                    patientNameEl.textContent = btn.dataset.name;
+                }
+
+                modal.classList.remove('hidden');
+            });
+        });
+
+        // cancelar
+        document.getElementById('cancel-call')?.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+
+        // clique fora fecha
+        modal?.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+
+        // escolher tipo
+        document.querySelectorAll('.call-type-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+
+                const type = btn.dataset.type;
+
+                const room = document.getElementById('call-room').value;
+
+                try {
+                    const response = await fetch(`/calls/${selectedAttendanceId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document
+                                .querySelector('meta[name="csrf-token"]')
+                                .content
+                        },
+                        body: JSON.stringify({
+                            type: type,
+                            room: room 
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        modal.classList.add('hidden');
+
+                        // feedback simples
+                        alert('Paciente chamado com sucesso!');
+
+                        // opcional: atualizar tela
+                        location.reload();
+                    }
+
+                } catch (error) {
+                    alert('Erro ao chamar paciente');
+                }
+
+            });
         });
     </script>
 </x-app-layout>
