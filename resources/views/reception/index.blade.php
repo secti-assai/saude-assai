@@ -181,7 +181,7 @@
                     <th>Residência</th>
                     <th>Status</th>
                     <th>Hora</th>
-                    <th>Ação</th>
+                    <!--<th>Ação</th>-->
                 </tr>
             </thead>
             <tbody>
@@ -221,10 +221,10 @@
                         <td class="text-gray-500 text-xs">{{ $a->created_at->format('H:i') }}</td>
                         <td>
                             @if($a->status !== 'ENCERRADO')
-                                <button class="call-btn sa-btn-primary text-xs" data-id="{{ $a->id }}"
+                                <!--<button class="call-btn sa-btn-primary text-xs" data-id="{{ $a->id }}"
                                     data-name="{{ $a->citizen->full_name }}">
                                     Chamar
-                                </button>
+                                </button>-->
                             @else
                                 <span class="text-gray-400 text-xs">Finalizado</span>
                             @endif
@@ -241,6 +241,7 @@
     </div>
     </div>
 
+<!--
     <div id="call-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
 
@@ -272,7 +273,7 @@
             </div>
 
         </div>
-    </div>
+    </div>-->
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

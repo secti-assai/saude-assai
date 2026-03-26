@@ -13,22 +13,22 @@ Route::middleware(['api.key', 'webhook.govassai'])->group(function () {
     Route::post('/integracoes/gov-assai/webhooks/cidadaos.updated', [GovAssaiWebhookController::class, 'citizenUpdated']);
 });
 
-Route::get('/calls/{unit}', function ($unit) {
+//Route::get('/calls/{unit}', function ($unit) {
 
-    $unit = \App\Models\HealthUnit::where('id', $unit)
-        ->firstOrFail();
+    //$unit = \App\Models\HealthUnit::where('id', $unit)
+        //->firstOrFail();
 
-    $calls = \App\Models\Call::with('attendance.citizen')
-        ->whereHas('attendance', function ($q) use ($unit) {
-            $q->where('health_unit_id', $unit->id);
-        })
-        ->where('status', 'CHAMADO')
-        ->latest('called_at')
-        ->take(7)
-        ->get();
+    //$calls = \App\Models\Call::with('attendance.citizen')
+        //->whereHas('attendance', function ($q) use ($unit) {
+            //$q->where('health_unit_id', $unit->id);
+        //})
+        //->where('status', 'CHAMADO')
+        //->latest('called_at')
+        //->take(7)
+        //->get();
 
-    return response()->json([
-        'current' => $calls->first(),
-        'previous' => $calls->slice(1)->values()
-    ]);
-});
+    //return response()->json([
+       // 'current' => $calls->first(),
+        //'previous' => $calls->slice(1)->values()
+    //]);
+//});
