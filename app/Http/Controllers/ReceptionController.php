@@ -53,6 +53,13 @@ class ReceptionController extends Controller
         }
 
         $attendances = $query->whereDate('created_at', today())
+            ->orderByRaw("
+                CASE
+                    WHEN status = 'ENCERRADO' THEN 2
+                    WHEN status = 'TRIAGEM_CONCLUIDA' THEN 1
+                    ELSE 0
+                END
+            ")
             ->latest()
             ->get();
 

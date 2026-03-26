@@ -42,7 +42,7 @@ Route::middleware(['auth', 'verified', '2fa'])->group(function () {
         Route::get('/admin/usuarios', [AdminController::class, 'users'])->name('admin.users');
         Route::post('/admin/usuarios', [AdminController::class, 'storeUser'])->name('admin.users.store');
         Route::post('/admin/usuarios/{user}', [AdminController::class, 'destroy'])->name('admin.users.destroy');
-        
+
         Route::get('/admin/conteudos', [PortalController::class, 'adminIndex'])->name('admin.portal');
         Route::post('/admin/conteudos', [PortalController::class, 'store'])->name('admin.portal.store');
         Route::post('/admin/conteudos/upload-imagem', [PortalController::class, 'uploadImage'])->name('admin.portal.upload-image');
@@ -71,6 +71,7 @@ Route::middleware(['auth', 'verified', '2fa'])->group(function () {
 
     Route::middleware('role:farmaceutico,admin_secti')->group(function () {
         Route::get('/farmacia', [PharmacyController::class, 'index'])->name('pharmacy.index');
+        Route::post('/farmacia/entregas/{delivery}/reassign', [PharmacyController::class, 'reassign'])->name('pharmacy.reassign');
         Route::post('/farmacia/dispensar/{prescription}', [PharmacyController::class, 'dispense'])->name('pharmacy.dispense');
     });
 
@@ -87,12 +88,15 @@ Route::middleware(['auth', 'verified', '2fa'])->group(function () {
     });
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 // Cadastro rápido de medicamento para prescrições
 use App\Http\Controllers\PrescriptionMedicationController;
 Route::post('/prescriptions/medications', [PrescriptionMedicationController::class, 'store'])->name('prescriptions.medications.store');
 
 
-Route::post('/calls/{attendance}', [CallController::class, 'call'])
-    ->name('calls.call');
+Route::get('/painel/{unit}', [CallController::class, 'panel'])
+    ->name('calls.panel');
+
+    Route::post('/calls/{attendance}', [CallController::class, 'call']);
+
