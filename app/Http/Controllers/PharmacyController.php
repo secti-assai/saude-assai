@@ -31,7 +31,16 @@ class PharmacyController extends Controller
         $search = trim((string) $request->input('search'));
         $searchDigits = preg_replace('/\D+/', '', $search) ?? '';
 
-        $applyHealthUnitFilter = function (Builder $query) use ($user): void {
+        // Definimos quem pode ver TUDO (Gestores da cidade ou a própria Farmácia se for centralizada)
+        $isCentral = in_array($user?->role, ['admin_secti', 'gestor', 'auditor', 'farmacia', 'farmaceutico'], true);
+
+        $applyHealthUnitFilter = function (Builder $query) use ($user, $isCentral): void {
+            // Se o usuário for central, aborta o filtro e mostra as receitas de todas as UBSs
+            if ($isCentral) {
+                return;
+            }
+
+            // Caso contrário (se for uma farmácia de bairro específica), filtra só as daquela UBS
             $query->when($user?->health_unit_id, function (Builder $q) use ($user) {
                 $q->where(function (Builder $nested) use ($user) {
                     $nested->whereHas('attendance', fn(Builder $q2) => $q2->where('health_unit_id', $user->health_unit_id))
