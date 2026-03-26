@@ -66,6 +66,8 @@ class PrescriptionController extends Controller
 
         $attendances = Attendance::with('citizen')
             ->when(!$isCentral && $user?->health_unit_id, fn($query) => $query->where('health_unit_id', $user->health_unit_id))
+            ->where('status', '!=', 'ENCERRADO')
+            ->whereDoesntHave('prescriptions')
             ->where(function ($query) use ($term, $normalizedCpf) {
                 $query->where('queue_password', 'ilike', '%' . $term . '%')
                     ->orWhereHas('citizen', function ($citizenQuery) use ($term, $normalizedCpf) {
@@ -117,6 +119,13 @@ class PrescriptionController extends Controller
 
         $attendance = Attendance::with('citizen')->findOrFail((int) $data['attendance_id']);
         $this->authorize('prescribe', $attendance);
+
+        $alreadyPrescribed = Prescription::where('attendance_id', $attendance->id)->exists();
+        if ($alreadyPrescribed) {
+            throw ValidationException::withMessages([
+                'attendance_id' => 'Este atendimento já possui prescrição emitida.'
+            ]);
+        }
 
         if (!empty($attendance->citizen?->cpf)) {
             SyncCitizenFromGovAssaiJob::dispatch($attendance->citizen->id);
