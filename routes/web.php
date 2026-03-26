@@ -71,7 +71,6 @@ Route::middleware(['auth', 'verified', '2fa'])->group(function () {
 
     Route::middleware('role:farmaceutico,admin_secti')->group(function () {
         Route::get('/farmacia', [PharmacyController::class, 'index'])->name('pharmacy.index');
-        Route::post('/farmacia/entregas/{delivery}/reassign', [PharmacyController::class, 'reassign'])->name('pharmacy.reassign');
         Route::post('/farmacia/dispensar/{prescription}', [PharmacyController::class, 'dispense'])->name('pharmacy.dispense');
     });
 
