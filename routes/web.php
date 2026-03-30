@@ -32,9 +32,26 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:agendador')
         ->name('women-clinic.agendador');
 
+<<<<<<< HEAD
     Route::post('/clinica-mulher/agendamentos/iniciar', [WomenClinicController::class, 'startScheduleFlow'])
         ->middleware('role:agendador')
         ->name('women-clinic.schedule.start');
+=======
+    Route::middleware('role:admin_secti')->group(function () {
+        Route::resource('admin/health-units', App\Http\Controllers\Admin\HealthUnitController::class, ['as' => 'admin']);
+        Route::get('/admin/usuarios', [AdminController::class, 'users'])->name('admin.users');
+        Route::post('/admin/usuarios', [AdminController::class, 'storeUser'])->name('admin.users.store');
+        Route::post('/admin/usuarios/{user}', [AdminController::class, 'destroy'])->name('admin.users.destroy');
+
+        Route::get('/admin/conteudos', [PortalController::class, 'adminIndex'])->name('admin.portal');
+        Route::post('/admin/conteudos', [PortalController::class, 'store'])->name('admin.portal.store');
+        Route::post('/admin/conteudos/upload-imagem', [PortalController::class, 'uploadImage'])->name('admin.portal.upload-image');
+        Route::patch('/admin/conteudos/{content}/toggle', [PortalController::class, 'togglePublish'])->name('admin.portal.toggle');
+        Route::get('/admin/conteudos/{content}/edit', [PortalController::class, 'edit'])->name('admin.portal.edit');
+        Route::put('/admin/conteudos/{content}', [PortalController::class, 'update'])->name('admin.portal.update');
+        Route::post('/admin/conteudos/{content}', [PortalController::class, 'destroy'])->name('admin.portal.destroy');
+    });
+>>>>>>> 90060f6bf2ff2625685f09415461be0c5397a6a8
 
     Route::post('/clinica-mulher/agendamentos/verificar-identidade', [WomenClinicController::class, 'verifyScheduleIdentity'])
         ->middleware('role:agendador')
@@ -48,9 +65,17 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:medico_clinica')
         ->name('women-clinic.medico');
 
+<<<<<<< HEAD
     Route::post('/clinica-mulher/agendamentos', [WomenClinicController::class, 'schedule'])
         ->middleware(['role:agendador', 'permission:women_clinic.schedule'])
         ->name('women-clinic.schedule');
+=======
+    Route::middleware('role:farmaceutico,admin_secti')->group(function () {
+        Route::get('/farmacia', [PharmacyController::class, 'index'])->name('pharmacy.index');
+        Route::post('/farmacia/entregas/{delivery}/reassign', [PharmacyController::class, 'reassign'])->name('pharmacy.reassign');
+        Route::post('/farmacia/dispensar/{prescription}', [PharmacyController::class, 'dispense'])->name('pharmacy.dispense');
+    });
+>>>>>>> 90060f6bf2ff2625685f09415461be0c5397a6a8
 
     Route::post('/clinica-mulher/agendamentos/{womenClinicAppointment}/check-in', [WomenClinicController::class, 'checkIn'])
         ->middleware(['role:recepcao_clinica', 'permission:women_clinic.checkin'])
@@ -109,4 +134,15 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
+
+// Cadastro rápido de medicamento para prescrições
+use App\Http\Controllers\PrescriptionMedicationController;
+Route::post('/prescriptions/medications', [PrescriptionMedicationController::class, 'store'])->name('prescriptions.medications.store');
+
+
+Route::get('/painel/{unit}', [CallController::class, 'panel'])
+    ->name('calls.panel');
+
+    Route::post('/calls/{attendance}', [CallController::class, 'call']);
+
