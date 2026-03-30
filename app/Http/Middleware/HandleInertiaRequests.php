@@ -43,11 +43,11 @@ class HandleInertiaRequests extends Middleware
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
                     'profile' => match($request->user()->role) {
-                        'admin_secti', 'gestor' => 'admin',
-                        'farmaceutico' => 'pharmacist',
-                        'medico_ubs', 'medico_hospital' => 'doctor',
-                        'enfermeiro' => 'nurse',
-                        'recepcionista' => 'receptionist',
+                        'agendador' => 'clinic_scheduler',
+                        'recepcao_clinica' => 'clinic_reception',
+                        'medico_clinica' => 'clinic_doctor',
+                        'recepcao_farmacia' => 'pharmacy_reception',
+                        'atendimento_farmacia' => 'pharmacy_attendant',
                         default => 'citizen',
                     }
                 ] : null,

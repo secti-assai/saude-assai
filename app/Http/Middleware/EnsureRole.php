@@ -12,7 +12,15 @@ class EnsureRole
     {
         $user = $request->user();
 
-        if (! $user || ! in_array($user->role, $roles, true)) {
+        if (! $user) {
+            abort(403, 'Acesso negado para este perfil.');
+        }
+
+        if ($user->role === 'admin') {
+            return $next($request);
+        }
+
+        if (! in_array($user->role, $roles, true)) {
             abort(403, 'Acesso negado para este perfil.');
         }
 

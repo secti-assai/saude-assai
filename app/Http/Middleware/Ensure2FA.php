@@ -12,11 +12,11 @@ class Ensure2FA
      * Perfis que DEVEM ter 2FA ativo para acessar rotas autenticadas.
      */
     private const REQUIRED_ROLES = [
-        'admin_secti',
-        'gestor',
-        'medico_ubs',
-        'medico_hospital',
-        'farmaceutico',
+        'agendador',
+        'recepcao_clinica',
+        'medico_clinica',
+        'recepcao_farmacia',
+        'atendimento_farmacia',
     ];
 
     public function handle(Request $request, Closure $next): Response

@@ -2,18 +2,15 @@
 @php
     $user = Auth::user();
     $role = $user->role ?? '';
+    $isAdmin = $role === 'admin';
     $navItems = [
-        ['route' => 'dashboard', 'match' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'chart-bar', 'roles' => '*'],
-        ['route' => 'reception.index', 'match' => 'reception.*', 'label' => 'Recepção', 'icon' => 'clipboard-list', 'roles' => 'recepcionista,admin_secti'],
-        ['route' => 'triage.index', 'match' => 'triage.*', 'label' => 'Triagem', 'icon' => 'heart', 'roles' => 'enfermeiro,admin_secti'],
-        ['route' => 'prescriptions.index', 'match' => 'prescriptions.*', 'label' => 'Prescrições', 'icon' => 'document-text', 'roles' => 'medico_ubs,medico_hospital,admin_secti'],
-        ['route' => 'pharmacy.index', 'match' => 'pharmacy.*', 'label' => 'Farmácia', 'icon' => 'beaker', 'roles' => 'farmaceutico,admin_secti'],
-        ['route' => 'hospital.index', 'match' => 'hospital.*', 'label' => 'Hospital', 'icon' => 'building-office', 'roles' => 'medico_hospital,enfermeiro,admin_secti'],
-        ['route' => 'deliveries.index', 'match' => 'deliveries.*', 'label' => 'Entregas', 'icon' => 'truck', 'roles' => 'entregador,admin_secti,farmaceutico'],
-        ['route' => 'reports.conformity', 'match' => 'reports.*', 'label' => 'Relatórios', 'icon' => 'chart-pie', 'roles' => 'admin_secti,gestor,auditor'],
-        ['route' => 'admin.users', 'match' => 'admin.users', 'label' => 'Usuários', 'icon' => 'users', 'roles' => 'admin_secti'],
-        ['route' => 'admin.health-units.index', 'match' => 'admin.health-units.*', 'label' => 'Unidades de Saúde', 'icon' => 'building-office-2', 'roles' => 'admin_secti,gestor'],
-        ['route' => 'admin.portal', 'match' => 'admin.portal', 'label' => 'Portal / Notícias', 'icon' => 'globe-alt', 'roles' => 'admin_secti,gestor'],
+        ['route' => 'admin.reports', 'match' => 'admin.reports', 'label' => 'Admin - Relatórios', 'icon' => 'chart-bar', 'roles' => 'admin'],
+        ['route' => 'admin.users', 'match' => 'admin.users', 'label' => 'Admin - Usuários', 'icon' => 'users', 'roles' => 'admin'],
+        ['route' => 'women-clinic.agendador', 'match' => 'women-clinic.agendador', 'label' => 'Clínica - Agendador', 'icon' => 'document-text', 'roles' => 'agendador'],
+        ['route' => 'women-clinic.recepcao', 'match' => 'women-clinic.recepcao', 'label' => 'Clínica - Recepção', 'icon' => 'clipboard-list', 'roles' => 'recepcao_clinica'],
+        ['route' => 'women-clinic.medico', 'match' => 'women-clinic.medico', 'label' => 'Clínica - Médico', 'icon' => 'heart', 'roles' => 'medico_clinica'],
+        ['route' => 'central-pharmacy.recepcao', 'match' => 'central-pharmacy.recepcao', 'label' => 'Farmácia - Recepção', 'icon' => 'beaker', 'roles' => 'recepcao_farmacia'],
+        ['route' => 'central-pharmacy.atendimento', 'match' => 'central-pharmacy.atendimento', 'label' => 'Farmácia - Atendimento', 'icon' => 'users', 'roles' => 'atendimento_farmacia'],
     ];
 @endphp
 
@@ -35,7 +32,7 @@
     <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         @foreach ($navItems as $item)
             @php
-                $allowed = $item['roles'] === '*' || collect(explode(',', $item['roles']))->contains($role);
+                $allowed = $isAdmin || $item['roles'] === '*' || collect(explode(',', $item['roles']))->contains($role);
                 $active = request()->routeIs($item['match']);
             @endphp
             @if ($allowed)
@@ -68,7 +65,6 @@
                     </button>
                 </x-slot>
                 <x-slot name="content">
-                    <x-dropdown-link :href="route('profile.edit')">Meu Perfil</x-dropdown-link>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <x-dropdown-link :href="route('logout')"
@@ -120,7 +116,7 @@
     <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         @foreach ($navItems as $item)
             @php
-                $allowed = $item['roles'] === '*' || collect(explode(',', $item['roles']))->contains($role);
+                $allowed = $isAdmin || $item['roles'] === '*' || collect(explode(',', $item['roles']))->contains($role);
                 $active = request()->routeIs($item['match']);
             @endphp
             @if ($allowed)

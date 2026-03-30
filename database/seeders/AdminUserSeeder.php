@@ -13,13 +13,12 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         $unitId = HealthUnit::where('kind', 'UBS')->value('id');
-        $hospitalId = HealthUnit::where('kind', 'HOSPITAL')->value('id');
 
-        // Admin
+        // Admin global (acesso total para testes)
         User::updateOrCreate(
-            ['email' => 'admin@saudeassai.local'],
+            ['email' => 'admin.teste@saudeassai.local'],
             [
-                'name' => 'Administrador SECTI',
+                'name' => 'Administrador de Teste',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_ADMIN,
                 'health_unit_id' => $unitId,
@@ -27,61 +26,61 @@ class AdminUserSeeder extends Seeder
             ]
         );
 
-        // Médico UBS
+        // Agendador (Clinica da Mulher)
         User::updateOrCreate(
-            ['email' => 'medico.ubs@saudeassai.local'],
+            ['email' => 'agendador@saudeassai.local'],
             [
-                'name' => 'Médico Clínico (UBS)',
+                'name' => 'Agendador Clinica da Mulher',
                 'password' => Hash::make('password'),
-                'role' => User::ROLE_MEDICO_UBS,
+                'role' => User::ROLE_AGENDADOR,
                 'health_unit_id' => $unitId,
                 'email_verified_at' => now(),
             ]
         );
 
-        // Médico Hospital (M7)
+        // Recepcao Clinica da Mulher
         User::updateOrCreate(
-            ['email' => 'medico.hospital@saudeassai.local'],
+            ['email' => 'recepcao.clinica@saudeassai.local'],
             [
-                'name' => 'Médico Plantonista (Hospital)',
+                'name' => 'Recepcao Clinica da Mulher',
                 'password' => Hash::make('password'),
-                'role' => User::ROLE_MEDICO_HOSPITAL,
-                'health_unit_id' => $hospitalId,
-                'email_verified_at' => now(),
-            ]
-        );
-
-        // Farmacêutico (M6)
-        User::updateOrCreate(
-            ['email' => 'farmacia@saudeassai.local'],
-            [
-                'name' => 'Farmacêutico Responsável',
-                'password' => Hash::make('password'),
-                'role' => User::ROLE_FARMACIA,
+                'role' => User::ROLE_RECEPCAO_CLINICA,
                 'health_unit_id' => $unitId,
                 'email_verified_at' => now(),
             ]
         );
 
-        // Enfermeiro Triagem (M4)
+        // Medico Clinica da Mulher
         User::updateOrCreate(
-            ['email' => 'enfermeiro@saudeassai.local'],
+            ['email' => 'medico.clinica@saudeassai.local'],
             [
-                'name' => 'Enfermeiro Especialista',
+                'name' => 'Medico Clinica da Mulher',
                 'password' => Hash::make('password'),
-                'role' => User::ROLE_ENFERMAGEM,
+                'role' => User::ROLE_MEDICO_CLINICA,
                 'health_unit_id' => $unitId,
                 'email_verified_at' => now(),
             ]
         );
 
-        // Recepcionista (M3)
+        // Recepcao Farmacia Central
         User::updateOrCreate(
-            ['email' => 'recepcao@saudeassai.local'],
+            ['email' => 'recepcao.farmacia@saudeassai.local'],
             [
-                'name' => 'Atendente da Recepção',
+                'name' => 'Recepcao Farmacia Central',
                 'password' => Hash::make('password'),
-                'role' => User::ROLE_RECEPCAO,
+                'role' => User::ROLE_RECEPCAO_FARMACIA,
+                'health_unit_id' => $unitId,
+                'email_verified_at' => now(),
+            ]
+        );
+
+        // Atendimento Farmacia Central
+        User::updateOrCreate(
+            ['email' => 'atendimento.farmacia@saudeassai.local'],
+            [
+                'name' => 'Atendimento Farmacia Central',
+                'password' => Hash::make('password'),
+                'role' => User::ROLE_ATENDIMENTO_FARMACIA,
                 'health_unit_id' => $unitId,
                 'email_verified_at' => now(),
             ]

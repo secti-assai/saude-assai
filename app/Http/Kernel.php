@@ -4,6 +4,7 @@ namespace App\Http;
 
 use App\Http\Middleware\Ensure2FA;
 use App\Http\Middleware\EnsureApiKey;
+use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\VerifyGovAssaiWebhookSignature;
@@ -72,6 +73,7 @@ class Kernel extends HttpKernel
         'verified' => EnsureEmailIsVerified::class,
 
         'role' => EnsureRole::class,
+        'permission' => EnsurePermission::class,
         '2fa' => Ensure2FA::class,
         'api.key' => EnsureApiKey::class,
         'webhook.govassai' => VerifyGovAssaiWebhookSignature::class,

@@ -29,19 +29,13 @@
                 @enderror
             </div>
 
-            {{-- Remember + Forgot --}}
-            <div class="flex items-center justify-between">
+            {{-- Remember --}}
+            <div class="flex items-center">
                 <label for="remember_me" class="inline-flex items-center cursor-pointer">
                     <input id="remember_me" type="checkbox" name="remember"
                            class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500 focus:ring-offset-0">
                     <span class="ms-2 text-sm text-gray-600">Lembrar-me</span>
                 </label>
-
-                @if (Route::has('password.request'))
-                    <a class="text-sm font-medium hover:underline transition" style="color: var(--sa-primary);" href="{{ route('password.request') }}">
-                        Esqueceu a senha?
-                    </a>
-                @endif
             </div>
 
             {{-- Submit --}}
