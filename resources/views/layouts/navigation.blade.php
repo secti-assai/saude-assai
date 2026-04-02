@@ -6,11 +6,11 @@
     $navItems = [
         ['route' => 'admin.reports', 'match' => 'admin.reports', 'label' => 'Admin - Relatórios', 'icon' => 'chart-bar', 'roles' => 'admin'],
         ['route' => 'admin.users', 'match' => 'admin.users', 'label' => 'Admin - Usuários', 'icon' => 'users', 'roles' => 'admin'],
-        ['route' => 'women-clinic.agendador', 'match' => 'women-clinic.agendador', 'label' => 'Clínica - Agendador', 'icon' => 'document-text', 'roles' => 'agendador'],
-        ['route' => 'women-clinic.recepcao', 'match' => 'women-clinic.recepcao', 'label' => 'Clínica - Recepção', 'icon' => 'clipboard-list', 'roles' => 'recepcao_clinica'],
-        ['route' => 'women-clinic.medico', 'match' => 'women-clinic.medico', 'label' => 'Clínica - Médico', 'icon' => 'heart', 'roles' => 'medico_clinica'],
-        ['route' => 'central-pharmacy.recepcao', 'match' => 'central-pharmacy.recepcao', 'label' => 'Farmácia - Recepção', 'icon' => 'beaker', 'roles' => 'recepcao_farmacia'],
-        ['route' => 'central-pharmacy.atendimento', 'match' => 'central-pharmacy.atendimento', 'label' => 'Farmácia - Atendimento', 'icon' => 'users', 'roles' => 'atendimento_farmacia'],
+        ['route' => 'women-clinic.agendador', 'match' => 'women-clinic.agendador', 'label' => 'Clínica - Agendador', 'icon' => 'document-text', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_SCHEDULE],
+        ['route' => 'women-clinic.recepcao', 'match' => 'women-clinic.recepcao', 'label' => 'Clínica - Recepção', 'icon' => 'clipboard-list', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_CHECKIN],
+        ['route' => 'women-clinic.medico', 'match' => 'women-clinic.medico', 'label' => 'Clínica - Médico', 'icon' => 'heart', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_CHECKOUT],
+        ['route' => 'central-pharmacy.recepcao', 'match' => 'central-pharmacy.recepcao', 'label' => 'Farmácia - Recepção', 'icon' => 'beaker', 'permission' => \App\Models\User::PERMISSION_CENTRAL_PHARMACY_RECEPTION],
+        ['route' => 'central-pharmacy.atendimento', 'match' => 'central-pharmacy.atendimento', 'label' => 'Farmácia - Atendimento', 'icon' => 'users', 'permission' => \App\Models\User::PERMISSION_CENTRAL_PHARMACY_DISPENSE],
     ];
 @endphp
 
@@ -32,7 +32,11 @@
     <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         @foreach ($navItems as $item)
             @php
-                $allowed = $isAdmin || $item['roles'] === '*' || collect(explode(',', $item['roles']))->contains($role);
+                $requiredPermission = $item['permission'] ?? null;
+                $roles = $item['roles'] ?? null;
+                $allowed = $isAdmin
+                    || (is_string($requiredPermission) && $requiredPermission !== '' && $user?->hasPermission($requiredPermission))
+                    || (is_string($roles) && ($roles === '*' || collect(explode(',', $roles))->contains($role)));
                 $active = request()->routeIs($item['match']);
             @endphp
             @if ($allowed)
@@ -116,7 +120,11 @@
     <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         @foreach ($navItems as $item)
             @php
-                $allowed = $isAdmin || $item['roles'] === '*' || collect(explode(',', $item['roles']))->contains($role);
+                $requiredPermission = $item['permission'] ?? null;
+                $roles = $item['roles'] ?? null;
+                $allowed = $isAdmin
+                    || (is_string($requiredPermission) && $requiredPermission !== '' && $user?->hasPermission($requiredPermission))
+                    || (is_string($roles) && ($roles === '*' || collect(explode(',', $roles))->contains($role)));
                 $active = request()->routeIs($item['match']);
             @endphp
             @if ($allowed)

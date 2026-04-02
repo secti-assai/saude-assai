@@ -28,7 +28,7 @@
                     @csrf
                     <div class="md:col-span-2">
                         <label class="sa-label">Passo 1 de 3 - CPF do Cidadão *</label>
-                        <input name="cpf" class="sa-input" value="{{ old('cpf') }}" required>
+                        <input name="cpf" class="sa-input" value="{{ old('cpf') }}" placeholder="000.000.000-00" maxlength="14" required oninput="let v = this.value.replace(/\D/g, ''); if(v.length > 11) v = v.slice(0, 11); v = v.replace(/(\d{3})(\d)/, '$1.$2'); v = v.replace(/(\d{3})(\d)/, '$1.$2'); v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2'); this.value = v;">
                     </div>
                     <div class="md:col-span-3 flex justify-end"><button type="submit" class="sa-btn-primary">Validar CPF</button></div>
                 </form>
@@ -39,14 +39,16 @@
                         <label class="sa-label">Passo 2 de 3 - Confirmacao de Identidade</label>
                         <p class="text-sm text-gray-700">Cidadão: <strong>{{ $flow['citizen_name'] ?? '—' }}</strong> | CPF: <strong>{{ $flow['cpf'] }}</strong></p>
                         <p class="text-sm text-gray-700 mt-1">{{ $flow['challenge']['prompt'] ?? '' }}</p>
-                        <p class="text-xs text-gray-500">Dica de mascara: {{ $flow['challenge']['mask_hint'] ?? '' }}</p>
                         <p class="text-xs text-gray-500">Voce pode responder com o dado solicitado ou com a data completa (ex: 12/03/2006).</p>
                     </div>
                     <div>
                         <label class="sa-label">Resposta *</label>
                         <input name="answer" class="sa-input" required>
                     </div>
-                    <div class="md:col-span-3 flex justify-end"><button type="submit" class="sa-btn-primary">Confirmar Identidade</button></div>
+                    <div class="md:col-span-3 flex justify-end space-x-2">
+                        <button type="submit" class="sa-btn-primary">Confirmar Identidade</button>
+                        <button type="submit" formnovalidate formaction="{{ route('women-clinic.schedule.cancel') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancelar / Voltar</button>
+                    </div>
                 </form>
             @else
                 <form method="POST" action="{{ route('women-clinic.schedule') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -63,13 +65,44 @@
                         <label class="sa-label">Observações</label>
                         <input name="notes" class="sa-input" value="{{ old('notes') }}">
                     </div>
-                    <div class="md:col-span-3 flex justify-end"><button type="submit" class="sa-btn-primary">Agendar</button></div>
+                    <div class="md:col-span-3 flex justify-end space-x-2">
+                        <button type="submit" class="sa-btn-primary">Agendar</button>
+                        <button type="submit" formnovalidate formaction="{{ route('women-clinic.schedule.cancel') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancelar / Voltar</button>
+                    </div>
                 </form>
             @endif
         </div>
 
         <div class="sa-card">
             <div class="sa-card-header"><h3 class="sa-card-title">Agendamentos</h3></div>
+            <div class="rounded-lg border border-emerald-100 bg-emerald-50/60 p-4">
+                <div class="mb-3">
+                    <p class="text-sm font-semibold text-emerald-900">Filtros de visualização</p>
+                    <p class="text-xs text-emerald-800">Padrão desta tela: data de hoje e status Agendado. Você pode alterar os filtros para consultar outros períodos e status.</p>
+                </div>
+                <form method="GET" action="{{ route('women-clinic.agendador') }}" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                    <div>
+                        <label for="date_start" class="sa-label">Data inicial</label>
+                        <input id="date_start" name="date_start" type="date" class="sa-input" value="{{ $filters['date_start'] ?? now()->toDateString() }}">
+                    </div>
+                    <div>
+                        <label for="date_end" class="sa-label">Data final</label>
+                        <input id="date_end" name="date_end" type="date" class="sa-input" value="{{ $filters['date_end'] ?? now()->toDateString() }}">
+                    </div>
+                    <div>
+                        <label for="status" class="sa-label">Status</label>
+                        <select id="status" name="status" class="sa-input">
+                            @foreach(($statusOptions ?? []) as $value => $label)
+                                <option value="{{ $value }}" @selected(($filters['status'] ?? 'AGENDADO') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="flex items-center justify-end gap-2">
+                        <button type="submit" class="sa-btn-primary">Aplicar</button>
+                        <a href="{{ route('women-clinic.agendador') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Voltar ao padrão</a>
+                    </div>
+                </form>
+            </div>
             <div class="overflow-x-auto">
                 <table class="sa-table">
                     <thead><tr><th>Data</th><th>Cidadão</th><th>Status</th><th>Nível Gov.Assaí</th></tr></thead>
@@ -78,7 +111,17 @@
                             <tr>
                                 <td>{{ $appointment->scheduled_for?->format('d/m/Y H:i') }}</td>
                                 <td>{{ $appointment->citizen->full_name ?? '—' }}</td>
-                                <td>{{ $appointment->status }}</td>
+                                <td>
+                                    @php
+                                        $statusClass = match ($appointment->status) {
+                                            'AGENDADO' => 'bg-blue-100 text-blue-700',
+                                            'CHECKIN' => 'bg-amber-100 text-amber-700',
+                                            'FINALIZADO' => 'bg-emerald-100 text-emerald-700',
+                                            default => 'bg-gray-100 text-gray-700',
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $statusClass }}">{{ $appointment->status }}</span>
+                                </td>
                                 <td>{{ $appointment->gov_assai_level ?? '—' }}</td>
                             </tr>
                         @empty

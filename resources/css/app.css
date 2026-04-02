@@ -119,8 +119,16 @@
         @apply shadow-lg;
     }
 
+    .sa-btn-secondary {
+        @apply sa-btn bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 hover:shadow-md;
+    }
+
     .sa-btn-success {
         @apply sa-btn bg-green-600 text-white hover:bg-green-700 hover:shadow-lg;
+    }
+
+    .sa-btn-warning {
+        @apply sa-btn bg-amber-500 text-white hover:bg-amber-600 hover:shadow-lg;
     }
 
     .sa-btn-danger {

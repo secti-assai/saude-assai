@@ -21,7 +21,6 @@ class User extends Authenticatable
         'registration',
         'crm',
         'health_unit_id',
-        'two_factor_enabled',
     ];
 
     protected $hidden = [
@@ -32,7 +31,6 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'two_factor_enabled' => 'boolean',
         'first_login_at' => 'datetime',
         'last_logout_at' => 'datetime',
         'permissions' => 'array',
@@ -64,18 +62,51 @@ class User extends Authenticatable
         ];
     }
 
-    public function hasPermission(string $permission): bool
+    public function roleDefaultPermissions(): array
+    {
+        return match ($this->role) {
+            self::ROLE_ADMIN => self::allPermissionOptions(),
+            self::ROLE_AGENDADOR => [self::PERMISSION_WOMEN_CLINIC_SCHEDULE],
+            self::ROLE_RECEPCAO_CLINICA => [self::PERMISSION_WOMEN_CLINIC_CHECKIN],
+            self::ROLE_MEDICO_CLINICA => [self::PERMISSION_WOMEN_CLINIC_CHECKOUT],
+            self::ROLE_RECEPCAO_FARMACIA => [self::PERMISSION_CENTRAL_PHARMACY_RECEPTION],
+            self::ROLE_ATENDIMENTO_FARMACIA => [self::PERMISSION_CENTRAL_PHARMACY_DISPENSE],
+            default => [],
+        };
+    }
+
+    public function effectivePermissions(): array
     {
         if ($this->role === self::ROLE_ADMIN) {
-            return true;
+            return self::allPermissionOptions();
         }
 
-        $permissions = $this->permissions ?? [];
-        if (! is_array($permissions) || $permissions === []) {
-            return false;
+        if (is_array($this->permissions) && $this->permissions !== []) {
+            $normalized = array_values(array_unique(array_filter(
+                $this->permissions,
+                fn ($permission): bool => is_string($permission) && $permission !== ''
+            )));
+
+            return array_values(array_intersect($normalized, self::allPermissionOptions()));
         }
 
-        return in_array($permission, $permissions, true);
+        return $this->roleDefaultPermissions();
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        return in_array($permission, $this->effectivePermissions(), true);
+    }
+
+    public function hasAnyPermission(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if (is_string($permission) && $permission !== '' && $this->hasPermission($permission)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function healthUnit(): BelongsTo

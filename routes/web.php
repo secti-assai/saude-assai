@@ -4,31 +4,46 @@ use App\Http\Controllers\AdminManagementController;
 use App\Http\Controllers\CallController;
 use App\Http\Controllers\CentralPharmacyController;
 use App\Http\Controllers\PrescriptionMedicationController;
-use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\WomenClinicController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/2fa/setup', [TwoFactorController::class, 'setup'])->name('2fa.setup');
-    Route::post('/2fa/enable', [TwoFactorController::class, 'enable'])->name('2fa.enable');
-});
-
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'module.context'])->group(function () {
     Route::get('/dashboard', function (Request $request) {
-        $role = (string) ($request->user()?->role ?? '');
+        $user = $request->user();
 
-        return match ($role) {
-            'admin' => redirect()->route('admin.reports'),
-            'agendador' => redirect()->route('women-clinic.agendador'),
-            'recepcao_clinica' => redirect()->route('women-clinic.recepcao'),
-            'medico_clinica' => redirect()->route('women-clinic.medico'),
-            'recepcao_farmacia' => redirect()->route('central-pharmacy.recepcao'),
-            'atendimento_farmacia' => redirect()->route('central-pharmacy.atendimento'),
-            default => abort(403, 'Perfil sem area operacional configurada.'),
-        };
+        if (! $user) {
+            abort(403, 'Perfil sem area operacional configurada.');
+        }
+
+        if ($user->role === User::ROLE_ADMIN) {
+            return redirect()->route('admin.reports');
+        }
+
+        if ($user->hasPermission(User::PERMISSION_WOMEN_CLINIC_SCHEDULE)) {
+            return redirect()->route('women-clinic.agendador');
+        }
+
+        if ($user->hasPermission(User::PERMISSION_WOMEN_CLINIC_CHECKIN)) {
+            return redirect()->route('women-clinic.recepcao');
+        }
+
+        if ($user->hasPermission(User::PERMISSION_WOMEN_CLINIC_CHECKOUT)) {
+            return redirect()->route('women-clinic.medico');
+        }
+
+        if ($user->hasPermission(User::PERMISSION_CENTRAL_PHARMACY_RECEPTION)) {
+            return redirect()->route('central-pharmacy.recepcao');
+        }
+
+        if ($user->hasPermission(User::PERMISSION_CENTRAL_PHARMACY_DISPENSE)) {
+            return redirect()->route('central-pharmacy.atendimento');
+        }
+
+        abort(403, 'Perfil sem area operacional configurada.');
     })->name('dashboard');
 
     Route::get('/profile', function () {
@@ -36,60 +51,88 @@ Route::middleware(['auth'])->group(function () {
     })->name('profile.edit');
 
     Route::get('/clinica-mulher/agendador', [WomenClinicController::class, 'agendadorArea'])
-        ->middleware('role:agendador')
+        ->middleware('permission:women_clinic.schedule')
         ->name('women-clinic.agendador');
 
     Route::post('/clinica-mulher/agendamentos/iniciar', [WomenClinicController::class, 'startScheduleFlow'])
-        ->middleware('role:agendador')
+        ->middleware('permission:women_clinic.schedule')
         ->name('women-clinic.schedule.start');
 
+    Route::post('/clinica-mulher/agendamentos/cancelar', [WomenClinicController::class, 'cancelScheduleFlow'])
+        ->middleware('permission:women_clinic.schedule')
+        ->name('women-clinic.schedule.cancel');
+
     Route::post('/clinica-mulher/agendamentos/verificar-identidade', [WomenClinicController::class, 'verifyScheduleIdentity'])
-        ->middleware('role:agendador')
+        ->middleware('permission:women_clinic.schedule')
         ->name('women-clinic.schedule.verify-identity');
 
     Route::get('/clinica-mulher/recepcao', [WomenClinicController::class, 'recepcaoArea'])
-        ->middleware('role:recepcao_clinica')
+        ->middleware('permission:women_clinic.checkin')
         ->name('women-clinic.recepcao');
 
+    Route::get('/clinica-mulher/recepcao/fila-dados', [WomenClinicController::class, 'recepcaoData'])
+        ->middleware('permission:women_clinic.checkin')
+        ->name('women-clinic.recepcao.data');
+
     Route::get('/clinica-mulher/medico', [WomenClinicController::class, 'medicoArea'])
-        ->middleware('role:medico_clinica')
+        ->middleware('permission:women_clinic.checkout')
         ->name('women-clinic.medico');
 
+    Route::get('/clinica-mulher/medico/fila-dados', [WomenClinicController::class, 'medicoData'])
+        ->middleware('permission:women_clinic.checkout')
+        ->name('women-clinic.medico.data');
+
     Route::post('/clinica-mulher/agendamentos', [WomenClinicController::class, 'schedule'])
-        ->middleware(['role:agendador', 'permission:women_clinic.schedule'])
+        ->middleware('permission:women_clinic.schedule')
         ->name('women-clinic.schedule');
 
     Route::post('/clinica-mulher/agendamentos/{womenClinicAppointment}/check-in', [WomenClinicController::class, 'checkIn'])
-        ->middleware(['role:recepcao_clinica', 'permission:women_clinic.checkin'])
+        ->middleware('permission:women_clinic.checkin')
         ->name('women-clinic.check-in');
 
     Route::post('/clinica-mulher/agendamentos/{womenClinicAppointment}/check-out', [WomenClinicController::class, 'checkOut'])
-        ->middleware(['role:medico_clinica', 'permission:women_clinic.checkout'])
+        ->middleware('permission:women_clinic.checkout')
         ->name('women-clinic.check-out');
 
     Route::get('/farmacia-central/recepcao', [CentralPharmacyController::class, 'recepcaoArea'])
-        ->middleware('role:recepcao_farmacia')
+        ->middleware('permission:central_pharmacy.reception')
         ->name('central-pharmacy.recepcao');
 
     Route::post('/farmacia-central/solicitacoes/iniciar', [CentralPharmacyController::class, 'startReceptionFlow'])
-        ->middleware('role:recepcao_farmacia')
+        ->middleware('permission:central_pharmacy.reception')
         ->name('central-pharmacy.reception.start');
 
+    Route::post('/farmacia-central/solicitacoes/cancelar', [CentralPharmacyController::class, 'cancelReceptionFlow'])
+        ->middleware('permission:central_pharmacy.reception')
+        ->name('central-pharmacy.reception.cancel');
+
     Route::post('/farmacia-central/solicitacoes/verificar-identidade', [CentralPharmacyController::class, 'verifyReceptionIdentity'])
-        ->middleware('role:recepcao_farmacia')
+        ->middleware('permission:central_pharmacy.reception')
         ->name('central-pharmacy.reception.verify-identity');
 
     Route::get('/farmacia-central/atendimento', [CentralPharmacyController::class, 'atendimentoArea'])
-        ->middleware('role:atendimento_farmacia')
+        ->middleware('permission:central_pharmacy.dispense')
         ->name('central-pharmacy.atendimento');
 
+    Route::get('/farmacia-central/atendimento/fila-dados', [CentralPharmacyController::class, 'atendimentoData'])
+        ->middleware('permission:central_pharmacy.dispense')
+        ->name('central-pharmacy.atendimento.data');
+
     Route::post('/farmacia-central/solicitacoes', [CentralPharmacyController::class, 'registerReception'])
-        ->middleware(['role:recepcao_farmacia', 'permission:central_pharmacy.reception'])
+        ->middleware('permission:central_pharmacy.reception')
         ->name('central-pharmacy.register-reception');
 
     Route::post('/farmacia-central/solicitacoes/{centralPharmacyRequest}/dispensar', [CentralPharmacyController::class, 'dispense'])
-        ->middleware(['role:atendimento_farmacia', 'permission:central_pharmacy.dispense'])
+        ->middleware('permission:central_pharmacy.dispense')
         ->name('central-pharmacy.dispense');
+
+    Route::post('/farmacia-central/solicitacoes/{centralPharmacyRequest}/nao-dispensar', [CentralPharmacyController::class, 'refuse'])
+        ->middleware('permission:central_pharmacy.dispense')
+        ->name('central-pharmacy.refuse');
+
+    Route::post('/farmacia-central/solicitacoes/{centralPharmacyRequest}/dispensar-equivalente', [CentralPharmacyController::class, 'dispenseEquivalent'])
+        ->middleware('permission:central_pharmacy.dispense')
+        ->name('central-pharmacy.dispense-equivalent');
 
     Route::get('/admin/usuarios', [AdminManagementController::class, 'usersArea'])
         ->middleware('role:admin')
@@ -119,12 +162,12 @@ Route::middleware(['auth'])->group(function () {
 require __DIR__ . '/auth.php';
 
 Route::post('/prescriptions/medications', [PrescriptionMedicationController::class, 'store'])
-    ->middleware('auth')
+    ->middleware(['auth', 'module.context'])
     ->name('prescriptions.medications.store');
 
 Route::get('/painel/{unit}', [CallController::class, 'panel'])
     ->name('calls.panel');
 
 Route::post('/calls/{attendance}', [CallController::class, 'call'])
-    ->middleware('auth');
+    ->middleware(['auth', 'module.context']);
 

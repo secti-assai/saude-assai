@@ -7,6 +7,7 @@ use App\Services\AuditService;
 use App\Services\CitizenEligibilityService;
 use App\Services\CitizenIdentityChallengeService;
 use App\Services\GovAssaiService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -21,16 +22,74 @@ class WomenClinicController extends Controller
     ) {
     }
 
-    public function agendadorArea(): View
+    public function agendadorArea(Request $request): View
     {
-        $appointments = WomenClinicAppointment::with(['citizen', 'scheduler', 'reception', 'doctor'])
-            ->orderByDesc('scheduled_for')
-            ->limit(50)
+        $today = now()->toDateString();
+
+        $dateStart = trim((string) $request->query('date_start', $today));
+        $dateEnd = trim((string) $request->query('date_end', $today));
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStart)) {
+            $dateStart = $today;
+        }
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateEnd)) {
+            $dateEnd = $today;
+        }
+
+        if ($dateStart > $dateEnd) {
+            [$dateStart, $dateEnd] = [$dateEnd, $dateStart];
+        }
+
+        $statusOptions = [
+            'AGENDADO' => 'Agendado',
+            'CHECKIN' => 'Check-in',
+            'FINALIZADO' => 'Finalizado',
+        ];
+
+        $dynamicStatuses = WomenClinicAppointment::query()
+            ->select('status')
+            ->distinct()
+            ->pluck('status')
+            ->filter(fn ($value): bool => is_string($value) && trim($value) !== '')
+            ->map(fn (string $value): string => strtoupper(trim($value)))
+            ->reject(fn (string $value): bool => isset($statusOptions[$value]))
+            ->values();
+
+        foreach ($dynamicStatuses as $dynamicStatus) {
+            $statusOptions[$dynamicStatus] = ucwords(strtolower(str_replace('_', ' ', $dynamicStatus)));
+        }
+
+        $statusOptions['TODOS'] = 'Todos os status';
+
+        $statusFilter = strtoupper(trim((string) $request->query('status', 'AGENDADO')));
+
+        if (! isset($statusOptions[$statusFilter])) {
+            $statusFilter = 'AGENDADO';
+        }
+
+        $appointmentsQuery = WomenClinicAppointment::with(['citizen', 'scheduler', 'reception', 'doctor'])
+            ->whereDate('scheduled_for', '>=', $dateStart)
+            ->whereDate('scheduled_for', '<=', $dateEnd);
+
+        if ($statusFilter !== 'TODOS') {
+            $appointmentsQuery->where('status', $statusFilter);
+        }
+
+        $appointments = $appointmentsQuery
+            ->orderBy('scheduled_for')
+            ->limit(100)
             ->get();
 
         return view('women-clinic.agendador', [
             'appointments' => $appointments,
             'flow' => session()->get('women_clinic.schedule_flow'),
+            'filters' => [
+                'date_start' => $dateStart,
+                'date_end' => $dateEnd,
+                'status' => $statusFilter,
+            ],
+            'statusOptions' => $statusOptions,
         ]);
     }
 
@@ -41,6 +100,12 @@ class WomenClinicController extends Controller
         ]);
 
         $cpf = $this->govAssai->normalizeCpf($data['cpf']);
+        $validation = $this->eligibility->validateAndSync($cpf);
+
+        if (! $validation['eligible']) {
+            return back()->withErrors(['cpf' => $validation['message']])->withInput();
+        }
+
         $gov = $this->govAssai->fetchCitizenByCpf($cpf);
 
         if (! $gov['success'] || ! is_array($gov['data'])) {
@@ -84,16 +149,154 @@ class WomenClinicController extends Controller
         return back()->with('status', 'Identidade confirmada. Complete o agendamento no passo final.');
     }
 
-    public function recepcaoArea(): View
+    public function cancelScheduleFlow(): RedirectResponse
     {
-        $appointments = WomenClinicAppointment::with(['citizen', 'scheduler'])
-            ->whereIn('status', ['AGENDADO', 'CHECKIN'])
+        $this->identityChallenge->clear('women_clinic_schedule');
+        session()->forget('women_clinic.schedule_flow');
+
+        return redirect()->route('women-clinic.agendador')->with('status', 'Agendamento cancelado. Voce pode iniciar a consulta de um novo cidadao.');
+    }
+
+    public function recepcaoArea(Request $request): View
+    {
+        $today = now()->toDateString();
+
+        $dateStart = trim((string) $request->query('date_start', $today));
+        $dateEnd = trim((string) $request->query('date_end', $today));
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStart)) {
+            $dateStart = $today;
+        }
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateEnd)) {
+            $dateEnd = $today;
+        }
+
+        if ($dateStart > $dateEnd) {
+            [$dateStart, $dateEnd] = [$dateEnd, $dateStart];
+        }
+
+        $statusOptions = [
+            'AGENDADO' => 'Agendado',
+            'CHECKIN' => 'Check-in',
+            'FINALIZADO' => 'Finalizado',
+        ];
+
+        $dynamicStatuses = WomenClinicAppointment::query()
+            ->select('status')
+            ->distinct()
+            ->pluck('status')
+            ->filter(fn ($value): bool => is_string($value) && trim($value) !== '')
+            ->map(fn (string $value): string => strtoupper(trim($value)))
+            ->reject(fn (string $value): bool => isset($statusOptions[$value]))
+            ->values();
+
+        foreach ($dynamicStatuses as $dynamicStatus) {
+            $statusOptions[$dynamicStatus] = ucwords(strtolower(str_replace('_', ' ', $dynamicStatus)));
+        }
+
+        $statusOptions['TODOS'] = 'Todos os status';
+
+        $statusFilter = strtoupper(trim((string) $request->query('status', 'TODOS')));
+
+        if (! isset($statusOptions[$statusFilter])) {
+            $statusFilter = 'TODOS';
+        }
+
+        $appointmentsQuery = WomenClinicAppointment::with(['citizen', 'scheduler'])
+            ->whereDate('scheduled_for', '>=', $dateStart)
+            ->whereDate('scheduled_for', '<=', $dateEnd);
+
+        if ($statusFilter !== 'TODOS') {
+            $appointmentsQuery->where('status', $statusFilter);
+        }
+
+        $appointments = $appointmentsQuery
             ->orderBy('scheduled_for')
-            ->limit(50)
+            ->limit(100)
             ->get();
 
         return view('women-clinic.recepcao', [
             'appointments' => $appointments,
+            'filters' => [
+                'date_start' => $dateStart,
+                'date_end' => $dateEnd,
+                'status' => $statusFilter,
+            ],
+            'statusOptions' => $statusOptions,
+        ]);
+    }
+
+    public function recepcaoData(Request $request): JsonResponse
+    {
+        $today = now()->toDateString();
+
+        $dateStart = trim((string) $request->query('date_start', $today));
+        $dateEnd = trim((string) $request->query('date_end', $today));
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStart)) {
+            $dateStart = $today;
+        }
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateEnd)) {
+            $dateEnd = $today;
+        }
+
+        if ($dateStart > $dateEnd) {
+            [$dateStart, $dateEnd] = [$dateEnd, $dateStart];
+        }
+
+        $statusOptions = [
+            'AGENDADO' => 'Agendado',
+            'CHECKIN' => 'Check-in',
+            'FINALIZADO' => 'Finalizado',
+        ];
+
+        $dynamicStatuses = WomenClinicAppointment::query()
+            ->select('status')
+            ->distinct()
+            ->pluck('status')
+            ->filter(fn ($value): bool => is_string($value) && trim($value) !== '')
+            ->map(fn (string $value): string => strtoupper(trim($value)))
+            ->reject(fn (string $value): bool => isset($statusOptions[$value]))
+            ->values();
+
+        foreach ($dynamicStatuses as $dynamicStatus) {
+            $statusOptions[$dynamicStatus] = ucwords(strtolower(str_replace('_', ' ', $dynamicStatus)));
+        }
+
+        $statusOptions['TODOS'] = 'Todos os status';
+
+        $statusFilter = strtoupper(trim((string) $request->query('status', 'TODOS')));
+
+        if (! isset($statusOptions[$statusFilter])) {
+            $statusFilter = 'TODOS';
+        }
+
+        $appointmentsQuery = WomenClinicAppointment::with(['citizen', 'scheduler'])
+            ->whereDate('scheduled_for', '>=', $dateStart)
+            ->whereDate('scheduled_for', '<=', $dateEnd);
+
+        if ($statusFilter !== 'TODOS') {
+            $appointmentsQuery->where('status', $statusFilter);
+        }
+
+        $appointments = $appointmentsQuery
+            ->orderBy('scheduled_for')
+            ->limit(100)
+            ->get();
+
+        return response()->json([
+            'rows' => $appointments->map(fn (WomenClinicAppointment $appointment): array => [
+                'id' => (string) $appointment->id,
+                'scheduled_for' => $appointment->scheduled_for?->format('d/m/Y H:i') ?? '—',
+                'citizen_name' => (string) ($appointment->citizen->full_name ?? '—'),
+                'status' => (string) $appointment->status,
+                'check_in_url' => $appointment->status === 'AGENDADO'
+                    ? route('women-clinic.check-in', $appointment)
+                    : null,
+            ])->values(),
+            'generated_at' => now()->toIso8601String(),
         ]);
     }
 
@@ -107,6 +310,25 @@ class WomenClinicController extends Controller
 
         return view('women-clinic.medico', [
             'appointments' => $appointments,
+        ]);
+    }
+
+    public function medicoData(): JsonResponse
+    {
+        $appointments = WomenClinicAppointment::with(['citizen'])
+            ->where('status', 'CHECKIN')
+            ->orderBy('checked_in_at')
+            ->limit(100)
+            ->get();
+
+        return response()->json([
+            'rows' => $appointments->map(fn (WomenClinicAppointment $appointment): array => [
+                'id' => (string) $appointment->id,
+                'citizen_name' => (string) ($appointment->citizen->full_name ?? '—'),
+                'checked_in_at' => $appointment->checked_in_at?->format('d/m/Y H:i') ?? '—',
+                'check_out_url' => route('women-clinic.check-out', $appointment),
+            ])->values(),
+            'generated_at' => now()->toIso8601String(),
         ]);
     }
 

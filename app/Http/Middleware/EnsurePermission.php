@@ -16,12 +16,6 @@ class EnsurePermission
             abort(403, 'Acesso negado.');
         }
 
-        // Backward compatibility: legacy users without explicit permissions rely on role middleware.
-        $permissions = $user->permissions;
-        if ($permissions === null || $permissions === []) {
-            return $next($request);
-        }
-
         if (! $user->hasPermission($permission)) {
             abort(403, 'Permissao insuficiente para esta acao.');
         }

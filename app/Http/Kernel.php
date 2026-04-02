@@ -2,10 +2,10 @@
 
 namespace App\Http;
 
-use App\Http\Middleware\Ensure2FA;
 use App\Http\Middleware\EnsureApiKey;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\ResetFlowOnModuleSwitch;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\VerifyGovAssaiWebhookSignature;
 use Illuminate\Auth\Middleware\Authenticate;
@@ -74,8 +74,8 @@ class Kernel extends HttpKernel
 
         'role' => EnsureRole::class,
         'permission' => EnsurePermission::class,
-        '2fa' => Ensure2FA::class,
         'api.key' => EnsureApiKey::class,
+        'module.context' => ResetFlowOnModuleSwitch::class,
         'webhook.govassai' => VerifyGovAssaiWebhookSignature::class,
     ];
 }

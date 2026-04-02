@@ -20,7 +20,6 @@ return new class extends Migration
             $table->unsignedBigInteger('health_unit_id')->nullable()->index();
             $table->timestamp('first_login_at')->nullable();
             $table->timestamp('last_logout_at')->nullable();
-            $table->boolean('two_factor_enabled')->default(false);
             $table->rememberToken();
             $table->timestamps();
         });

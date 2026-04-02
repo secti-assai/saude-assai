@@ -14,6 +14,13 @@ use Illuminate\View\View;
 
 class AdminManagementController extends Controller
 {
+    private const ALLOWED_USER_UNIT_NAMES = [
+        'Clinica da Mulher',
+        'Clínica da Mulher',
+        'Farmacia Central',
+        'Farmácia Central',
+    ];
+
     public function __construct(private readonly AuditService $audit)
     {
     }
@@ -21,7 +28,9 @@ class AdminManagementController extends Controller
     public function usersArea(): View
     {
         $users = User::with('healthUnit')->orderBy('name')->get();
-        $healthUnits = HealthUnit::orderBy('name')->get();
+        $healthUnits = $this->allowedUserHealthUnitsQuery()
+            ->orderBy('name')
+            ->get();
 
         return view('admin.users', [
             'users' => $users,
@@ -40,6 +49,8 @@ class AdminManagementController extends Controller
 
     public function createUser(Request $request): RedirectResponse
     {
+        $allowedHealthUnitIds = $this->allowedUserHealthUnitIds();
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
@@ -52,7 +63,7 @@ class AdminManagementController extends Controller
                 User::ROLE_RECEPCAO_FARMACIA,
                 User::ROLE_ATENDIMENTO_FARMACIA,
             ])],
-            'health_unit_id' => ['nullable', 'exists:health_units,id'],
+            'health_unit_id' => ['nullable', Rule::in($allowedHealthUnitIds)],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', Rule::in(User::allPermissionOptions())],
         ]);
@@ -77,6 +88,8 @@ class AdminManagementController extends Controller
 
     public function updatePermissions(Request $request, User $user): RedirectResponse
     {
+        $allowedHealthUnitIds = $this->allowedUserHealthUnitIds();
+
         $data = $request->validate([
             'role' => ['required', 'string', Rule::in([
                 User::ROLE_ADMIN,
@@ -88,7 +101,7 @@ class AdminManagementController extends Controller
             ])],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', Rule::in(User::allPermissionOptions())],
-            'health_unit_id' => ['nullable', 'exists:health_units,id'],
+            'health_unit_id' => ['nullable', Rule::in($allowedHealthUnitIds)],
         ]);
 
         $user->update([
@@ -148,5 +161,19 @@ class AdminManagementController extends Controller
             'activityByModule' => $activityByModule,
             'recentAudits' => $recentAudits,
         ]);
+    }
+
+    private function allowedUserHealthUnitsQuery()
+    {
+        return HealthUnit::query()
+            ->whereIn('name', self::ALLOWED_USER_UNIT_NAMES);
+    }
+
+    private function allowedUserHealthUnitIds(): array
+    {
+        return $this->allowedUserHealthUnitsQuery()
+            ->pluck('id')
+            ->map(fn ($id): string => (string) $id)
+            ->all();
     }
 }

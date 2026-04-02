@@ -42,6 +42,21 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_users_can_authenticate_with_normalized_email_input(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'admin.teste@saudeassai.local',
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => ' ADMIN.TESTE@saudeassai.local ',
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create();

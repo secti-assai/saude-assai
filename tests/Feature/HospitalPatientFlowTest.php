@@ -17,7 +17,6 @@ class HospitalPatientFlowTest extends TestCase
     {
         $agendador = User::factory()->create([
             'role' => 'agendador',
-            'two_factor_enabled' => false,
             'email_verified_at' => now(),
         ]);
 
@@ -77,13 +76,11 @@ class HospitalPatientFlowTest extends TestCase
     {
         $recepcaoFarmacia = User::factory()->create([
             'role' => 'recepcao_farmacia',
-            'two_factor_enabled' => false,
             'email_verified_at' => now(),
         ]);
 
         $atendimentoFarmacia = User::factory()->create([
             'role' => 'atendimento_farmacia',
-            'two_factor_enabled' => false,
             'email_verified_at' => now(),
         ]);
 
@@ -120,14 +117,20 @@ class HospitalPatientFlowTest extends TestCase
             ],
         ])->post(route('central-pharmacy.register-reception'), [
             'prescription_code' => 'RX-100',
+            'prescription_date' => now()->toDateString(),
+            'prescriber_name' => 'Dra. Ana Souza',
             'medication_name' => 'Dipirona 500mg',
+            'concentration' => '500 mg',
             'quantity' => 2,
+            'dosage' => '1 comprimido a cada 8 horas por 5 dias',
         ]);
 
         $receptionResponse->assertRedirect()->assertSessionHasNoErrors();
         $this->assertDatabaseHas('central_pharmacy_requests', [
             'status' => 'RECEPCAO_VALIDADA',
+            'prescriber_name' => 'Dra. Ana Souza',
             'medication_name' => 'Dipirona 500mg',
+            'concentration' => '500 mg',
             'quantity' => 2,
         ]);
 
@@ -145,7 +148,6 @@ class HospitalPatientFlowTest extends TestCase
     {
         $agendador = User::factory()->create([
             'role' => 'agendador',
-            'two_factor_enabled' => false,
             'email_verified_at' => now(),
         ]);
 
@@ -191,17 +193,51 @@ class HospitalPatientFlowTest extends TestCase
         $this->assertDatabaseCount('women_clinic_appointments', 0);
     }
 
+    public function test_women_clinic_start_flow_is_blocked_when_level_is_below_2(): void
+    {
+        $agendador = User::factory()->create([
+            'role' => 'agendador',
+            'email_verified_at' => now(),
+        ]);
+
+        config()->set('services.gov_assai.base_url', 'https://gov-assai.test');
+        config()->set('services.gov_assai.api_key', 'test-key');
+
+        Http::fake([
+            'https://gov-assai.test/api/saude/cidadaos/cpf/*' => Http::response([
+                'success' => true,
+                'message' => 'Consulta realizada com sucesso.',
+                'data' => [
+                    'cidadao' => [
+                        'nome' => 'NIVEL INSUFICIENTE',
+                        'data_nascimento' => '1990-01-15',
+                    ],
+                    'gov_assai' => [
+                        'nivel' => 1,
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($agendador)->post(route('women-clinic.schedule.start'), [
+            'cpf' => '123.456.789-09',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('cpf');
+        $response->assertSessionMissing('women_clinic.schedule_flow');
+        $this->assertStringContainsString('nivel 2', (string) session('errors')->first('cpf'));
+    }
+
     public function test_women_clinic_check_in_moves_appointment_to_checkin_status(): void
     {
         $agendador = User::factory()->create([
             'role' => 'agendador',
-            'two_factor_enabled' => false,
             'email_verified_at' => now(),
         ]);
 
         $recepcao = User::factory()->create([
             'role' => 'recepcao_clinica',
-            'two_factor_enabled' => false,
             'email_verified_at' => now(),
         ]);
 

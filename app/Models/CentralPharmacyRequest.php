@@ -21,16 +21,24 @@ class CentralPharmacyRequest extends Model
         'reception_user_id',
         'attendant_user_id',
         'prescription_code',
+        'prescription_date',
+        'prescriber_name',
         'medication_name',
+        'concentration',
         'quantity',
+        'dosage',
         'gov_assai_level',
         'residence_status',
         'status',
         'notes',
+        'refusal_reason',
+        'equivalent_medication_name',
+        'equivalent_concentration',
         'dispensed_at',
     ];
 
     protected $casts = [
+        'prescription_date' => 'date',
         'dispensed_at' => 'datetime',
     ];
 

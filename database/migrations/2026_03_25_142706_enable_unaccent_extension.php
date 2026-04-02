@@ -14,6 +14,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
         try {
             DB::statement('CREATE EXTENSION IF NOT EXISTS unaccent');
         } catch (\Exception $e) {
@@ -26,6 +30,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
         try {
             DB::statement('DROP EXTENSION IF EXISTS unaccent');
         } catch (\Exception $e) {

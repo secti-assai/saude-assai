@@ -22,11 +22,14 @@
         @endif
 
         <div class="sa-card">
-            <div class="sa-card-header"><h3 class="sa-card-title">Pacientes em Atendimento</h3></div>
+            <div class="sa-card-header">
+                <h3 class="sa-card-title">Pacientes em Atendimento</h3>
+                <span id="women-medico-live-updated" class="text-xs text-gray-500">Atualização automática a cada 8 segundos</span>
+            </div>
             <div class="overflow-x-auto">
                 <table class="sa-table">
                     <thead><tr><th>Cidadão</th><th>Check-in</th><th>Ação</th></tr></thead>
-                    <tbody>
+                    <tbody id="women-medico-live-body">
                         @forelse($appointments as $appointment)
                             <tr>
                                 <td>{{ $appointment->citizen->full_name ?? '—' }}</td>
@@ -46,4 +49,76 @@
             </div>
         </div>
     </div>
+
+    <script>
+        (() => {
+            const tbody = document.getElementById('women-medico-live-body');
+            const updatedLabel = document.getElementById('women-medico-live-updated');
+            if (!tbody || !updatedLabel) {
+                return;
+            }
+
+            const endpoint = @json(route('women-clinic.medico.data'));
+            const csrfToken = @json(csrf_token());
+
+            const escapeHtml = (value) => String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+
+            const renderRows = (rows) => {
+                if (!Array.isArray(rows) || rows.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500 py-6">Nenhum paciente em consulta.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = rows.map((row) => `
+                    <tr>
+                        <td>${escapeHtml(row.citizen_name ?? '—')}</td>
+                        <td>${escapeHtml(row.checked_in_at ?? '—')}</td>
+                        <td>
+                            <form method="POST" action="${escapeHtml(row.check_out_url)}">
+                                <input type="hidden" name="_token" value="${escapeHtml(csrfToken)}">
+                                <button type="submit" class="sa-btn-success">Finalizar (Check-out)</button>
+                            </form>
+                        </td>
+                    </tr>
+                `).join('');
+            };
+
+            let isRefreshing = false;
+
+            const refreshQueue = async () => {
+                if (isRefreshing) {
+                    return;
+                }
+
+                isRefreshing = true;
+                try {
+                    const response = await fetch(endpoint, {
+                        headers: {
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    const payload = await response.json();
+                    renderRows(payload.rows ?? []);
+                    updatedLabel.textContent = `Atualizado às ${new Date().toLocaleTimeString('pt-BR')}`;
+                } catch (error) {
+                    // Keep UI stable even if network temporarily fails.
+                } finally {
+                    isRefreshing = false;
+                }
+            };
+
+            window.setInterval(refreshQueue, 8000);
+        })();
+    </script>
 </x-app-layout>

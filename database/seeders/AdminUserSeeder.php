@@ -12,7 +12,11 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $unitId = HealthUnit::where('kind', 'UBS')->value('id');
+        $clinicaUnitId = HealthUnit::whereIn('name', ['Clinica da Mulher', 'Clínica da Mulher'])->value('id')
+            ?? HealthUnit::where('kind', 'UBS')->value('id');
+        $farmaciaUnitId = HealthUnit::whereIn('name', ['Farmacia Central', 'Farmácia Central'])->value('id')
+            ?? HealthUnit::where('kind', 'FARMACIA')->value('id')
+            ?? $clinicaUnitId;
 
         // Admin global (acesso total para testes)
         User::updateOrCreate(
@@ -21,7 +25,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Administrador de Teste',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_ADMIN,
-                'health_unit_id' => $unitId,
+                'health_unit_id' => $clinicaUnitId,
                 'email_verified_at' => now(),
             ]
         );
@@ -33,7 +37,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Agendador Clinica da Mulher',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_AGENDADOR,
-                'health_unit_id' => $unitId,
+                'health_unit_id' => $clinicaUnitId,
                 'email_verified_at' => now(),
             ]
         );
@@ -45,7 +49,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Recepcao Clinica da Mulher',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_RECEPCAO_CLINICA,
-                'health_unit_id' => $unitId,
+                'health_unit_id' => $clinicaUnitId,
                 'email_verified_at' => now(),
             ]
         );
@@ -57,7 +61,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Medico Clinica da Mulher',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_MEDICO_CLINICA,
-                'health_unit_id' => $unitId,
+                'health_unit_id' => $clinicaUnitId,
                 'email_verified_at' => now(),
             ]
         );
@@ -69,7 +73,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Recepcao Farmacia Central',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_RECEPCAO_FARMACIA,
-                'health_unit_id' => $unitId,
+                'health_unit_id' => $farmaciaUnitId,
                 'email_verified_at' => now(),
             ]
         );
@@ -81,7 +85,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Atendimento Farmacia Central',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_ATENDIMENTO_FARMACIA,
-                'health_unit_id' => $unitId,
+                'health_unit_id' => $farmaciaUnitId,
                 'email_verified_at' => now(),
             ]
         );

@@ -49,7 +49,7 @@ class CitizenEligibilityService
         if ($level === null || (int) $level < 2) {
             return [
                 'eligible' => false,
-                'message' => 'Cidadao sem nivel 2 no Gov.Assai. Atendimento nao autorizado.',
+                'message' => 'Cidadao sem nivel 2 no Gov.Assai. Atendimento nao autorizado. Solicitar ao cidadão para que entre em contato com a Secretaria de Ciência, Tecnologia e Inovação para regularizar sua situação.',
                 'residence_status' => 'RESIDENTE',
                 'gov_assai_level' => $level,
                 'citizen' => null,
