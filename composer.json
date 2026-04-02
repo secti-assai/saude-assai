@@ -7,11 +7,13 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "apache/thrift": "^0.22.0",
         "guzzlehttp/guzzle": "^7.8",
         "inertiajs/inertia-laravel": "^1.0 || ^2.0",
         "laravel/framework": "^10.0",
         "laravel/tinker": "^2.8",
-        "spatie/laravel-activitylog": "^4.12"
+        "spatie/laravel-activitylog": "^4.12",
+        "symfony/css-selector": "7.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -76,9 +78,9 @@
         }
     },
     "config": {
-        "optimize-autoloader": true,
-        "preferred-install": "dist",
-        "sort-packages": true,
+        "platform": {
+            "php": "8.2.12"
+        },
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
