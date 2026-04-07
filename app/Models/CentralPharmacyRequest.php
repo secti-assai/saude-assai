@@ -34,12 +34,16 @@ class CentralPharmacyRequest extends Model
         'refusal_reason',
         'equivalent_medication_name',
         'equivalent_concentration',
+        'feedback_score',
+        'feedback_comment',
+        'feedback_submitted_at',
         'dispensed_at',
     ];
 
     protected $casts = [
         'prescription_date' => 'date',
         'dispensed_at' => 'datetime',
+        'feedback_submitted_at' => 'datetime',
     ];
 
     public function citizen(): BelongsTo

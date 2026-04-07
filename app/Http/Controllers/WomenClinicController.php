@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendWomenClinicLifecycleNotificationJob;
 use App\Models\WomenClinicAppointment;
 use App\Services\AuditService;
 use App\Services\CitizenEligibilityService;
@@ -378,6 +379,21 @@ class WomenClinicController extends Controller
             'scheduled_for' => $appointment->scheduled_for?->toIso8601String(),
         ]);
 
+        SendWomenClinicLifecycleNotificationJob::dispatch(
+            (string) $appointment->id,
+            SendWomenClinicLifecycleNotificationJob::TRIGGER_SCHEDULED
+        )->afterCommit();
+
+        $reminderDispatch = SendWomenClinicLifecycleNotificationJob::dispatch(
+            (string) $appointment->id,
+            SendWomenClinicLifecycleNotificationJob::TRIGGER_REMINDER_24H
+        )->afterCommit();
+
+        $reminderAt = $appointment->scheduled_for?->copy()->subHours(24);
+        if ($reminderAt !== null && $reminderAt->greaterThan(now())) {
+            $reminderDispatch->delay($reminderAt);
+        }
+
         $this->identityChallenge->clear('women_clinic_schedule');
         $this->identityChallenge->consumeVerified('women_clinic_schedule');
         session()->forget('women_clinic.schedule_flow');
@@ -417,6 +433,11 @@ class WomenClinicController extends Controller
             'appointment_id' => $womenClinicAppointment->id,
         ]);
 
+        SendWomenClinicLifecycleNotificationJob::dispatch(
+            (string) $womenClinicAppointment->id,
+            SendWomenClinicLifecycleNotificationJob::TRIGGER_CHECKIN
+        )->afterCommit();
+
         return back()->with('status', 'Check-in realizado. Cidadao liberado para aguardar consulta.');
     }
 
@@ -435,6 +456,11 @@ class WomenClinicController extends Controller
         $this->audit->log($request, 'MULHER', 'CHECKOUT_CONSULTA', WomenClinicAppointment::class, null, [
             'appointment_id' => $womenClinicAppointment->id,
         ]);
+
+        SendWomenClinicLifecycleNotificationJob::dispatch(
+            (string) $womenClinicAppointment->id,
+            SendWomenClinicLifecycleNotificationJob::TRIGGER_CHECKOUT
+        )->afterCommit();
 
         return back()->with('status', 'Consulta finalizada com check-out medico.');
     }

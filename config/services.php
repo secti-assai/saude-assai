@@ -42,4 +42,15 @@ return [
         'connect_timeout' => env('GOV_ASSAI_CONNECT_TIMEOUT', 5),
     ],
 
+    'notifications' => [
+        'base_url' => env('NOTIFICATIONS_BASE_URL', 'http://notificacoes.assai.pr.gov.br'),
+        'api_key' => env('NOTIFICATIONS_API_KEY'),
+        'timeout' => env('NOTIFICATIONS_TIMEOUT', 10),
+        'connect_timeout' => env('NOTIFICATIONS_CONNECT_TIMEOUT', 5),
+        'default_channel' => env('NOTIFICATIONS_DEFAULT_CHANNEL', 'whatsapp'),
+        'public_base_url' => env('NOTIFICATIONS_PUBLIC_BASE_URL', env('APP_URL', 'http://localhost')),
+        'cancel_link_ttl_hours' => env('NOTIFICATIONS_CANCEL_LINK_TTL_HOURS', 6),
+        'feedback_link_ttl_hours' => env('NOTIFICATIONS_FEEDBACK_LINK_TTL_HOURS', 168),
+    ],
+
 ];

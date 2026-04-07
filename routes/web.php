@@ -2,16 +2,30 @@
 
 use App\Http\Controllers\AdminManagementController;
 use App\Http\Controllers\CallController;
+use App\Http\Controllers\CentralPharmacyPublicController;
 use App\Http\Controllers\CentralPharmacyController;
 use App\Http\Controllers\CentralPharmacyReportController;
 use App\Http\Controllers\CentralPharmacyUnifiedController;
 use App\Http\Controllers\PrescriptionMedicationController;
 use App\Http\Controllers\WomenClinicController;
+use App\Http\Controllers\WomenClinicPublicController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
+
+Route::match(['get', 'post'], '/clinica-mulher/publico/cancelamento/{womenClinicAppointment}', [WomenClinicPublicController::class, 'cancel'])
+    ->middleware('signed:relative')
+    ->name('women-clinic.public.cancel');
+
+Route::match(['get', 'post'], '/clinica-mulher/publico/avaliacao/{womenClinicAppointment}', [WomenClinicPublicController::class, 'feedback'])
+    ->middleware('signed:relative')
+    ->name('women-clinic.public.feedback');
+
+Route::match(['get', 'post'], '/farmacia-central/publico/avaliacao/{centralPharmacyRequest}', [CentralPharmacyPublicController::class, 'feedback'])
+    ->middleware('signed:relative')
+    ->name('central-pharmacy.public.feedback');
 
 Route::middleware(['auth', 'module.context'])->group(function () {
     Route::get('/dashboard', function (Request $request) {

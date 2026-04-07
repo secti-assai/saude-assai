@@ -29,12 +29,20 @@ class WomenClinicAppointment extends Model
         'notes',
         'checked_in_at',
         'checked_out_at',
+        'cancelled_at',
+        'reminder_24h_sent_at',
+        'feedback_score',
+        'feedback_comment',
+        'feedback_submitted_at',
     ];
 
     protected $casts = [
         'scheduled_for' => 'datetime',
         'checked_in_at' => 'datetime',
         'checked_out_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'reminder_24h_sent_at' => 'datetime',
+        'feedback_submitted_at' => 'datetime',
     ];
 
     public function citizen(): BelongsTo

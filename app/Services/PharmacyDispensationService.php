@@ -15,7 +15,8 @@ class PharmacyDispensationService
 
     public function __construct(
         private readonly GovAssaiService $govAssai,
-        private readonly AuditService $audit
+        private readonly AuditService $audit,
+        private readonly PharmacyNotificationService $pharmacyNotifications,
     ) {}
 
     public function getCitizenInfo(string $cpf): array
@@ -146,7 +147,8 @@ class PharmacyDispensationService
                 $this->audit->log($request, 'FARMACIA_CENTRAL', 'DESBLOQUEAR_FARMACIA_CIDADAO', Citizen::class, $citizen->id, ['reason' => 'Atingiu Nivel 2.']);
             }
 
-            $this->logDispensation($citizen, $attendantUserId, $data, $level, $request);
+            $pharmacyRequest = $this->logDispensation($citizen, $attendantUserId, $data, $level, $request);
+            $this->pharmacyNotifications->sendDispenseFeedback($pharmacyRequest);
 
             return [
                 'success' => true,
@@ -157,6 +159,8 @@ class PharmacyDispensationService
             // Level 1 or 0 (Not Found)
             if ($citizen->pharmacy_lock_flag) {
                 // Blocked
+                $this->pharmacyNotifications->sendRegularizationGuidance($citizen, $level, 'blocked-'.$citizen->id.'-'.now()->format('YmdHis'));
+
                 return [
                     'success' => false,
                     'action' => 'BLOCKED',
@@ -169,7 +173,9 @@ class PharmacyDispensationService
                     'reason' => 'Nivel '.$level.' no momento da dispensacao com aviso de regularizacao.',
                 ]);
 
-                $this->logDispensation($citizen, $attendantUserId, $data, $level, $request);
+                $pharmacyRequest = $this->logDispensation($citizen, $attendantUserId, $data, $level, $request);
+                $this->pharmacyNotifications->sendRegularizationGuidance($citizen, $level, 'dispensed-notified-'.$pharmacyRequest->id);
+                $this->pharmacyNotifications->sendDispenseFeedback($pharmacyRequest);
 
                 return [
                     'success' => true,
@@ -242,6 +248,8 @@ class PharmacyDispensationService
             'reason' => $refusalReason,
             'gov_assai_level' => $level,
         ]);
+
+        $this->pharmacyNotifications->sendRegularizationGuidance($citizen, $level, 'no-dispense-'.$pharmacyRequest->id);
 
         return [
             'success' => true,
@@ -374,7 +382,7 @@ class PharmacyDispensationService
         };
     }
 
-    private function logDispensation(Citizen $citizen, int $attendantUserId, array $data, int $level, $request)
+    private function logDispensation(Citizen $citizen, int $attendantUserId, array $data, int $level, $request): CentralPharmacyRequest
     {
         $pharmacyRequest = CentralPharmacyRequest::create([
             'citizen_id' => $citizen->id,
@@ -399,5 +407,7 @@ class PharmacyDispensationService
             'pharmacy_request_id' => $pharmacyRequest->id,
             'dispense_category' => $pharmacyRequest->medication_name,
         ]);
+
+        return $pharmacyRequest;
     }
 }
