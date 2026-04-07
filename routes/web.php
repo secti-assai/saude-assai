@@ -9,6 +9,7 @@ use App\Http\Controllers\CentralPharmacyUnifiedController;
 use App\Http\Controllers\PrescriptionMedicationController;
 use App\Http\Controllers\WomenClinicController;
 use App\Http\Controllers\WomenClinicPublicController;
+use App\Http\Controllers\WomenClinicReportController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,10 @@ Route::middleware(['auth', 'module.context'])->group(function () {
 
         if ($user->hasPermission(User::PERMISSION_WOMEN_CLINIC_SCHEDULE)) {
             return redirect()->route('women-clinic.agendador');
+        }
+
+        if ($user->hasPermission(User::PERMISSION_WOMEN_CLINIC_REPORTS)) {
+            return redirect()->route('women-clinic.reports');
         }
 
         if ($user->hasPermission(User::PERMISSION_WOMEN_CLINIC_CHECKIN)) {
@@ -109,6 +114,10 @@ Route::middleware(['auth', 'module.context'])->group(function () {
     Route::post('/clinica-mulher/agendamentos/{womenClinicAppointment}/check-out', [WomenClinicController::class, 'checkOut'])
         ->middleware('permission:women_clinic.checkout')
         ->name('women-clinic.check-out');
+
+    Route::get('/clinica-mulher/relatorios', [WomenClinicReportController::class, 'index'])
+        ->middleware('permission:women_clinic.reports')
+        ->name('women-clinic.reports');
 
     Route::get('/farmacia-central', [CentralPharmacyUnifiedController::class, 'index'])
         ->middleware('permission:central_pharmacy.unified')
