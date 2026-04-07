@@ -3,6 +3,8 @@
 use App\Http\Controllers\AdminManagementController;
 use App\Http\Controllers\CallController;
 use App\Http\Controllers\CentralPharmacyController;
+use App\Http\Controllers\CentralPharmacyReportController;
+use App\Http\Controllers\CentralPharmacyUnifiedController;
 use App\Http\Controllers\PrescriptionMedicationController;
 use App\Http\Controllers\WomenClinicController;
 use App\Models\User;
@@ -35,12 +37,12 @@ Route::middleware(['auth', 'module.context'])->group(function () {
             return redirect()->route('women-clinic.medico');
         }
 
-        if ($user->hasPermission(User::PERMISSION_CENTRAL_PHARMACY_RECEPTION)) {
-            return redirect()->route('central-pharmacy.recepcao');
+        if ($user->hasPermission(User::PERMISSION_CENTRAL_PHARMACY)) {
+            return redirect()->route('central-pharmacy.unified');
         }
 
-        if ($user->hasPermission(User::PERMISSION_CENTRAL_PHARMACY_DISPENSE)) {
-            return redirect()->route('central-pharmacy.atendimento');
+        if ($user->hasPermission(User::PERMISSION_CENTRAL_PHARMACY_REPORTS)) {
+            return redirect()->route('central-pharmacy.reports');
         }
 
         abort(403, 'Perfil sem area operacional configurada.');
@@ -94,45 +96,25 @@ Route::middleware(['auth', 'module.context'])->group(function () {
         ->middleware('permission:women_clinic.checkout')
         ->name('women-clinic.check-out');
 
-    Route::get('/farmacia-central/recepcao', [CentralPharmacyController::class, 'recepcaoArea'])
-        ->middleware('permission:central_pharmacy.reception')
-        ->name('central-pharmacy.recepcao');
+    Route::get('/farmacia-central', [CentralPharmacyUnifiedController::class, 'index'])
+        ->middleware('permission:central_pharmacy.unified')
+        ->name('central-pharmacy.unified');
 
-    Route::post('/farmacia-central/solicitacoes/iniciar', [CentralPharmacyController::class, 'startReceptionFlow'])
-        ->middleware('permission:central_pharmacy.reception')
-        ->name('central-pharmacy.reception.start');
+    Route::post('/farmacia-central/buscar', [CentralPharmacyUnifiedController::class, 'search'])
+        ->middleware('permission:central_pharmacy.unified')
+        ->name('central-pharmacy.unified.search');
 
-    Route::post('/farmacia-central/solicitacoes/cancelar', [CentralPharmacyController::class, 'cancelReceptionFlow'])
-        ->middleware('permission:central_pharmacy.reception')
-        ->name('central-pharmacy.reception.cancel');
+    Route::post('/farmacia-central/dispensar', [CentralPharmacyUnifiedController::class, 'dispense'])
+        ->middleware('permission:central_pharmacy.unified')
+        ->name('central-pharmacy.unified.dispense');
 
-    Route::post('/farmacia-central/solicitacoes/verificar-identidade', [CentralPharmacyController::class, 'verifyReceptionIdentity'])
-        ->middleware('permission:central_pharmacy.reception')
-        ->name('central-pharmacy.reception.verify-identity');
+    Route::post('/farmacia-central/nao-dispensar-bloqueio', [CentralPharmacyUnifiedController::class, 'noDispenseBlocked'])
+        ->middleware('permission:central_pharmacy.unified')
+        ->name('central-pharmacy.unified.no-dispense-blocked');
 
-    Route::get('/farmacia-central/atendimento', [CentralPharmacyController::class, 'atendimentoArea'])
-        ->middleware('permission:central_pharmacy.dispense')
-        ->name('central-pharmacy.atendimento');
-
-    Route::get('/farmacia-central/atendimento/fila-dados', [CentralPharmacyController::class, 'atendimentoData'])
-        ->middleware('permission:central_pharmacy.dispense')
-        ->name('central-pharmacy.atendimento.data');
-
-    Route::post('/farmacia-central/solicitacoes', [CentralPharmacyController::class, 'registerReception'])
-        ->middleware('permission:central_pharmacy.reception')
-        ->name('central-pharmacy.register-reception');
-
-    Route::post('/farmacia-central/solicitacoes/{centralPharmacyRequest}/dispensar', [CentralPharmacyController::class, 'dispense'])
-        ->middleware('permission:central_pharmacy.dispense')
-        ->name('central-pharmacy.dispense');
-
-    Route::post('/farmacia-central/solicitacoes/{centralPharmacyRequest}/nao-dispensar', [CentralPharmacyController::class, 'refuse'])
-        ->middleware('permission:central_pharmacy.dispense')
-        ->name('central-pharmacy.refuse');
-
-    Route::post('/farmacia-central/solicitacoes/{centralPharmacyRequest}/dispensar-equivalente', [CentralPharmacyController::class, 'dispenseEquivalent'])
-        ->middleware('permission:central_pharmacy.dispense')
-        ->name('central-pharmacy.dispense-equivalent');
+    Route::get('/farmacia-central/relatorios', [CentralPharmacyReportController::class, 'index'])
+        ->middleware('permission:central_pharmacy.reports')
+        ->name('central-pharmacy.reports');
 
     Route::get('/admin/usuarios', [AdminManagementController::class, 'usersArea'])
         ->middleware('role:admin')

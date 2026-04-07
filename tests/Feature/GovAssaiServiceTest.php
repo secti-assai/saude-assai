@@ -89,4 +89,26 @@ class GovAssaiServiceTest extends TestCase
         $this->assertFalse($result['success']);
         $this->assertSame('GOV_ASSAI_UNAVAILABLE', $result['error_code']);
     }
+
+    public function test_it_returns_invalid_response_when_success_status_has_html_body(): void
+    {
+        config()->set('services.gov_assai.base_url', 'https://gov-assai.test');
+        config()->set('services.gov_assai.api_key', 'test-key');
+
+        Http::fake([
+            'https://gov-assai.test/api/saude/cidadaos/cpf/*' => Http::response(
+                '<html><head><title>Gov.Assai - Login</title></head><body>Login</body></html>',
+                200,
+                ['Content-Type' => 'text/html; charset=UTF-8']
+            ),
+        ]);
+
+        $service = app(GovAssaiService::class);
+        $result = $service->fetchCitizenByCpf('12345678901');
+
+        $this->assertSame(200, $result['status']);
+        $this->assertFalse($result['success']);
+        $this->assertSame('GOV_ASSAI_INVALID_RESPONSE', $result['error_code']);
+        $this->assertStringContainsString('resposta invalida', $result['message']);
+    }
 }

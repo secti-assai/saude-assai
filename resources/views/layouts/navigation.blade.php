@@ -9,8 +9,8 @@
         ['route' => 'women-clinic.agendador', 'match' => 'women-clinic.agendador', 'label' => 'Clínica - Agendador', 'icon' => 'document-text', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_SCHEDULE],
         ['route' => 'women-clinic.recepcao', 'match' => 'women-clinic.recepcao', 'label' => 'Clínica - Recepção', 'icon' => 'clipboard-list', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_CHECKIN],
         ['route' => 'women-clinic.medico', 'match' => 'women-clinic.medico', 'label' => 'Clínica - Médico', 'icon' => 'heart', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_CHECKOUT],
-        ['route' => 'central-pharmacy.recepcao', 'match' => 'central-pharmacy.recepcao', 'label' => 'Farmácia - Recepção', 'icon' => 'beaker', 'permission' => \App\Models\User::PERMISSION_CENTRAL_PHARMACY_RECEPTION],
-        ['route' => 'central-pharmacy.atendimento', 'match' => 'central-pharmacy.atendimento', 'label' => 'Farmácia - Atendimento', 'icon' => 'users', 'permission' => \App\Models\User::PERMISSION_CENTRAL_PHARMACY_DISPENSE],
+        ['route' => 'central-pharmacy.unified', 'match' => 'central-pharmacy.unified*', 'label' => 'Farmácia Central', 'icon' => 'beaker', 'permission' => \App\Models\User::PERMISSION_CENTRAL_PHARMACY],
+        ['route' => 'central-pharmacy.reports', 'match' => 'central-pharmacy.reports', 'label' => 'Farmácia - Relatórios', 'icon' => 'chart-bar', 'permission' => \App\Models\User::PERMISSION_CENTRAL_PHARMACY_REPORTS],
     ];
 @endphp
 

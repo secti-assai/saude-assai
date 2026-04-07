@@ -71,6 +71,16 @@ class GovAssaiService
         if ($response->successful()) {
             $payload = $response->json();
 
+            if (! is_array($payload)) {
+                return [
+                    'status' => $response->status(),
+                    'success' => false,
+                    'message' => 'Gov.Assai retornou resposta invalida (nao JSON). Verifique autenticacao/endpoint da API.',
+                    'error_code' => 'GOV_ASSAI_INVALID_RESPONSE',
+                    'data' => null,
+                ];
+            }
+
             return [
                 'status' => $response->status(),
                 'success' => (bool) Arr::get($payload, 'success', false),
@@ -81,6 +91,16 @@ class GovAssaiService
         }
 
         $payload = $response->json();
+
+        if (! is_array($payload)) {
+            return [
+                'status' => $response->status(),
+                'success' => false,
+                'message' => 'Falha ao consultar Gov.Assai (resposta nao JSON).',
+                'error_code' => Str::upper('HTTP_'.$response->status()),
+                'data' => null,
+            ];
+        }
 
         return [
             'status' => $response->status(),

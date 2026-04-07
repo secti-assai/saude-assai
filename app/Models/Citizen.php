@@ -15,6 +15,7 @@ class Citizen extends Model
         'email' => 'encrypted',
         'birth_date' => 'date',
         'is_resident_assai' => 'boolean',
+        'pharmacy_lock_flag' => 'boolean',
         'residence_validated_at' => 'datetime',
     ];
 
@@ -31,6 +32,7 @@ class Citizen extends Model
         'gov_assai_id',
         'address',
         'is_resident_assai',
+        'pharmacy_lock_flag',
         'residence_validated_at',
         'phone',
         'email',

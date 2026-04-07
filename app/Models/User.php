@@ -40,16 +40,15 @@ class User extends Authenticatable
     public const ROLE_AGENDADOR = 'agendador';
     public const ROLE_RECEPCAO_CLINICA = 'recepcao_clinica';
     public const ROLE_MEDICO_CLINICA = 'medico_clinica';
-    public const ROLE_RECEPCAO_FARMACIA = 'recepcao_farmacia';
-    public const ROLE_ATENDIMENTO_FARMACIA = 'atendimento_farmacia';
+    public const ROLE_FARMACIA = 'farmacia';
 
     /** @use HasFactory<UserFactory> */
 
     public const PERMISSION_WOMEN_CLINIC_SCHEDULE = 'women_clinic.schedule';
     public const PERMISSION_WOMEN_CLINIC_CHECKIN = 'women_clinic.checkin';
     public const PERMISSION_WOMEN_CLINIC_CHECKOUT = 'women_clinic.checkout';
-    public const PERMISSION_CENTRAL_PHARMACY_RECEPTION = 'central_pharmacy.reception';
-    public const PERMISSION_CENTRAL_PHARMACY_DISPENSE = 'central_pharmacy.dispense';
+    public const PERMISSION_CENTRAL_PHARMACY = 'central_pharmacy.unified';
+    public const PERMISSION_CENTRAL_PHARMACY_REPORTS = 'central_pharmacy.reports';
 
     public static function allPermissionOptions(): array
     {
@@ -57,8 +56,8 @@ class User extends Authenticatable
             self::PERMISSION_WOMEN_CLINIC_SCHEDULE,
             self::PERMISSION_WOMEN_CLINIC_CHECKIN,
             self::PERMISSION_WOMEN_CLINIC_CHECKOUT,
-            self::PERMISSION_CENTRAL_PHARMACY_RECEPTION,
-            self::PERMISSION_CENTRAL_PHARMACY_DISPENSE,
+            self::PERMISSION_CENTRAL_PHARMACY,
+            self::PERMISSION_CENTRAL_PHARMACY_REPORTS,
         ];
     }
 
@@ -69,8 +68,7 @@ class User extends Authenticatable
             self::ROLE_AGENDADOR => [self::PERMISSION_WOMEN_CLINIC_SCHEDULE],
             self::ROLE_RECEPCAO_CLINICA => [self::PERMISSION_WOMEN_CLINIC_CHECKIN],
             self::ROLE_MEDICO_CLINICA => [self::PERMISSION_WOMEN_CLINIC_CHECKOUT],
-            self::ROLE_RECEPCAO_FARMACIA => [self::PERMISSION_CENTRAL_PHARMACY_RECEPTION],
-            self::ROLE_ATENDIMENTO_FARMACIA => [self::PERMISSION_CENTRAL_PHARMACY_DISPENSE],
+            self::ROLE_FARMACIA => [self::PERMISSION_CENTRAL_PHARMACY],
             default => [],
         };
     }
