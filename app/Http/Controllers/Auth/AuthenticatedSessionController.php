@@ -31,9 +31,11 @@ class AuthenticatedSessionController extends Controller
         $role = (string) ($request->user()?->role ?? '');
 
         $target = match ($role) {
-            'agendador' => route('women-clinic.agendador', absolute: false),
+            'agendador' => route('clinic-scheduler.index', absolute: false),
             'recepcao_clinica' => route('women-clinic.recepcao', absolute: false),
             'medico_clinica' => route('women-clinic.medico', absolute: false),
+            'recepcao_policlinica' => route('policlinica.recepcao', absolute: false),
+            'medico_policlinica' => route('policlinica.medico', absolute: false),
             'recepcao_farmacia' => route('central-pharmacy.recepcao', absolute: false),
             'atendimento_farmacia' => route('central-pharmacy.atendimento', absolute: false),
             default => route('dashboard', absolute: false),

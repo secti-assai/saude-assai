@@ -15,6 +15,8 @@ class WomenClinicNotificationService
     public function sendScheduled(WomenClinicAppointment $appointment): void
     {
         $appointment->loadMissing('citizen');
+        $clinicLabel = WomenClinicAppointment::clinicLabel($appointment->clinic_type);
+        $clinicSlug = str_replace('_', '-', strtolower(WomenClinicAppointment::resolveClinicType($appointment->clinic_type)));
 
         $phone = (string) ($appointment->citizen->phone ?? '');
         $formattedDate = $appointment->scheduled_for?->format('d/m/Y H:i');
@@ -25,16 +27,18 @@ class WomenClinicNotificationService
 
         $this->notifications->enqueueWhatsapp(
             $phone,
-            'Clinica da Mulher - Consulta agendada',
+            $clinicLabel.' - Consulta agendada',
             "Sua consulta foi agendada para {$formattedDate}. Voce recebera outro lembrete 24 horas antes com um link seguro para cancelamento.",
             now(),
-            'women-clinic-'.$appointment->id.'-scheduled'
+            $clinicSlug.'-'.$appointment->id.'-scheduled'
         );
     }
 
     public function sendReminder24hWithCancelLink(WomenClinicAppointment $appointment): void
     {
         $appointment->loadMissing('citizen');
+        $clinicLabel = WomenClinicAppointment::clinicLabel($appointment->clinic_type);
+        $clinicSlug = str_replace('_', '-', strtolower(WomenClinicAppointment::resolveClinicType($appointment->clinic_type)));
 
         if ($appointment->status !== 'AGENDADO') {
             return;
@@ -56,10 +60,10 @@ class WomenClinicNotificationService
 
         $result = $this->notifications->enqueueWhatsapp(
             $phone,
-            'Clinica da Mulher - Lembrete de consulta',
+            $clinicLabel.' - Lembrete de consulta',
             "Lembrete: sua consulta esta marcada para {$formattedDate}. Caso precise cancelar, use este link seguro (valido por {$ttlHours} horas): {$cancelLink}. Na pagina, informe CPF e data de nascimento para confirmar o cancelamento.",
             now(),
-            'women-clinic-'.$appointment->id.'-reminder-24h'
+            $clinicSlug.'-'.$appointment->id.'-reminder-24h'
         );
 
         if ($result['success']) {
@@ -72,32 +76,36 @@ class WomenClinicNotificationService
     public function sendCheckIn(WomenClinicAppointment $appointment): void
     {
         $appointment->loadMissing('citizen');
+        $clinicLabel = WomenClinicAppointment::clinicLabel($appointment->clinic_type);
+        $clinicSlug = str_replace('_', '-', strtolower(WomenClinicAppointment::resolveClinicType($appointment->clinic_type)));
 
         $phone = (string) ($appointment->citizen->phone ?? '');
         $formattedDate = $appointment->scheduled_for?->format('d/m/Y H:i');
 
         $this->notifications->enqueueWhatsapp(
             $phone,
-            'Clinica da Mulher - Check-in realizado',
+            $clinicLabel.' - Check-in realizado',
             'Seu check-in foi realizado com sucesso'.($formattedDate !== null ? " para a consulta de {$formattedDate}" : '').'. Aguarde o atendimento medico.',
             now(),
-            'women-clinic-'.$appointment->id.'-checkin-'.($appointment->checked_in_at?->timestamp ?? now()->timestamp)
+            $clinicSlug.'-'.$appointment->id.'-checkin-'.($appointment->checked_in_at?->timestamp ?? now()->timestamp)
         );
     }
 
     public function sendCheckOutAndFeedback(WomenClinicAppointment $appointment): void
     {
         $appointment->loadMissing('citizen');
+        $clinicLabel = WomenClinicAppointment::clinicLabel($appointment->clinic_type);
+        $clinicSlug = str_replace('_', '-', strtolower(WomenClinicAppointment::resolveClinicType($appointment->clinic_type)));
 
         $phone = (string) ($appointment->citizen->phone ?? '');
         $feedbackLink = $this->buildFeedbackLink($appointment);
 
         $this->notifications->enqueueWhatsapp(
             $phone,
-            'Clinica da Mulher - Consulta finalizada',
+            $clinicLabel.' - Consulta finalizada',
             "Sua consulta foi finalizada. Para avaliar o atendimento, acesse este link: {$feedbackLink}",
             now(),
-            'women-clinic-'.$appointment->id.'-checkout-'.($appointment->checked_out_at?->timestamp ?? now()->timestamp)
+            $clinicSlug.'-'.$appointment->id.'-checkout-'.($appointment->checked_out_at?->timestamp ?? now()->timestamp)
         );
     }
 

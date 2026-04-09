@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\HealthUnit;
 use App\Models\User;
+use App\Models\WomenClinicAppointment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -120,6 +121,39 @@ class UserAccessAndUnitRestrictionTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => 'clinica@saudeassai.local',
             'health_unit_id' => $clinic->id,
+        ]);
+
+        $doctorWithoutSpecialty = $this->actingAs($admin)->post(route('admin.users.create'), [
+            'name' => 'Medico Sem Especialidade',
+            'email' => 'medico.sem.especialidade@saudeassai.local',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'role' => User::ROLE_MEDICO_CLINICA,
+            'health_unit_id' => $clinic->id,
+            'permissions' => [User::PERMISSION_WOMEN_CLINIC_CHECKOUT],
+            'clinic_specialty' => '',
+        ]);
+
+        $doctorWithoutSpecialty->assertRedirect();
+        $doctorWithoutSpecialty->assertSessionHasErrors('clinic_specialty');
+        $this->assertDatabaseMissing('users', ['email' => 'medico.sem.especialidade@saudeassai.local']);
+
+        $validDoctor = $this->actingAs($admin)->post(route('admin.users.create'), [
+            'name' => 'Medico Cardiologia',
+            'email' => 'medico.cardiologia@saudeassai.local',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'role' => User::ROLE_MEDICO_CLINICA,
+            'health_unit_id' => $clinic->id,
+            'permissions' => [User::PERMISSION_WOMEN_CLINIC_CHECKOUT],
+            'clinic_specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
+        ]);
+
+        $validDoctor->assertRedirect();
+        $validDoctor->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('users', [
+            'email' => 'medico.cardiologia@saudeassai.local',
+            'clinic_specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
         ]);
 
         $this->assertNotNull($farmacia->id);

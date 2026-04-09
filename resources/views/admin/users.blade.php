@@ -42,6 +42,15 @@
                     </select>
                 </div>
                 <div>
+                    <label class="sa-label">Especialidade (medicos das clinicas)</label>
+                    <select name="clinic_specialty" class="sa-select">
+                        <option value="">Sem especialidade</option>
+                        @foreach($clinicSpecialties as $specialtyValue => $specialtyLabel)
+                            <option value="{{ $specialtyValue }}" @selected(old('clinic_specialty') === $specialtyValue)>{{ $specialtyLabel }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
                     <label class="sa-label">Unidade</label>
                     <select name="health_unit_id" class="sa-select">
                         <option value="">Sem unidade</option>
@@ -84,6 +93,7 @@
                             <th>Nome</th>
                             <th>Email</th>
                             <th>Perfil</th>
+                            <th>Especialidade</th>
                             <th>Unidade</th>
                             <th>Permissoes</th>
                             <th>Acoes</th>
@@ -95,6 +105,7 @@
                                 <td>{{ $item->name }}</td>
                                 <td>{{ $item->email }}</td>
                                 <td>{{ $item->role }}</td>
+                                <td>{{ $item->role === \App\Models\User::ROLE_MEDICO_CLINICA ? $item->clinicSpecialtyLabel() : '—' }}</td>
                                 <td>{{ $item->healthUnit->name ?? '—' }}</td>
                                 <td class="text-xs">{{ implode(', ', $item->permissions ?? []) ?: 'herda por perfil' }}</td>
                                 <td>
@@ -112,6 +123,14 @@
                                                 <option value="">Sem unidade</option>
                                                 @foreach($healthUnits as $unit)
                                                     <option value="{{ $unit->id }}" @selected((string) $item->health_unit_id === (string) $unit->id)>{{ $unit->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <select name="clinic_specialty" class="sa-select text-xs">
+                                                <option value="">Sem especialidade</option>
+                                                @foreach($clinicSpecialties as $specialtyValue => $specialtyLabel)
+                                                    <option value="{{ $specialtyValue }}" @selected((string) $item->clinic_specialty === (string) $specialtyValue)>{{ $specialtyLabel }}</option>
                                                 @endforeach
                                             </select>
                                         </div>

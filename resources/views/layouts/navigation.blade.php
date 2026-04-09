@@ -6,10 +6,13 @@
     $navItems = [
         ['route' => 'admin.reports', 'match' => 'admin.reports', 'label' => 'Admin - Relatórios', 'icon' => 'chart-bar', 'roles' => 'admin'],
         ['route' => 'admin.users', 'match' => 'admin.users', 'label' => 'Admin - Usuários', 'icon' => 'users', 'roles' => 'admin'],
-        ['route' => 'women-clinic.agendador', 'match' => 'women-clinic.agendador', 'label' => 'Clínica - Agendador', 'icon' => 'document-text', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_SCHEDULE],
-        ['route' => 'women-clinic.recepcao', 'match' => 'women-clinic.recepcao', 'label' => 'Clínica - Recepção', 'icon' => 'clipboard-list', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_CHECKIN],
-        ['route' => 'women-clinic.medico', 'match' => 'women-clinic.medico', 'label' => 'Clínica - Médico', 'icon' => 'heart', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_CHECKOUT],
-        ['route' => 'women-clinic.reports', 'match' => 'women-clinic.reports', 'label' => 'Clínica - Relatórios', 'icon' => 'chart-bar', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_REPORTS],
+        ['route' => 'clinic-scheduler.index', 'match' => 'clinic-scheduler.*', 'label' => 'Agendador - Clínicas', 'icon' => 'document-text', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_SCHEDULE],
+        ['route' => 'women-clinic.recepcao', 'match' => 'women-clinic.recepcao', 'label' => 'Clínica da Mulher - Recepção', 'icon' => 'clipboard-list', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_CHECKIN],
+        ['route' => 'women-clinic.medico', 'match' => 'women-clinic.medico', 'label' => 'Clínica da Mulher - Médico', 'icon' => 'heart', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_CHECKOUT],
+        ['route' => 'women-clinic.reports', 'match' => 'women-clinic.reports', 'label' => 'Clínica da Mulher - Relatórios', 'icon' => 'chart-bar', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_REPORTS],
+        ['route' => 'policlinica.recepcao', 'match' => 'policlinica.recepcao', 'label' => 'Policlínica - Recepção', 'icon' => 'clipboard-list', 'permission' => \App\Models\User::PERMISSION_POLICLINICA_CHECKIN],
+        ['route' => 'policlinica.medico', 'match' => 'policlinica.medico', 'label' => 'Policlínica - Médico', 'icon' => 'heart', 'permission' => \App\Models\User::PERMISSION_POLICLINICA_CHECKOUT],
+        ['route' => 'policlinica.reports', 'match' => 'policlinica.reports', 'label' => 'Policlínica - Relatórios', 'icon' => 'chart-bar', 'permission' => \App\Models\User::PERMISSION_POLICLINICA_REPORTS],
         ['route' => 'central-pharmacy.unified', 'match' => 'central-pharmacy.unified*', 'label' => 'Farmácia Central', 'icon' => 'beaker', 'permission' => \App\Models\User::PERMISSION_CENTRAL_PHARMACY],
         ['route' => 'central-pharmacy.reports', 'match' => 'central-pharmacy.reports', 'label' => 'Farmácia - Relatórios', 'icon' => 'chart-bar', 'permission' => \App\Models\User::PERMISSION_CENTRAL_PHARMACY_REPORTS],
     ];

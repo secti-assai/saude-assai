@@ -54,16 +54,28 @@ class LiveQueueDataEndpointsTest extends TestCase
     {
         $medico = User::factory()->create([
             'role' => 'medico_clinica',
+            'clinic_specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
             'email_verified_at' => now(),
         ]);
 
-        $citizenCheckin = $this->createCitizen('60606060606', 'PACIENTE CHECKIN MEDICO');
-        $citizenAgendado = $this->createCitizen('70707070707', 'PACIENTE AGENDADO MEDICO');
+        $citizenCheckin = $this->createCitizen('60606060606', 'PACIENTE CHECKIN CARDIO');
+        $citizenCheckinOutraEspecialidade = $this->createCitizen('70707070707', 'PACIENTE CHECKIN ORTOPEDIA');
+        $citizenAgendado = $this->createCitizen('80808080808', 'PACIENTE AGENDADO MEDICO');
 
         WomenClinicAppointment::create([
             'citizen_id' => $citizenCheckin->id,
             'scheduler_user_id' => $medico->id,
             'scheduled_for' => now(),
+            'specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
+            'status' => 'CHECKIN',
+            'checked_in_at' => now(),
+        ]);
+
+        WomenClinicAppointment::create([
+            'citizen_id' => $citizenCheckinOutraEspecialidade->id,
+            'scheduler_user_id' => $medico->id,
+            'scheduled_for' => now(),
+            'specialty' => WomenClinicAppointment::SPECIALTY_ORTOPEDIA,
             'status' => 'CHECKIN',
             'checked_in_at' => now(),
         ]);
@@ -72,6 +84,7 @@ class LiveQueueDataEndpointsTest extends TestCase
             'citizen_id' => $citizenAgendado->id,
             'scheduler_user_id' => $medico->id,
             'scheduled_for' => now(),
+            'specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
             'status' => 'AGENDADO',
         ]);
 
@@ -79,7 +92,7 @@ class LiveQueueDataEndpointsTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonCount(1, 'rows');
-        $response->assertJsonPath('rows.0.citizen_name', 'PACIENTE CHECKIN MEDICO');
+        $response->assertJsonPath('rows.0.citizen_name', 'PACIENTE CHECKIN CARDIO');
     }
 
     public function test_pharmacy_atendimento_data_endpoint_returns_pending_dispense_queue(): void

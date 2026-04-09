@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\SendWomenClinicLifecycleNotificationJob;
+use App\Models\User;
 use App\Models\WomenClinicAppointment;
 use App\Services\AuditService;
 use App\Services\CitizenEligibilityService;
@@ -11,6 +12,7 @@ use App\Services\GovAssaiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class WomenClinicController extends Controller
@@ -69,12 +71,43 @@ class WomenClinicController extends Controller
             $statusFilter = 'AGENDADO';
         }
 
+        $clinicOptions = WomenClinicAppointment::clinicOptions();
+        $clinicFilterOptions = ['TODOS' => 'Todas as clinicas'] + $clinicOptions;
+        $clinicFilterInput = trim((string) $request->query('clinic_type', 'TODOS'));
+        $clinicFilter = $clinicFilterInput === 'TODOS'
+            ? 'TODOS'
+            : (WomenClinicAppointment::normalizeClinicType($clinicFilterInput) ?? 'TODOS');
+
+        $specialtyOptions = WomenClinicAppointment::specialtyOptions();
+        $specialtyFilterOptions = ['TODOS' => 'Todas as especialidades'] + $specialtyOptions;
+        $specialtyFilter = strtoupper(trim((string) $request->query('specialty', 'TODOS')));
+
+        if (! isset($specialtyFilterOptions[$specialtyFilter])) {
+            $specialtyFilter = 'TODOS';
+        }
+
         $appointmentsQuery = WomenClinicAppointment::with(['citizen', 'scheduler', 'reception', 'doctor'])
             ->whereDate('scheduled_for', '>=', $dateStart)
             ->whereDate('scheduled_for', '<=', $dateEnd);
 
+        if ($clinicFilter === WomenClinicAppointment::CLINIC_WOMEN) {
+            $appointmentsQuery->where(function ($query): void {
+                $query
+                    ->where('clinic_type', WomenClinicAppointment::CLINIC_WOMEN)
+                    ->orWhereNull('clinic_type');
+            });
+        }
+
+        if ($clinicFilter === WomenClinicAppointment::CLINIC_POLICLINICA) {
+            $appointmentsQuery->where('clinic_type', WomenClinicAppointment::CLINIC_POLICLINICA);
+        }
+
         if ($statusFilter !== 'TODOS') {
             $appointmentsQuery->where('status', $statusFilter);
+        }
+
+        if ($specialtyFilter !== 'TODOS') {
+            $appointmentsQuery->where('specialty', $specialtyFilter);
         }
 
         $appointments = $appointmentsQuery
@@ -89,8 +122,15 @@ class WomenClinicController extends Controller
                 'date_start' => $dateStart,
                 'date_end' => $dateEnd,
                 'status' => $statusFilter,
+                'clinic_type' => $clinicFilter,
+                'specialty' => $specialtyFilter,
             ],
+            'clinicOptions' => $clinicOptions,
+            'clinicFilterOptions' => $clinicFilterOptions,
             'statusOptions' => $statusOptions,
+            'clinicSpecialtyOptions' => $specialtyOptions,
+            'specialtiesByClinic' => WomenClinicAppointment::specialtyOptionsByClinic(),
+            'specialtyFilterOptions' => $specialtyFilterOptions,
         ]);
     }
 
@@ -155,7 +195,7 @@ class WomenClinicController extends Controller
         $this->identityChallenge->clear('women_clinic_schedule');
         session()->forget('women_clinic.schedule_flow');
 
-        return redirect()->route('women-clinic.agendador')->with('status', 'Agendamento cancelado. Voce pode iniciar a consulta de um novo cidadao.');
+        return redirect()->route('clinic-scheduler.index')->with('status', 'Agendamento cancelado. Voce pode iniciar a consulta de um novo cidadao.');
     }
 
     public function recepcaoArea(Request $request): View
@@ -205,6 +245,11 @@ class WomenClinicController extends Controller
         }
 
         $appointmentsQuery = WomenClinicAppointment::with(['citizen', 'scheduler'])
+            ->where(function ($query): void {
+                $query
+                    ->where('clinic_type', WomenClinicAppointment::CLINIC_WOMEN)
+                    ->orWhereNull('clinic_type');
+            })
             ->whereDate('scheduled_for', '>=', $dateStart)
             ->whereDate('scheduled_for', '<=', $dateEnd);
 
@@ -275,6 +320,11 @@ class WomenClinicController extends Controller
         }
 
         $appointmentsQuery = WomenClinicAppointment::with(['citizen', 'scheduler'])
+            ->where(function ($query): void {
+                $query
+                    ->where('clinic_type', WomenClinicAppointment::CLINIC_WOMEN)
+                    ->orWhereNull('clinic_type');
+            })
             ->whereDate('scheduled_for', '>=', $dateStart)
             ->whereDate('scheduled_for', '<=', $dateEnd);
 
@@ -292,6 +342,7 @@ class WomenClinicController extends Controller
                 'id' => (string) $appointment->id,
                 'scheduled_for' => $appointment->scheduled_for?->format('d/m/Y H:i') ?? '—',
                 'citizen_name' => (string) ($appointment->citizen->full_name ?? '—'),
+                'specialty_label' => WomenClinicAppointment::specialtyLabel($appointment->specialty),
                 'status' => (string) $appointment->status,
                 'check_in_url' => $appointment->status === 'AGENDADO'
                     ? route('women-clinic.check-in', $appointment)
@@ -301,24 +352,63 @@ class WomenClinicController extends Controller
         ]);
     }
 
-    public function medicoArea(): View
+    public function medicoArea(Request $request): View
     {
-        $appointments = WomenClinicAppointment::with(['citizen', 'reception'])
+        $doctorSpecialty = $this->resolveDoctorSpecialtyForCheckout($request);
+
+        $appointmentsQuery = WomenClinicAppointment::with(['citizen', 'reception'])
             ->where('status', 'CHECKIN')
-            ->orderBy('checked_in_at')
+            ->where(function ($query): void {
+                $query
+                    ->where('clinic_type', WomenClinicAppointment::CLINIC_WOMEN)
+                    ->orWhereNull('clinic_type');
+            })
+            ->orderBy('checked_in_at');
+
+        if ($doctorSpecialty !== null) {
+            $appointmentsQuery->where(function ($query) use ($doctorSpecialty): void {
+                $query
+                    ->where('specialty', $doctorSpecialty)
+                    ->orWhereNull('specialty')
+                    ->orWhereNotIn('specialty', WomenClinicAppointment::specialtyValuesForClinic(WomenClinicAppointment::CLINIC_WOMEN));
+            });
+        }
+
+        $appointments = $appointmentsQuery
             ->limit(50)
             ->get();
 
         return view('women-clinic.medico', [
             'appointments' => $appointments,
+            'doctorSpecialtyLabel' => $doctorSpecialty !== null
+                ? WomenClinicAppointment::specialtyLabel($doctorSpecialty)
+                : null,
         ]);
     }
 
-    public function medicoData(): JsonResponse
+    public function medicoData(Request $request): JsonResponse
     {
-        $appointments = WomenClinicAppointment::with(['citizen'])
+        $doctorSpecialty = $this->resolveDoctorSpecialtyForCheckout($request);
+
+        $appointmentsQuery = WomenClinicAppointment::with(['citizen'])
             ->where('status', 'CHECKIN')
-            ->orderBy('checked_in_at')
+            ->where(function ($query): void {
+                $query
+                    ->where('clinic_type', WomenClinicAppointment::CLINIC_WOMEN)
+                    ->orWhereNull('clinic_type');
+            })
+            ->orderBy('checked_in_at');
+
+        if ($doctorSpecialty !== null) {
+            $appointmentsQuery->where(function ($query) use ($doctorSpecialty): void {
+                $query
+                    ->where('specialty', $doctorSpecialty)
+                    ->orWhereNull('specialty')
+                    ->orWhereNotIn('specialty', WomenClinicAppointment::specialtyValuesForClinic(WomenClinicAppointment::CLINIC_WOMEN));
+            });
+        }
+
+        $appointments = $appointmentsQuery
             ->limit(100)
             ->get();
 
@@ -326,6 +416,7 @@ class WomenClinicController extends Controller
             'rows' => $appointments->map(fn (WomenClinicAppointment $appointment): array => [
                 'id' => (string) $appointment->id,
                 'citizen_name' => (string) ($appointment->citizen->full_name ?? '—'),
+                'specialty_label' => WomenClinicAppointment::specialtyLabel($appointment->specialty),
                 'checked_in_at' => $appointment->checked_in_at?->format('d/m/Y H:i') ?? '—',
                 'check_out_url' => route('women-clinic.check-out', $appointment),
             ])->values(),
@@ -347,17 +438,34 @@ class WomenClinicController extends Controller
 
         $data = $request->validate([
             'scheduled_for' => ['required', 'date', 'after_or_equal:today'],
+            'clinic_type' => ['required', 'string', Rule::in(WomenClinicAppointment::clinicValues())],
+            'specialty' => ['required', 'string', Rule::in(WomenClinicAppointment::specialtyValues())],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        $clinicType = WomenClinicAppointment::resolveClinicType((string) ($data['clinic_type'] ?? ''));
+        if (! WomenClinicAppointment::isSpecialtyAllowedForClinic($clinicType, (string) ($data['specialty'] ?? ''))) {
+            return back()->withErrors([
+                'specialty' => 'A especialidade selecionada nao pertence a clinica informada.',
+            ])->withInput();
+        }
+
+        $specialty = WomenClinicAppointment::normalizeSpecialty((string) ($data['specialty'] ?? ''));
+        if ($specialty === null) {
+            return back()->withErrors([
+                'specialty' => 'Especialidade invalida para o agendamento.',
+            ])->withInput();
+        }
 
         $validation = $this->eligibility->validateAndSync((string) $flow['cpf']);
 
         if (! $validation['eligible'] || ! $validation['citizen']) {
-            $this->audit->log($request, 'MULHER', 'AGENDAMENTO_BLOQUEADO', WomenClinicAppointment::class, null, [
+            $this->audit->log($request, $this->auditModuleForClinic($clinicType), 'AGENDAMENTO_BLOQUEADO', WomenClinicAppointment::class, null, [
                 'cpf' => $validation['cpf'],
                 'error_code' => $validation['error_code'],
                 'residence_status' => $validation['residence_status'],
                 'gov_assai_level' => $validation['gov_assai_level'],
+                'clinic_type' => $clinicType,
             ]);
 
             return back()->withErrors(['cpf' => $validation['message']])->withInput();
@@ -367,16 +475,20 @@ class WomenClinicController extends Controller
             'citizen_id' => $validation['citizen']->id,
             'scheduler_user_id' => (int) $request->user()->id,
             'scheduled_for' => $data['scheduled_for'],
+            'clinic_type' => $clinicType,
+            'specialty' => $specialty,
             'gov_assai_level' => $validation['gov_assai_level'],
             'residence_status' => $validation['residence_status'],
             'status' => 'AGENDADO',
             'notes' => $data['notes'] ?? null,
         ]);
 
-        $this->audit->log($request, 'MULHER', 'AGENDAR_CONSULTA', WomenClinicAppointment::class, null, [
+        $this->audit->log($request, $this->auditModuleForClinic($clinicType), 'AGENDAR_CONSULTA', WomenClinicAppointment::class, null, [
             'appointment_id' => $appointment->id,
             'citizen_id' => $appointment->citizen_id,
             'scheduled_for' => $appointment->scheduled_for?->toIso8601String(),
+            'clinic_type' => $appointment->clinic_type,
+            'specialty' => $appointment->specialty,
         ]);
 
         SendWomenClinicLifecycleNotificationJob::dispatch(
@@ -398,11 +510,15 @@ class WomenClinicController extends Controller
         $this->identityChallenge->consumeVerified('women_clinic_schedule');
         session()->forget('women_clinic.schedule_flow');
 
-        return back()->with('status', 'Consulta da Clinica da Mulher agendada com sucesso.');
+        return back()->with('status', 'Consulta da '.WomenClinicAppointment::clinicLabel($clinicType).' agendada com sucesso.');
     }
 
     public function checkIn(Request $request, WomenClinicAppointment $womenClinicAppointment): RedirectResponse
     {
+        if (! $this->isWomenClinicAppointment($womenClinicAppointment)) {
+            return back()->withErrors(['status' => 'Este agendamento pertence a outro modulo de clinica.']);
+        }
+
         if ($womenClinicAppointment->status !== 'AGENDADO') {
             return back()->withErrors(['status' => 'Somente consultas agendadas podem receber check-in.']);
         }
@@ -443,8 +559,25 @@ class WomenClinicController extends Controller
 
     public function checkOut(Request $request, WomenClinicAppointment $womenClinicAppointment): RedirectResponse
     {
+        if (! $this->isWomenClinicAppointment($womenClinicAppointment)) {
+            return back()->withErrors(['status' => 'Este agendamento pertence a outro modulo de clinica.']);
+        }
+
         if ($womenClinicAppointment->status !== 'CHECKIN') {
             return back()->withErrors(['status' => 'Somente consultas em check-in podem ser finalizadas.']);
+        }
+
+        $doctorSpecialty = $this->resolveDoctorSpecialtyForCheckout($request);
+        $appointmentSpecialty = WomenClinicAppointment::normalizeSpecialty($womenClinicAppointment->specialty);
+
+        if (
+            $doctorSpecialty !== null
+            && $appointmentSpecialty !== null
+            && $appointmentSpecialty !== $doctorSpecialty
+        ) {
+            return back()->withErrors([
+                'status' => 'Este medico pode finalizar apenas consultas da especialidade '.WomenClinicAppointment::specialtyLabel($doctorSpecialty).'.',
+            ]);
         }
 
         $womenClinicAppointment->update([
@@ -455,6 +588,8 @@ class WomenClinicController extends Controller
 
         $this->audit->log($request, 'MULHER', 'CHECKOUT_CONSULTA', WomenClinicAppointment::class, null, [
             'appointment_id' => $womenClinicAppointment->id,
+            'appointment_specialty' => $womenClinicAppointment->specialty,
+            'doctor_specialty' => $doctorSpecialty,
         ]);
 
         SendWomenClinicLifecycleNotificationJob::dispatch(
@@ -463,5 +598,43 @@ class WomenClinicController extends Controller
         )->afterCommit();
 
         return back()->with('status', 'Consulta finalizada com check-out medico.');
+    }
+
+    private function resolveDoctorSpecialtyForCheckout(Request $request): ?string
+    {
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            abort(403, 'Usuario nao autenticado para check-out.');
+        }
+
+        if ($user->role === User::ROLE_ADMIN) {
+            return null;
+        }
+
+        $doctorSpecialty = WomenClinicAppointment::normalizeSpecialty($user->clinic_specialty);
+
+        if (
+            $doctorSpecialty === null
+            || ! WomenClinicAppointment::isSpecialtyAllowedForClinic(WomenClinicAppointment::CLINIC_WOMEN, $doctorSpecialty)
+        ) {
+            abort(403, 'Perfil medico sem especialidade vinculada. Contate o administrador.');
+        }
+
+        return $doctorSpecialty;
+    }
+
+    private function auditModuleForClinic(string $clinicType): string
+    {
+        return $clinicType === WomenClinicAppointment::CLINIC_POLICLINICA
+            ? 'POLICLINICA'
+            : 'MULHER';
+    }
+
+    private function isWomenClinicAppointment(WomenClinicAppointment $appointment): bool
+    {
+        $clinicType = WomenClinicAppointment::normalizeClinicType($appointment->clinic_type);
+
+        return $clinicType === null || $clinicType === WomenClinicAppointment::CLINIC_WOMEN;
     }
 }

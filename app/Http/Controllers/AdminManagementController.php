@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\HealthUnit;
 use App\Models\User;
+use App\Models\WomenClinicAppointment;
 use App\Services\AuditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,8 @@ class AdminManagementController extends Controller
     private const ALLOWED_USER_UNIT_NAMES = [
         'Clinica da Mulher',
         'Clínica da Mulher',
+        'Policlinica',
+        'Policlínica',
         'Farmacia Central',
         'Farmácia Central',
     ];
@@ -40,9 +43,12 @@ class AdminManagementController extends Controller
                 User::ROLE_AGENDADOR,
                 User::ROLE_RECEPCAO_CLINICA,
                 User::ROLE_MEDICO_CLINICA,
+                User::ROLE_RECEPCAO_POLICLINICA,
+                User::ROLE_MEDICO_POLICLINICA,
                 User::ROLE_FARMACIA,
             ],
             'permissions' => User::allPermissionOptions(),
+            'clinicSpecialties' => User::clinicSpecialtyOptions(),
         ]);
     }
 
@@ -59,11 +65,19 @@ class AdminManagementController extends Controller
                 User::ROLE_AGENDADOR,
                 User::ROLE_RECEPCAO_CLINICA,
                 User::ROLE_MEDICO_CLINICA,
+                User::ROLE_RECEPCAO_POLICLINICA,
+                User::ROLE_MEDICO_POLICLINICA,
                 User::ROLE_FARMACIA,
             ])],
             'health_unit_id' => ['nullable', Rule::in($allowedHealthUnitIds)],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', Rule::in(User::allPermissionOptions())],
+            'clinic_specialty' => [
+                'nullable',
+                'string',
+                Rule::requiredIf($this->isDoctorRole((string) $request->input('role'))),
+                Rule::in(WomenClinicAppointment::specialtyValues()),
+            ],
         ]);
 
         $user = User::create([
@@ -73,12 +87,14 @@ class AdminManagementController extends Controller
             'role' => $data['role'],
             'health_unit_id' => $data['health_unit_id'] ?? null,
             'permissions' => $data['permissions'] ?? null,
+            'clinic_specialty' => $this->resolveClinicSpecialty($data),
             'email_verified_at' => now(),
         ]);
 
         $this->audit->log($request, 'ADMIN', 'CRIAR_USUARIO', User::class, (int) $user->id, [
             'target_user_email' => $user->email,
             'target_user_role' => $user->role,
+            'target_user_clinic_specialty' => $user->clinic_specialty,
         ]);
 
         return back()->with('status', 'Usuario criado com sucesso.');
@@ -94,22 +110,32 @@ class AdminManagementController extends Controller
                 User::ROLE_AGENDADOR,
                 User::ROLE_RECEPCAO_CLINICA,
                 User::ROLE_MEDICO_CLINICA,
+                User::ROLE_RECEPCAO_POLICLINICA,
+                User::ROLE_MEDICO_POLICLINICA,
                 User::ROLE_FARMACIA,
             ])],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', Rule::in(User::allPermissionOptions())],
             'health_unit_id' => ['nullable', Rule::in($allowedHealthUnitIds)],
+            'clinic_specialty' => [
+                'nullable',
+                'string',
+                Rule::requiredIf($this->isDoctorRole((string) $request->input('role'))),
+                Rule::in(WomenClinicAppointment::specialtyValues()),
+            ],
         ]);
 
         $user->update([
             'role' => $data['role'],
             'permissions' => $data['permissions'] ?? null,
             'health_unit_id' => $data['health_unit_id'] ?? null,
+            'clinic_specialty' => $this->resolveClinicSpecialty($data),
         ]);
 
         $this->audit->log($request, 'ADMIN', 'ATUALIZAR_PERMISSOES', User::class, (int) $user->id, [
             'target_user_email' => $user->email,
             'target_user_role' => $user->role,
+            'target_user_clinic_specialty' => $user->clinic_specialty,
             'permissions' => $user->permissions,
         ]);
 
@@ -172,5 +198,19 @@ class AdminManagementController extends Controller
             ->pluck('id')
             ->map(fn ($id): string => (string) $id)
             ->all();
+    }
+
+    private function resolveClinicSpecialty(array $data): ?string
+    {
+        if (! $this->isDoctorRole((string) ($data['role'] ?? ''))) {
+            return null;
+        }
+
+        return WomenClinicAppointment::normalizeSpecialty((string) ($data['clinic_specialty'] ?? ''));
+    }
+
+    private function isDoctorRole(string $role): bool
+    {
+        return in_array($role, [User::ROLE_MEDICO_CLINICA, User::ROLE_MEDICO_POLICLINICA], true);
     }
 }

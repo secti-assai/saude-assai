@@ -53,7 +53,9 @@ class ResetFlowOnModuleSwitch
         $segment = (string) $request->segment(1);
 
         return match ($segment) {
+            'agendador', 'agendamentos' => 'clinic_scheduler',
             'clinica-mulher' => 'women_clinic',
+            'policlinica' => 'policlinica',
             'farmacia-central' => 'central_pharmacy',
             'admin' => 'admin',
             'dashboard' => 'dashboard',

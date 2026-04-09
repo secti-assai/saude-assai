@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-class WomenClinicReportController extends Controller
+class PoliclinicaReportController extends Controller
 {
     public function __construct(private readonly WomenClinicReportService $reportService)
     {
@@ -24,8 +24,8 @@ class WomenClinicReportController extends Controller
             'citizen_name' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $payload = $this->reportService->buildForClinic($validated, WomenClinicAppointment::CLINIC_WOMEN);
+        $payload = $this->reportService->buildForClinic($validated, WomenClinicAppointment::CLINIC_POLICLINICA);
 
-        return view('women-clinic.reports', $payload);
+        return view('policlinica.reports', $payload);
     }
 }

@@ -62,6 +62,8 @@ class WomenClinicNotificationWorkflowTest extends TestCase
             ])
             ->post(route('women-clinic.schedule'), [
                 'scheduled_for' => now()->addDays(2)->format('Y-m-d H:i:s'),
+                'clinic_type' => WomenClinicAppointment::CLINIC_WOMEN,
+                'specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
                 'notes' => 'Teste de notificacao',
             ]);
 
@@ -144,6 +146,7 @@ class WomenClinicNotificationWorkflowTest extends TestCase
 
         $doctor = User::factory()->create([
             'role' => User::ROLE_MEDICO_CLINICA,
+            'clinic_specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
             'email_verified_at' => now(),
         ]);
 
@@ -161,6 +164,7 @@ class WomenClinicNotificationWorkflowTest extends TestCase
             'scheduler_user_id' => $doctor->id,
             'reception_user_id' => $doctor->id,
             'scheduled_for' => now()->subHour(),
+            'specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
             'status' => 'CHECKIN',
             'checked_in_at' => now()->subMinutes(20),
             'residence_status' => 'RESIDENTE',
@@ -179,5 +183,47 @@ class WomenClinicNotificationWorkflowTest extends TestCase
             return $job->appointmentId === (string) $appointment->id
                 && $job->trigger === SendWomenClinicLifecycleNotificationJob::TRIGGER_CHECKOUT;
         });
+    }
+
+    public function test_checkout_is_blocked_when_doctor_specialty_differs_from_appointment(): void
+    {
+        Queue::fake();
+
+        $doctor = User::factory()->create([
+            'role' => User::ROLE_MEDICO_CLINICA,
+            'clinic_specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
+            'email_verified_at' => now(),
+        ]);
+
+        $citizen = Citizen::create([
+            'cpf' => '90012640933',
+            'cpf_hash' => hash('sha256', '90012640933'),
+            'full_name' => 'CIDADAO ESPECIALIDADE DIVERGENTE',
+            'birth_date' => '1993-01-01',
+            'is_resident_assai' => true,
+            'phone' => '(43) 96666-6666',
+        ]);
+
+        $appointment = WomenClinicAppointment::create([
+            'citizen_id' => $citizen->id,
+            'scheduler_user_id' => $doctor->id,
+            'reception_user_id' => $doctor->id,
+            'scheduled_for' => now()->subHour(),
+            'specialty' => WomenClinicAppointment::SPECIALTY_PSIQUIATRIA,
+            'status' => 'CHECKIN',
+            'checked_in_at' => now()->subMinutes(20),
+            'residence_status' => 'RESIDENTE',
+            'gov_assai_level' => '2',
+        ]);
+
+        $response = $this->actingAs($doctor)->post(route('women-clinic.check-out', $appointment));
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('status');
+
+        $appointment->refresh();
+        $this->assertSame('CHECKIN', $appointment->status);
+
+        Queue::assertNothingPushed();
     }
 }

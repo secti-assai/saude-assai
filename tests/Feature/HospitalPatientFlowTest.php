@@ -57,6 +57,8 @@ class HospitalPatientFlowTest extends TestCase
             ],
         ])->post(route('women-clinic.schedule'), [
             'scheduled_for' => now()->addDay()->format('Y-m-d H:i:s'),
+            'clinic_type' => WomenClinicAppointment::CLINIC_WOMEN,
+            'specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
             'notes' => 'Consulta de retorno',
         ]);
 
@@ -184,6 +186,8 @@ class HospitalPatientFlowTest extends TestCase
             ],
         ])->post(route('women-clinic.schedule'), [
             'scheduled_for' => now()->addDay()->format('Y-m-d H:i:s'),
+            'clinic_type' => WomenClinicAppointment::CLINIC_WOMEN,
+            'specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
         ]);
 
         $response
@@ -274,6 +278,8 @@ class HospitalPatientFlowTest extends TestCase
             ],
         ])->post(route('women-clinic.schedule'), [
             'scheduled_for' => now()->addDay()->format('Y-m-d H:i:s'),
+            'clinic_type' => WomenClinicAppointment::CLINIC_WOMEN,
+            'specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
         ]);
 
         $scheduleResponse->assertRedirect()->assertSessionHasNoErrors();

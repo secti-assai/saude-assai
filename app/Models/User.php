@@ -20,6 +20,7 @@ class User extends Authenticatable
         'permissions',
         'registration',
         'crm',
+        'clinic_specialty',
         'health_unit_id',
     ];
 
@@ -40,6 +41,8 @@ class User extends Authenticatable
     public const ROLE_AGENDADOR = 'agendador';
     public const ROLE_RECEPCAO_CLINICA = 'recepcao_clinica';
     public const ROLE_MEDICO_CLINICA = 'medico_clinica';
+    public const ROLE_RECEPCAO_POLICLINICA = 'recepcao_policlinica';
+    public const ROLE_MEDICO_POLICLINICA = 'medico_policlinica';
     public const ROLE_FARMACIA = 'farmacia';
 
     /** @use HasFactory<UserFactory> */
@@ -48,6 +51,9 @@ class User extends Authenticatable
     public const PERMISSION_WOMEN_CLINIC_CHECKIN = 'women_clinic.checkin';
     public const PERMISSION_WOMEN_CLINIC_CHECKOUT = 'women_clinic.checkout';
     public const PERMISSION_WOMEN_CLINIC_REPORTS = 'women_clinic.reports';
+    public const PERMISSION_POLICLINICA_CHECKIN = 'policlinica.checkin';
+    public const PERMISSION_POLICLINICA_CHECKOUT = 'policlinica.checkout';
+    public const PERMISSION_POLICLINICA_REPORTS = 'policlinica.reports';
     public const PERMISSION_CENTRAL_PHARMACY = 'central_pharmacy.unified';
     public const PERMISSION_CENTRAL_PHARMACY_REPORTS = 'central_pharmacy.reports';
 
@@ -58,9 +64,25 @@ class User extends Authenticatable
             self::PERMISSION_WOMEN_CLINIC_CHECKIN,
             self::PERMISSION_WOMEN_CLINIC_CHECKOUT,
             self::PERMISSION_WOMEN_CLINIC_REPORTS,
+            self::PERMISSION_POLICLINICA_CHECKIN,
+            self::PERMISSION_POLICLINICA_CHECKOUT,
+            self::PERMISSION_POLICLINICA_REPORTS,
             self::PERMISSION_CENTRAL_PHARMACY,
             self::PERMISSION_CENTRAL_PHARMACY_REPORTS,
         ];
+    }
+
+    /**
+     * @return array<string,string>
+     */
+    public static function clinicSpecialtyOptions(): array
+    {
+        return WomenClinicAppointment::specialtyOptions();
+    }
+
+    public function clinicSpecialtyLabel(): string
+    {
+        return WomenClinicAppointment::specialtyLabel($this->clinic_specialty);
     }
 
     public function roleDefaultPermissions(): array
@@ -70,6 +92,8 @@ class User extends Authenticatable
             self::ROLE_AGENDADOR => [self::PERMISSION_WOMEN_CLINIC_SCHEDULE, self::PERMISSION_WOMEN_CLINIC_REPORTS],
             self::ROLE_RECEPCAO_CLINICA => [self::PERMISSION_WOMEN_CLINIC_CHECKIN],
             self::ROLE_MEDICO_CLINICA => [self::PERMISSION_WOMEN_CLINIC_CHECKOUT],
+            self::ROLE_RECEPCAO_POLICLINICA => [self::PERMISSION_POLICLINICA_CHECKIN],
+            self::ROLE_MEDICO_POLICLINICA => [self::PERMISSION_POLICLINICA_CHECKOUT],
             self::ROLE_FARMACIA => [self::PERMISSION_CENTRAL_PHARMACY],
             default => [],
         };

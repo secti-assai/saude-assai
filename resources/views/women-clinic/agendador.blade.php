@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="sa-page-header">
-            <h2 class="sa-page-title">Clínica da Mulher - AGENDADOR</h2>
-            <p class="sa-page-subtitle">Área exclusiva de agendamento</p>
+            <h2 class="sa-page-title">Agendador de Clínicas de Especialidades</h2>
+            <p class="sa-page-subtitle">Agenda central para Clínica da Mulher e Policlínica</p>
         </div>
     </x-slot>
 
@@ -24,7 +24,7 @@
         <div class="sa-card">
             <div class="sa-card-header"><h3 class="sa-card-title">Novo Agendamento</h3></div>
             @if (!is_array($flow) || !isset($flow['cpf']))
-                <form method="POST" action="{{ route('women-clinic.schedule.start') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <form method="POST" action="{{ route('clinic-scheduler.schedule.start') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     @csrf
                     <div class="md:col-span-2">
                         <label class="sa-label">Passo 1 de 3 - CPF do Cidadão *</label>
@@ -33,7 +33,7 @@
                     <div class="md:col-span-3 flex justify-end"><button type="submit" class="sa-btn-primary">Validar CPF</button></div>
                 </form>
             @elseif (empty($flow['identity_verified']))
-                <form method="POST" action="{{ route('women-clinic.schedule.verify-identity') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <form method="POST" action="{{ route('clinic-scheduler.schedule.verify-identity') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     @csrf
                     <div class="md:col-span-3">
                         <label class="sa-label">Passo 2 de 3 - Confirmacao de Identidade</label>
@@ -47,12 +47,15 @@
                     </div>
                     <div class="md:col-span-3 flex justify-end space-x-2">
                         <button type="submit" class="sa-btn-primary">Confirmar Identidade</button>
-                        <button type="submit" formnovalidate formaction="{{ route('women-clinic.schedule.cancel') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancelar / Voltar</button>
+                        <button type="submit" formnovalidate formaction="{{ route('clinic-scheduler.schedule.cancel') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancelar / Voltar</button>
                     </div>
                 </form>
             @else
-                <form method="POST" action="{{ route('women-clinic.schedule') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <form method="POST" action="{{ route('clinic-scheduler.schedule') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     @csrf
+                    @php
+                        $selectedClinicForForm = old('clinic_type', \App\Models\WomenClinicAppointment::CLINIC_WOMEN);
+                    @endphp
                     <div class="md:col-span-3">
                         <label class="sa-label">Passo 3 de 3 - Dados do Agendamento</label>
                         <p class="text-sm text-gray-700">Identidade confirmada para <strong>{{ $flow['citizen_name'] ?? '—' }}</strong> (CPF {{ $flow['cpf'] }})</p>
@@ -62,12 +65,29 @@
                         <input name="scheduled_for" type="datetime-local" class="sa-input" value="{{ old('scheduled_for') }}" required>
                     </div>
                     <div>
+                        <label class="sa-label">Clínica *</label>
+                        <select name="clinic_type" id="scheduler-clinic-type" class="sa-select" required>
+                            @foreach(($clinicOptions ?? []) as $clinicValue => $clinicLabel)
+                                <option value="{{ $clinicValue }}" @selected($selectedClinicForForm === $clinicValue)>{{ $clinicLabel }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="sa-label">Especialidade *</label>
+                        <select name="specialty" id="scheduler-specialty" class="sa-select" required>
+                            <option value="">Selecione</option>
+                            @foreach(($clinicSpecialtyOptions ?? []) as $specialtyValue => $specialtyLabel)
+                                <option value="{{ $specialtyValue }}" @selected(old('specialty') === $specialtyValue)>{{ $specialtyLabel }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
                         <label class="sa-label">Observações</label>
                         <input name="notes" class="sa-input" value="{{ old('notes') }}">
                     </div>
                     <div class="md:col-span-3 flex justify-end space-x-2">
                         <button type="submit" class="sa-btn-primary">Agendar</button>
-                        <button type="submit" formnovalidate formaction="{{ route('women-clinic.schedule.cancel') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancelar / Voltar</button>
+                        <button type="submit" formnovalidate formaction="{{ route('clinic-scheduler.schedule.cancel') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancelar / Voltar</button>
                     </div>
                 </form>
             @endif
@@ -78,9 +98,9 @@
             <div class="rounded-lg border border-emerald-100 bg-emerald-50/60 p-4">
                 <div class="mb-3">
                     <p class="text-sm font-semibold text-emerald-900">Filtros de visualização</p>
-                    <p class="text-xs text-emerald-800">Padrão desta tela: data de hoje e status Agendado. Você pode alterar os filtros para consultar outros períodos e status.</p>
+                    <p class="text-xs text-emerald-800">Padrão desta tela: data de hoje e status Agendado. Você pode filtrar por clínica, especialidade, período e status.</p>
                 </div>
-                <form method="GET" action="{{ route('women-clinic.agendador') }}" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                <form method="GET" action="{{ route('clinic-scheduler.index') }}" class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
                     <div>
                         <label for="date_start" class="sa-label">Data inicial</label>
                         <input id="date_start" name="date_start" type="date" class="sa-input" value="{{ $filters['date_start'] ?? now()->toDateString() }}">
@@ -97,19 +117,37 @@
                             @endforeach
                         </select>
                     </div>
+                    <div>
+                        <label for="clinic_type" class="sa-label">Clínica</label>
+                        <select id="clinic_type" name="clinic_type" class="sa-input">
+                            @foreach(($clinicFilterOptions ?? []) as $value => $label)
+                                <option value="{{ $value }}" @selected(($filters['clinic_type'] ?? 'TODOS') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label for="specialty" class="sa-label">Especialidade</label>
+                        <select id="specialty" name="specialty" class="sa-input">
+                            @foreach(($specialtyFilterOptions ?? []) as $value => $label)
+                                <option value="{{ $value }}" @selected(($filters['specialty'] ?? 'TODOS') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="flex items-center justify-end gap-2">
                         <button type="submit" class="sa-btn-primary">Aplicar</button>
-                        <a href="{{ route('women-clinic.agendador') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Voltar ao padrão</a>
+                        <a href="{{ route('clinic-scheduler.index') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Voltar ao padrão</a>
                     </div>
                 </form>
             </div>
             <div class="overflow-x-auto">
                 <table class="sa-table">
-                    <thead><tr><th>Data</th><th>Cidadão</th><th>Status</th><th>Nível Gov.Assaí</th></tr></thead>
+                    <thead><tr><th>Data</th><th>Clínica</th><th>Especialidade</th><th>Cidadão</th><th>Status</th><th>Nível Gov.Assaí</th></tr></thead>
                     <tbody>
                         @forelse($appointments as $appointment)
                             <tr>
                                 <td>{{ $appointment->scheduled_for?->format('d/m/Y H:i') }}</td>
+                                <td>{{ \App\Models\WomenClinicAppointment::clinicLabel($appointment->clinic_type) }}</td>
+                                <td>{{ \App\Models\WomenClinicAppointment::specialtyLabel($appointment->specialty) }}</td>
                                 <td>{{ $appointment->citizen->full_name ?? '—' }}</td>
                                 <td>
                                     @php
@@ -126,11 +164,59 @@
                                 <td>{{ $appointment->gov_assai_level ?? '—' }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="4" class="text-center text-gray-500 py-6">Nenhum agendamento.</td></tr>
+                            <tr><td colspan="6" class="text-center text-gray-500 py-6">Nenhum agendamento.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    <script>
+        (() => {
+            const clinicSelect = document.getElementById('scheduler-clinic-type');
+            const specialtySelect = document.getElementById('scheduler-specialty');
+            if (!clinicSelect || !specialtySelect) {
+                return;
+            }
+
+            const specialtiesByClinic = @json($specialtiesByClinic ?? []);
+            const oldSpecialty = @json(old('specialty'));
+
+            const populateSpecialtyOptions = (clinicType) => {
+                const specialties = specialtiesByClinic[clinicType] || {};
+                const availableEntries = Object.entries(specialties);
+
+                specialtySelect.innerHTML = '';
+
+                const emptyOption = document.createElement('option');
+                emptyOption.value = '';
+                emptyOption.textContent = 'Selecione';
+                specialtySelect.appendChild(emptyOption);
+
+                availableEntries.forEach(([value, label]) => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = label;
+
+                    if (oldSpecialty && oldSpecialty === value) {
+                        option.selected = true;
+                    }
+
+                    specialtySelect.appendChild(option);
+                });
+
+                const hasSelectedSpecialty = Array.from(specialtySelect.options).some((option) => option.selected && option.value !== '');
+                if (!hasSelectedSpecialty) {
+                    specialtySelect.value = '';
+                }
+            };
+
+            populateSpecialtyOptions(clinicSelect.value);
+            clinicSelect.addEventListener('change', () => {
+                specialtySelect.dataset.userChanged = '1';
+                populateSpecialtyOptions(clinicSelect.value);
+            });
+        })();
+    </script>
 </x-app-layout>

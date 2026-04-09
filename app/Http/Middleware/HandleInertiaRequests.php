@@ -46,6 +46,8 @@ class HandleInertiaRequests extends Middleware
                         'agendador' => 'clinic_scheduler',
                         'recepcao_clinica' => 'clinic_reception',
                         'medico_clinica' => 'clinic_doctor',
+                        'recepcao_policlinica' => 'policlinic_reception',
+                        'medico_policlinica' => 'policlinic_doctor',
                         'recepcao_farmacia' => 'pharmacy_reception',
                         'atendimento_farmacia' => 'pharmacy_attendant',
                         default => 'citizen',

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="sa-page-header">
-            <h2 class="sa-page-title">Clínica da Mulher - MEDICO_CLINICA</h2>
+            <h2 class="sa-page-title">Policlínica - MEDICO_POLICLINICA</h2>
             <p class="sa-page-subtitle">Área exclusiva de check-out</p>
         </div>
     </x-slot>
@@ -30,19 +30,19 @@
         <div class="sa-card">
             <div class="sa-card-header">
                 <h3 class="sa-card-title">Pacientes em Atendimento</h3>
-                <span id="women-medico-live-updated" class="text-xs text-gray-500">Atualização automática a cada 8 segundos</span>
+                <span id="policlinica-medico-live-updated" class="text-xs text-gray-500">Atualização automática a cada 8 segundos</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="sa-table">
                     <thead><tr><th>Especialidade</th><th>Cidadão</th><th>Check-in</th><th>Ação</th></tr></thead>
-                    <tbody id="women-medico-live-body">
+                    <tbody id="policlinica-medico-live-body">
                         @forelse($appointments as $appointment)
                             <tr>
                                 <td>{{ \App\Models\WomenClinicAppointment::specialtyLabel($appointment->specialty) }}</td>
                                 <td>{{ $appointment->citizen->full_name ?? '—' }}</td>
                                 <td>{{ $appointment->checked_in_at?->format('d/m/Y H:i') ?? '—' }}</td>
                                 <td>
-                                    <form method="POST" action="{{ route('women-clinic.check-out', $appointment) }}">
+                                    <form method="POST" action="{{ route('policlinica.check-out', $appointment) }}">
                                         @csrf
                                         <button type="submit" class="sa-btn-success">Finalizar (Check-out)</button>
                                     </form>
@@ -59,13 +59,13 @@
 
     <script>
         (() => {
-            const tbody = document.getElementById('women-medico-live-body');
-            const updatedLabel = document.getElementById('women-medico-live-updated');
+            const tbody = document.getElementById('policlinica-medico-live-body');
+            const updatedLabel = document.getElementById('policlinica-medico-live-updated');
             if (!tbody || !updatedLabel) {
                 return;
             }
 
-            const endpoint = @json(route('women-clinic.medico.data'));
+            const endpoint = @json(route('policlinica.medico.data'));
             const csrfToken = @json(csrf_token());
 
             const escapeHtml = (value) => String(value ?? '')

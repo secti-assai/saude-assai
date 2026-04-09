@@ -9,6 +9,13 @@ use Illuminate\Support\Str;
 
 class WomenClinicReportService
 {
+    public function buildForClinic(array $input, string $clinicType): array
+    {
+        $input['clinic_type'] = $clinicType;
+
+        return $this->build($input);
+    }
+
     /**
      * @return array{filters:array,summary:array,statusBreakdown:Collection<int,array{status:string,total:int}>,feedbackBreakdown:Collection<int,array{score:string,total:int}>,dailyBreakdown:Collection<int,array{day:string,total:int,finalized:int,feedbacks:int}>,rows:\Illuminate\Contracts\Pagination\LengthAwarePaginator}
      */
@@ -19,6 +26,7 @@ class WomenClinicReportService
         $rowsQuery = WomenClinicAppointment::query()
             ->with(['citizen', 'scheduler', 'reception', 'doctor']);
 
+        $this->applyClinicFilter($rowsQuery, $filters['clinic_type']);
         $this->applyDateFilter($rowsQuery, $filters);
         $this->applyStatusFilter($rowsQuery, $filters['status']);
         $this->applyTextFilters($rowsQuery, $filters);
@@ -29,6 +37,7 @@ class WomenClinicReportService
             ->withQueryString();
 
         $periodQuery = WomenClinicAppointment::query();
+        $this->applyClinicFilter($periodQuery, $filters['clinic_type']);
         $this->applyDateFilter($periodQuery, $filters);
 
         $totalAppointments = (clone $periodQuery)->count();
@@ -132,7 +141,7 @@ class WomenClinicReportService
     }
 
     /**
-     * @return array{date_start:string,date_end:string,status:string,has_feedback:string,citizen_name:string}
+        * @return array{date_start:string,date_end:string,status:string,has_feedback:string,citizen_name:string,clinic_type:?string}
      */
     private function normalizeFilters(array $input): array
     {
@@ -162,6 +171,7 @@ class WomenClinicReportService
         }
 
         $citizenName = trim((string) ($input['citizen_name'] ?? ''));
+        $clinicType = WomenClinicAppointment::normalizeClinicType((string) ($input['clinic_type'] ?? ''));
 
         return [
             'date_start' => $dateStart,
@@ -169,7 +179,27 @@ class WomenClinicReportService
             'status' => $status,
             'has_feedback' => $hasFeedback,
             'citizen_name' => $citizenName,
+            'clinic_type' => $clinicType,
         ];
+    }
+
+    private function applyClinicFilter(Builder $query, ?string $clinicType): void
+    {
+        if ($clinicType === null) {
+            return;
+        }
+
+        if ($clinicType === WomenClinicAppointment::CLINIC_WOMEN) {
+            $query->where(function ($scope): void {
+                $scope
+                    ->where('clinic_type', WomenClinicAppointment::CLINIC_WOMEN)
+                    ->orWhereNull('clinic_type');
+            });
+
+            return;
+        }
+
+        $query->where('clinic_type', $clinicType);
     }
 
     private function applyDateFilter(Builder $query, array $filters): void

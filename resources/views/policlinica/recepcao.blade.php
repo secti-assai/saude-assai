@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="sa-page-header">
-            <h2 class="sa-page-title">Clínica da Mulher - RECEPCAO_CLINICA</h2>
+            <h2 class="sa-page-title">Policlínica - RECEPCAO_POLICLINICA</h2>
             <p class="sa-page-subtitle">Área exclusiva de check-in</p>
         </div>
     </x-slot>
@@ -24,14 +24,14 @@
         <div class="sa-card">
             <div class="sa-card-header">
                 <h3 class="sa-card-title">Fila de Check-in</h3>
-                <span id="women-recepcao-live-updated" class="text-xs text-gray-500">Atualização automática a cada 8 segundos</span>
+                <span id="policlinica-recepcao-live-updated" class="text-xs text-gray-500">Atualização automática a cada 8 segundos</span>
             </div>
             <div class="rounded-lg border border-emerald-100 bg-emerald-50/60 p-4">
                 <div class="mb-3">
                     <p class="text-sm font-semibold text-emerald-900">Filtros de visualização</p>
                     <p class="text-xs text-emerald-800">Padrão desta tela: atendimentos de hoje, em ordem de horário. Você pode filtrar por período e status quando necessário.</p>
                 </div>
-                <form method="GET" action="{{ route('women-clinic.recepcao') }}" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                <form method="GET" action="{{ route('policlinica.recepcao') }}" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                     <div>
                         <label for="date_start" class="sa-label">Data inicial</label>
                         <input id="date_start" name="date_start" type="date" class="sa-input" value="{{ $filters['date_start'] ?? now()->toDateString() }}">
@@ -50,14 +50,14 @@
                     </div>
                     <div class="flex items-center justify-end gap-2">
                         <button type="submit" class="sa-btn-primary">Aplicar</button>
-                        <a href="{{ route('women-clinic.recepcao') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Voltar ao padrão</a>
+                        <a href="{{ route('policlinica.recepcao') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Voltar ao padrão</a>
                     </div>
                 </form>
             </div>
             <div class="overflow-x-auto">
                 <table class="sa-table">
                     <thead><tr><th>Data</th><th>Especialidade</th><th>Cidadão</th><th>Status</th><th>Ação</th></tr></thead>
-                    <tbody id="women-recepcao-live-body">
+                    <tbody id="policlinica-recepcao-live-body">
                         @forelse($appointments as $appointment)
                             <tr>
                                 <td>{{ $appointment->scheduled_for?->format('d/m/Y H:i') }}</td>
@@ -77,7 +77,7 @@
                                 </td>
                                 <td>
                                     @if($appointment->status === 'AGENDADO')
-                                        <form method="POST" action="{{ route('women-clinic.check-in', $appointment) }}">
+                                        <form method="POST" action="{{ route('policlinica.check-in', $appointment) }}">
                                             @csrf
                                             <button type="submit" class="sa-btn-primary !py-2 !px-4">Check-in</button>
                                         </form>
@@ -99,13 +99,13 @@
 
     <script>
         (() => {
-            const tbody = document.getElementById('women-recepcao-live-body');
-            const updatedLabel = document.getElementById('women-recepcao-live-updated');
+            const tbody = document.getElementById('policlinica-recepcao-live-body');
+            const updatedLabel = document.getElementById('policlinica-recepcao-live-updated');
             if (!tbody || !updatedLabel) {
                 return;
             }
 
-            const endpoint = @json(route('women-clinic.recepcao.data'));
+            const endpoint = @json(route('policlinica.recepcao.data'));
             const csrfToken = @json(csrf_token());
             const currentParams = new URLSearchParams(window.location.search);
 
