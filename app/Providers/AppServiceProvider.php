@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Models\WomenClinicAppointment;
+use App\Models\CentralPharmacyRequest;
+use App\Observers\WomenClinicAppointmentObserver;
+use App\Observers\CentralPharmacyRequestObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        WomenClinicAppointment::observe(WomenClinicAppointmentObserver::class);
+        CentralPharmacyRequest::observe(CentralPharmacyRequestObserver::class);
     }
 }
