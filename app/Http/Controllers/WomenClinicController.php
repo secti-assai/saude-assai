@@ -471,6 +471,19 @@ class WomenClinicController extends Controller
             return back()->withErrors(['cpf' => $validation['message']])->withInput();
         }
 
+        // Validação de conflito de agenda (evita overbooking no mesmo dia/hora, clínica e especialidade)
+        $scheduledFor = \Carbon\Carbon::parse($data['scheduled_for']);
+        
+        $conflict = WomenClinicAppointment::where('clinic_type', $clinicType)
+            ->where('specialty', $specialty)
+            ->where('scheduled_for', clone $scheduledFor)
+            ->whereNotIn('status', ['CANCELADO'])
+            ->exists();
+
+        if ($conflict) {
+            return back()->withErrors(['scheduled_for' => 'Este horário já está preenchido para esta especialidade. Selecione outro.'])->withInput();
+        }
+
         $appointment = WomenClinicAppointment::create([
             'citizen_id' => $validation['citizen']->id,
             'scheduler_user_id' => (int) $request->user()->id,
