@@ -21,6 +21,30 @@
         <div class="sa-alert-success mb-6"><span class="text-sm font-medium">{{ session('status') }}</span></div>
     @endif
 
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="ux-step-card">
+            <span class="ux-step-badge">1</span>
+            <div>
+                <p class="ux-step-title">Visualize a Agenda</p>
+                <p class="ux-step-text">Escolha data, clínica e especialidade para abrir os horários.</p>
+            </div>
+        </div>
+        <div class="ux-step-card">
+            <span class="ux-step-badge">2</span>
+            <div>
+                <p class="ux-step-title">Identifique o Cidadão</p>
+                <p class="ux-step-text">Informe CPF e valide a identidade no painel da direita.</p>
+            </div>
+        </div>
+        <div class="ux-step-card">
+            <span class="ux-step-badge">3</span>
+            <div>
+                <p class="ux-step-title">Selecione o Horário</p>
+                <p class="ux-step-text">Clique em um horário livre para habilitar a confirmação.</p>
+            </div>
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         
         <!-- Coluna Esquerda: Agenda (2/3) -->
@@ -49,6 +73,17 @@
                         <select id="view-specialty" class="sa-select font-medium text-gray-700">
                             <option value="">Selecione a clínica...</option>
                         </select>
+                    </div>
+                </div>
+
+                <div class="px-5 py-3 border-b border-gray-100 bg-blue-50/70 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div id="ux-status-banner" class="text-sm font-medium text-blue-800">
+                        Selecione especialidade para visualizar os horários.
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="ux-chip">Total: <strong id="slot-total-count">0</strong></span>
+                        <span class="ux-chip ux-chip-free">Livres: <strong id="slot-free-count">0</strong></span>
+                        <span class="ux-chip ux-chip-busy">Ocupados: <strong id="slot-busy-count">0</strong></span>
                     </div>
                 </div>
 
@@ -324,6 +359,56 @@
         .glow-input {
             animation: inputPulse 1.5s ease-in-out 2;
         }
+        .ux-step-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            border: 1px solid #dbeafe;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        .ux-step-badge {
+            width: 1.75rem;
+            height: 1.75rem;
+            border-radius: 9999px;
+            background: #2563eb;
+            color: #fff;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.8rem;
+        }
+        .ux-step-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            line-height: 1.2;
+        }
+        .ux-step-text {
+            font-size: 0.75rem;
+            color: #475569;
+            margin-top: 0.15rem;
+        }
+        .ux-chip {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            padding: 0.2rem 0.5rem;
+            border-radius: 9999px;
+        }
+        .ux-chip-free {
+            border-color: #86efac;
+            color: #166534;
+            background: #f0fdf4;
+        }
+        .ux-chip-busy {
+            border-color: #fecaca;
+            color: #991b1b;
+            background: #fef2f2;
+        }
         @keyframes inputPulse {
             0% { box-shadow: 0 0 0 0px rgba(59, 130, 246, 0.6); border-color: #3b82f6; }
             50% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); border-color: #3b82f6; }
@@ -348,6 +433,10 @@
             const hiddenSpecialty = document.getElementById('final-specialty');
             const finalDateLabel = document.getElementById('final-dateLabel');
             const submitBtn = document.getElementById('btn-submit-final');
+            const statusBanner = document.getElementById('ux-status-banner');
+            const totalCount = document.getElementById('slot-total-count');
+            const freeCount = document.getElementById('slot-free-count');
+            const busyCount = document.getElementById('slot-busy-count');
 
             const initTargetSpecialty = @json($filters['specialty'] ?? '');
 
@@ -364,6 +453,25 @@
                 });
             };
 
+            const setStatusMessage = (message, tone = 'info') => {
+                if (!statusBanner) return;
+                statusBanner.textContent = message;
+                statusBanner.className = 'text-sm font-medium';
+                if (tone === 'success') {
+                    statusBanner.classList.add('text-green-800');
+                } else if (tone === 'warn') {
+                    statusBanner.classList.add('text-amber-800');
+                } else {
+                    statusBanner.classList.add('text-blue-800');
+                }
+            };
+
+            const resetCounters = () => {
+                if (totalCount) totalCount.textContent = '0';
+                if (freeCount) freeCount.textContent = '0';
+                if (busyCount) busyCount.textContent = '0';
+            };
+
             // Disparadores dinâmicos
             clinicSelect.addEventListener('change', () => {
                 populateSpecialtyOptions(clinicSelect.value);
@@ -372,9 +480,12 @@
             
             specialtySelect.addEventListener('change', () => {
                 if (specialtySelect.value) {
+                    setStatusMessage('Carregando agenda do dia...', 'info');
                     loadSlots();
                 } else {
                     document.getElementById('agenda-overlay-empty').classList.remove('hidden');
+                    resetCounters();
+                    setStatusMessage('Selecione uma especialidade para abrir a grade.', 'info');
                 }
             });
             dateInput.addEventListener('change', () => {
@@ -395,6 +506,9 @@
                     <h4 class="text-lg font-bold text-blue-800 mb-1">Passo Final!</h4>
                     <p class="text-sm font-medium text-gray-600 px-8 text-center">Agora, selecione a <strong>Clínica e a Especialidade</strong> nesta barra acima para ver os horários disponíveis ao cidadão.</p>
                 `;
+                setStatusMessage('Paciente validado. Falta apenas selecionar um horário livre.', 'warn');
+            } else {
+                setStatusMessage('Use os filtros acima para visualizar a agenda.', 'info');
             }
 
             function loadSlots() {
@@ -408,6 +522,7 @@
                 document.getElementById('agenda-overlay-empty').classList.add('hidden');
                 list.innerHTML = '<div class="p-12 text-center text-blue-500"><i class="fas fa-spinner fa-spin text-3xl mb-3 block"></i> Carregando a agenda do profissional...</div>';
                 document.getElementById('slot-duration-text').innerHTML = "Buscando...";
+                setStatusMessage('Buscando horários disponíveis...', 'info');
                 
                 // Update final form hidden elements right away when they explore
                 if(hiddenClinic && isStep3) {
@@ -428,10 +543,14 @@
                     .then(slots => {
                         if (slots.error) {
                             list.innerHTML = `<div class="p-8 text-center text-red-600 font-bold"><i class="fas fa-exclamation-triangle block text-3xl mb-2"></i> ${slots.error}</div>`;
+                            resetCounters();
+                            setStatusMessage('Não foi possível carregar a agenda agora.', 'warn');
                             return;
                         }
                         if (slots.length === 0) {
                             list.innerHTML = '<div class="p-8 text-center text-gray-500"><i class="far fa-calendar-times block text-3xl mb-2 text-gray-300"></i> Nenhum horário configurado para este dia nesta especialidade.</div>';
+                            resetCounters();
+                            setStatusMessage('Sem horários configurados para os filtros selecionados.', 'warn');
                             return;
                         }
 
@@ -440,6 +559,18 @@
                         document.getElementById('agenda-subtitle').textContent = `Agendamentos para ${parts[2]}/${parts[1]}/${parts[0]} - ${specialtySelect.options[specialtySelect.selectedIndex].text}`;
                         
                         list.innerHTML = '';
+                        const total = slots.length;
+                        const free = slots.filter(slot => !!slot.available).length;
+                        const busy = total - free;
+                        if (totalCount) totalCount.textContent = String(total);
+                        if (freeCount) freeCount.textContent = String(free);
+                        if (busyCount) busyCount.textContent = String(busy);
+
+                        if (isStep3) {
+                            setStatusMessage('Clique em um horário livre para concluir o agendamento.', 'warn');
+                        } else {
+                            setStatusMessage('Agenda carregada. Para marcar, inicie o atendimento no painel da direita.', 'info');
+                        }
                         
                         slots.forEach(slot => {
                             const row = document.createElement('div');
@@ -517,6 +648,7 @@
                                         
                                         submitBtn.disabled = false;
                                         submitBtn.className = "btn-ready w-full py-3 font-bold rounded transition-colors text-base";
+                                        setStatusMessage(`Horário ${slot.time} selecionado. Agora confirme o agendamento.`, 'success');
                                         
                                         // Auto-scroll para concluir com pequeno atraso para sentirem a seleção
                                         setTimeout(() => {
@@ -533,6 +665,7 @@
                                                 setTimeout(() => cpfInput.classList.remove('glow-input'), 3000);
                                             }, 500);
                                         }
+                                        setStatusMessage('Para reservar este horário, informe o CPF no painel da direita.', 'warn');
                                     }
                                 };
                             }
@@ -548,6 +681,8 @@
                         
                     }).catch(e => {
                         list.innerHTML = '<div class="p-8 text-center text-red-500"><i class="fas fa-plug text-4xl mb-3 text-red-200 block"></i> Erro ao carregar tabela.</div>';
+                        resetCounters();
+                        setStatusMessage('Erro de conexão ao carregar a agenda.', 'warn');
                     });
             }
         })();
