@@ -89,6 +89,10 @@ Route::middleware(['auth', 'module.context'])->group(function () {
         ->middleware('permission:women_clinic.schedule')
         ->name('clinic-scheduler.index');
 
+    Route::get('/agendador/slots', [\App\Http\Controllers\AgendaController::class, 'getSlots'])
+        ->middleware('permission:women_clinic.schedule')
+        ->name('clinic-scheduler.slots');
+
     Route::post('/agendamentos/iniciar', [WomenClinicController::class, 'startScheduleFlow'])
         ->middleware('permission:women_clinic.schedule')
         ->name('clinic-scheduler.schedule.start');
