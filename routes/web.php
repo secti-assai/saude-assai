@@ -243,6 +243,10 @@ Route::middleware(['auth', 'module.context'])->group(function () {
         ->middleware('permission:central_pharmacy.reports')
         ->name('central-pharmacy.reports');
 
+    Route::get('/farmacia-central/relatorios/exportar-csv', [CentralPharmacyReportController::class, 'exportCsv'])
+        ->middleware('permission:central_pharmacy.reports')
+        ->name('central-pharmacy.reports.export-csv');
+
     Route::get('/admin/usuarios', [AdminManagementController::class, 'usersArea'])
         ->middleware('role:admin')
         ->name('admin.users');

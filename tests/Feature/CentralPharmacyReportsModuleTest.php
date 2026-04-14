@@ -328,4 +328,138 @@ class CentralPharmacyReportsModuleTest extends TestCase
         $response->assertSee('CIDADAO LEITE');
         $response->assertDontSee('CIDADAO SUPLEMENTO');
     }
+
+    public function test_reports_csv_export_downloads_all_records_for_selected_period(): void
+    {
+        $viewer = User::factory()->create([
+            'role' => User::ROLE_FARMACIA,
+            'permissions' => [User::PERMISSION_CENTRAL_PHARMACY_REPORTS],
+        ]);
+
+        $reception = User::factory()->create();
+        $attendant = User::factory()->create();
+
+        $insideOneCitizen = Citizen::create([
+            'cpf' => '90012640960',
+            'cpf_hash' => hash('sha256', '90012640960'),
+            'full_name' => 'CIDADAO CSV DENTRO 1',
+            'birth_date' => '1990-01-01',
+            'is_resident_assai' => true,
+            'pharmacy_lock_flag' => false,
+            'phone' => '(43) 95555-1111',
+        ]);
+
+        $insideTwoCitizen = Citizen::create([
+            'cpf' => '90012640961',
+            'cpf_hash' => hash('sha256', '90012640961'),
+            'full_name' => 'CIDADAO CSV DENTRO 2',
+            'birth_date' => '1991-01-01',
+            'is_resident_assai' => true,
+            'pharmacy_lock_flag' => true,
+            'phone' => '(43) 95555-2222',
+        ]);
+
+        $outsideCitizen = Citizen::create([
+            'cpf' => '90012640962',
+            'cpf_hash' => hash('sha256', '90012640962'),
+            'full_name' => 'CIDADAO CSV FORA',
+            'birth_date' => '1992-01-01',
+            'is_resident_assai' => false,
+            'pharmacy_lock_flag' => true,
+            'phone' => '(43) 95555-3333',
+        ]);
+
+        $insideOne = CentralPharmacyRequest::create([
+            'citizen_id' => $insideOneCitizen->id,
+            'reception_user_id' => $reception->id,
+            'attendant_user_id' => $attendant->id,
+            'prescription_date' => now()->toDateString(),
+            'prescriber_name' => 'Dr. Csv 1',
+            'medication_name' => 'MEDICACAO',
+            'concentration' => '250mg',
+            'quantity' => 1,
+            'dosage' => '1 comprimido',
+            'gov_assai_level' => '2',
+            'status' => 'DISPENSADO',
+            'residence_status' => 'RESIDENTE',
+            'dispensed_at' => now()->subDays(2),
+        ]);
+
+        $insideTwo = CentralPharmacyRequest::create([
+            'citizen_id' => $insideTwoCitizen->id,
+            'reception_user_id' => $reception->id,
+            'attendant_user_id' => $attendant->id,
+            'prescription_date' => now()->toDateString(),
+            'prescriber_name' => 'Dr. Csv 2',
+            'medication_name' => 'LEITE',
+            'concentration' => 'N/A',
+            'quantity' => 1,
+            'dosage' => 'N/A',
+            'gov_assai_level' => '1',
+            'status' => 'NAO_DISPENSADO',
+            'residence_status' => 'PENDENTE',
+            'refusal_reason' => 'Sem estoque',
+            'dispensed_at' => null,
+        ]);
+
+        $outside = CentralPharmacyRequest::create([
+            'citizen_id' => $outsideCitizen->id,
+            'reception_user_id' => $reception->id,
+            'attendant_user_id' => $attendant->id,
+            'prescription_date' => now()->subDays(20)->toDateString(),
+            'prescriber_name' => 'Dr. Fora',
+            'medication_name' => 'SUPLEMENTO',
+            'concentration' => 'N/A',
+            'quantity' => 1,
+            'dosage' => 'N/A',
+            'gov_assai_level' => '1',
+            'status' => 'DISPENSADO',
+            'residence_status' => 'NAO_RESIDENTE',
+            'dispensed_at' => now()->subDays(20),
+        ]);
+
+        CentralPharmacyRequest::query()->whereKey($insideOne->id)->update([
+            'created_at' => now()->subDays(2),
+            'updated_at' => now()->subDays(2),
+        ]);
+
+        CentralPharmacyRequest::query()->whereKey($insideTwo->id)->update([
+            'created_at' => now()->subDay(),
+            'updated_at' => now()->subDay(),
+        ]);
+
+        CentralPharmacyRequest::query()->whereKey($outside->id)->update([
+            'created_at' => now()->subDays(20),
+            'updated_at' => now()->subDays(20),
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('central-pharmacy.reports.export-csv', [
+            'date_start' => now()->subDays(3)->toDateString(),
+            'date_end' => now()->toDateString(),
+            'status' => 'TODOS',
+        ]));
+
+        $response->assertOk();
+        $response->assertDownload();
+        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+
+        $csv = ltrim($response->streamedContent(), "\xEF\xBB\xBF");
+
+        $this->assertStringContainsString('id_atendimento;data_registro;data_atendimento;cidadao', $csv);
+        $this->assertStringContainsString('CIDADAO CSV DENTRO 1', $csv);
+        $this->assertStringContainsString('CIDADAO CSV DENTRO 2', $csv);
+        $this->assertStringNotContainsString('CIDADAO CSV FORA', $csv);
+    }
+
+    public function test_user_without_reports_permission_cannot_export_reports_csv(): void
+    {
+        $pharmacyUser = User::factory()->create([
+            'role' => User::ROLE_FARMACIA,
+            'permissions' => [User::PERMISSION_CENTRAL_PHARMACY],
+        ]);
+
+        $response = $this->actingAs($pharmacyUser)->get(route('central-pharmacy.reports.export-csv'));
+
+        $response->assertForbidden();
+    }
 }

@@ -6,10 +6,83 @@ use App\Models\CentralPharmacyRequest;
 use App\Models\Citizen;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 
 class PharmacyReportService
 {
+    /**
+     * @return array{filename:string,filters:array{date_start:string,date_end:string,status:string,dispense_category:string,gov_level:string,needs_validation:string,citizen_name:string},headers:array<int,string>,rows:LazyCollection<int,array<int,string>>}
+     */
+    public function buildCsvExport(array $input): array
+    {
+        $filters = $this->normalizeFilters($input);
+
+        $rows = $this->baseFilteredQuery($filters)
+            ->orderBy('created_at')
+            ->cursor()
+            ->map(function (CentralPharmacyRequest $row): array {
+                $lockFlag = (bool) ($row->citizen->pharmacy_lock_flag ?? false);
+
+                return [
+                    (string) $row->id,
+                    $row->created_at?->format('d/m/Y H:i') ?? '',
+                    ($row->dispensed_at ?? $row->created_at)?->format('d/m/Y H:i') ?? '',
+                    (string) ($row->citizen->full_name ?? ''),
+                    (string) ($row->gov_assai_level ?? 'N/A'),
+                    $lockFlag ? 'PENDENTE_NIVEL_2' : 'REGULARIZADO',
+                    (string) ($row->status ?? ''),
+                    $this->categoryLabel($row->medication_name),
+                    (string) ($row->quantity ?? ''),
+                    (string) ($row->prescriber_name ?? ''),
+                    (string) ($row->prescription_code ?? ''),
+                    $row->prescription_date?->format('d/m/Y') ?? '',
+                    (string) ($row->attendant->name ?? ''),
+                    (string) ($row->reception->name ?? ''),
+                    (string) ($row->residence_status ?? ''),
+                    (string) ($row->refusal_reason ?? ''),
+                    (string) ($row->equivalent_medication_name ?? ''),
+                    (string) ($row->equivalent_concentration ?? ''),
+                    (string) ($row->feedback_score ?? ''),
+                    (string) ($row->feedback_comment ?? ''),
+                ];
+            });
+
+        $filename = sprintf(
+            'farmacia-central-atendimentos-%s-a-%s.csv',
+            $filters['date_start'],
+            $filters['date_end']
+        );
+
+        return [
+            'filename' => $filename,
+            'filters' => $filters,
+            'headers' => [
+                'id_atendimento',
+                'data_registro',
+                'data_atendimento',
+                'cidadao',
+                'nivel_gov_assai',
+                'validacao_nivel_2',
+                'status',
+                'categoria',
+                'quantidade',
+                'prescritor',
+                'codigo_receita',
+                'data_receita',
+                'atendente',
+                'recepcao',
+                'status_residencia',
+                'motivo_recusa',
+                'medicacao_equivalente',
+                'concentracao_equivalente',
+                'avaliacao_nota',
+                'avaliacao_comentario',
+            ],
+            'rows' => $rows,
+        ];
+    }
+
     /**
      * @return array{filters:array,summary:array,statusBreakdown:Collection<int,array{status:string,total:int}>,levelBreakdown:Collection<int,array{level:string,total:int}>,categoryBreakdown:Collection<int,array{category:string,total:int}>,rows:\Illuminate\Contracts\Pagination\LengthAwarePaginator}
      */
@@ -17,12 +90,7 @@ class PharmacyReportService
     {
         $filters = $this->normalizeFilters($input);
 
-        $rowsQuery = CentralPharmacyRequest::query()
-            ->with(['citizen', 'reception', 'attendant']);
-
-        $this->applyDateFilter($rowsQuery, $filters);
-        $this->applyStatusFilter($rowsQuery, $filters['status']);
-        $this->applyTextFilters($rowsQuery, $filters);
+        $rowsQuery = $this->baseFilteredQuery($filters);
 
         $rows = $rowsQuery
             ->orderByDesc('created_at')
@@ -105,6 +173,18 @@ class PharmacyReportService
             'categoryBreakdown' => $categoryBreakdown,
             'rows' => $rows,
         ];
+    }
+
+    private function baseFilteredQuery(array $filters): Builder
+    {
+        $query = CentralPharmacyRequest::query()
+            ->with(['citizen', 'reception', 'attendant']);
+
+        $this->applyDateFilter($query, $filters);
+        $this->applyStatusFilter($query, $filters['status']);
+        $this->applyTextFilters($query, $filters);
+
+        return $query;
     }
 
     /**

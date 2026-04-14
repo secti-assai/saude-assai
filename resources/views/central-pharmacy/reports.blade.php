@@ -25,6 +25,15 @@
                 $selectedStatus = $filters['status'] ?? 'TODOS';
                 $selectedValidation = $filters['needs_validation'] ?? 'all';
                 $selectedCategory = $filters['dispense_category'] ?? 'ALL';
+                $csvFilters = [
+                    'date_start' => $filters['date_start'] ?? null,
+                    'date_end' => $filters['date_end'] ?? null,
+                    'status' => $filters['status'] ?? null,
+                    'dispense_category' => $filters['dispense_category'] ?? null,
+                    'gov_level' => $filters['gov_level'] ?? null,
+                    'needs_validation' => $filters['needs_validation'] ?? null,
+                    'citizen_name' => $filters['citizen_name'] ?? null,
+                ];
             @endphp
             <form method="GET" action="{{ route('central-pharmacy.reports') }}" class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
                 <div>
@@ -73,6 +82,7 @@
                 </div>
 
                 <div class="md:col-span-6 flex justify-end gap-2">
+                    <a href="{{ route('central-pharmacy.reports.export-csv', $csvFilters) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded">Exportar CSV</a>
                     <a href="{{ route('central-pharmacy.reports') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Limpar</a>
                     <button type="submit" class="sa-btn-primary">Aplicar filtros</button>
                 </div>
