@@ -81,9 +81,9 @@
                     <input type="text" name="citizen_name" class="sa-input" value="{{ $filters['citizen_name'] ?? '' }}" placeholder="Buscar por nome">
                 </div>
 
-                <div class="md:col-span-6 flex justify-end gap-2">
-                    <a href="{{ route('central-pharmacy.reports.export-csv', $csvFilters) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded">Exportar CSV</a>
-                    <a href="{{ route('central-pharmacy.reports') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Limpar</a>
+                <div class="md:col-span-6 flex flex-wrap justify-end gap-2">
+                    <a href="{{ route('central-pharmacy.reports.export-csv', $csvFilters) }}" class="sa-btn-secondary">Exportar CSV</a>
+                    <a href="{{ route('central-pharmacy.reports') }}" class="sa-btn-outline">Limpar</a>
                     <button type="submit" class="sa-btn-primary">Aplicar filtros</button>
                 </div>
             </form>
