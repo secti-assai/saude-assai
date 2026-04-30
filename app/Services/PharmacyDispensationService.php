@@ -156,11 +156,14 @@ class PharmacyDispensationService
             $pharmacyRequest = $this->logDispensation($citizen, $attendantUserId, $data, $level, $request);
             $this->pharmacyNotifications->sendDispenseFeedback($pharmacyRequest);
 
-            $levelLabel = $isEsusIntegration ? 'e-SUS PEC' : 'Nivel '.$level;
+            $message = $isEsusIntegration
+                ? 'Cidadão localizado na base de dados do município. A dispensa foi realizada e registrada!'
+                : 'O cidadão está regularizado (Nível '.$level.'). A dispensa foi realizada e registrada!';
+
             return [
                 'success' => true,
                 'action' => 'DISPENSED',
-                'message' => 'O cidadao esta regularizado ('.$levelLabel.'). A dispensa foi realizada e registrada!',
+                'message' => $message,
             ];
         } else {
             // Level 1 or 0 (Not Found)

@@ -56,8 +56,8 @@
                     <div class="mb-6 p-4 rounded-lg bg-emerald-50 text-emerald-800 border bg-emerald-100 flex items-center">
                         <div>
                             @if($isEsusIntegration)
-                                <p class="font-bold text-lg">Cidadão Identificado via e-SUS PEC</p>
-                                <p class="text-sm border-l-4 border-emerald-500">A pessoa foi localizada na base do e-SUS PEC do município e está liberada para retirada.</p>
+                                <p class="font-bold text-lg">Cidadão Identificado</p>
+                                <p class="text-sm border-l-4 border-emerald-500">A pessoa foi localizada na base do município e está liberada para retirada.</p>
                             @else
                                 <p class="font-bold text-lg">Cidadão Regularizado (Nível {{ $info['level'] }})</p>
                                 <p class="text-sm border-l-4 border-emerald-500">A pessoa está regularizada com o Gov.Assaí e pode retirar a medicação.</p>
