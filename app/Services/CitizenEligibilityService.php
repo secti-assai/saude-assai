@@ -33,6 +33,21 @@ class CitizenEligibilityService
         $result = $this->govAssai->fetchCitizenByCpf($normalizedCpf);
 
         if (! $result['success']) {
+            $errorCode = $result['error_code'] ?? null;
+
+            if ($errorCode === 'AWAITING_ACS_VALIDATION') {
+                return [
+                    'eligible' => false,
+                    'message' => 'Cidadao pendente de validacao pelo Agente de Saude (ACS). Atendimento nao autorizado no momento.',
+                    'residence_status' => 'RESIDENTE',
+                    'gov_assai_level' => '0',
+                    'citizen' => null,
+                    'cpf' => $normalizedCpf,
+                    'error_code' => $errorCode,
+                    'origem' => $result['origem'] ?? null,
+                ];
+            }
+
             return [
                 'eligible' => false,
                 'message' => $result['message'],

@@ -91,7 +91,7 @@ class PharmacyDispensationService
         $normalizedNameInput = $this->normalizeFullName($data['full_name'] ?? null);
         $normalizedPhoneInput = $this->normalizePhone($data['phone'] ?? null);
 
-        if ($lookupStatus === 'NOT_FOUND' && ($normalizedNameInput === null || $normalizedPhoneInput === null)) {
+        if (in_array($lookupStatus, ['NOT_FOUND', 'AWAITING_ACS_VALIDATION']) && ($normalizedNameInput === null || $normalizedPhoneInput === null)) {
             return [
                 'success' => false,
                 'action' => 'MISSING_CITIZEN_DATA',
@@ -106,7 +106,7 @@ class PharmacyDispensationService
                 'cpf_hash' => hash('sha256', $normalizedCpf),
             ];
 
-            if ($govData) {
+            if ($govData || $lookupStatus === 'AWAITING_ACS_VALIDATION') {
                 // Merge data with manual overrides, keeping standardized formats.
                 $citizenData['full_name'] = $normalizedNameInput
                     ?? $this->normalizeFullName((string) Arr::get($govData, 'cidadao.nome', ''))
@@ -273,6 +273,10 @@ class PharmacyDispensationService
     {
         if (($govResponse['success'] ?? false) === true && is_array($govResponse['data'] ?? null)) {
             return 'FOUND';
+        }
+
+        if (($govResponse['error_code'] ?? '') === 'AWAITING_ACS_VALIDATION') {
+            return 'AWAITING_ACS_VALIDATION';
         }
 
         $status = (int) ($govResponse['status'] ?? 0);
