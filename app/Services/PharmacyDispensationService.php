@@ -218,11 +218,11 @@ class PharmacyDispensationService
             ];
         }
 
-        $level = (int) ($info['level'] ?? 0);\r
-        $isEsusIntegration = ($info['origem'] ?? null) === 'integracao_esus';\r
-        if (! $citizen->pharmacy_lock_flag || $level >= 2 || $isEsusIntegration) {\r
-            return [\r
-                'success' => false,\r
+        $level = (int) ($info['level'] ?? 0);
+        $isEsusIntegration = ($info['origem'] ?? null) === 'integracao_esus';
+        if (! $citizen->pharmacy_lock_flag || $level >= 2 || $isEsusIntegration) {
+            return [
+                'success' => false,
                 'action' => 'BLOCK_NOT_ACTIVE',
                 'message' => 'Este cidadao nao esta mais bloqueado para dispensacao.',
             ];

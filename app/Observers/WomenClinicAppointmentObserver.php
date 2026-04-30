@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\SendWomenClinicLifecycleNotificationJob;
 use App\Models\WomenClinicAppointment;
 use App\Services\GovAssaiIntegrationService;
 
@@ -24,8 +25,29 @@ class WomenClinicAppointmentObserver
      */
     public function updated(WomenClinicAppointment $appointment): void
     {
-        if ($appointment->isDirty('status') || $appointment->isDirty('scheduled_for')) {
+        if ($appointment->wasChanged('status') || $appointment->wasChanged('scheduled_for')) {
             $this->syncWithGovAssai($appointment);
+        }
+
+        // WhatsApp Triggers para Atualizacoes, Cancelamentos e Reagendamentos
+        if ($appointment->wasChanged('status') && $appointment->status === 'CANCELADO') {
+            SendWomenClinicLifecycleNotificationJob::dispatch(
+                $appointment->id,
+                SendWomenClinicLifecycleNotificationJob::TRIGGER_CANCELLED
+            );
+        } elseif ($appointment->wasChanged('scheduled_for') && $appointment->status === 'AGENDADO') {
+            SendWomenClinicLifecycleNotificationJob::dispatch(
+                $appointment->id,
+                SendWomenClinicLifecycleNotificationJob::TRIGGER_RESCHEDULED
+            );
+        } elseif (
+            $appointment->status === 'AGENDADO' &&
+            ($appointment->wasChanged('clinic_type') || $appointment->wasChanged('specialty') || $appointment->wasChanged('notes'))
+        ) {
+            SendWomenClinicLifecycleNotificationJob::dispatch(
+                $appointment->id,
+                SendWomenClinicLifecycleNotificationJob::TRIGGER_EDITED
+            );
         }
     }
 

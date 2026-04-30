@@ -28,7 +28,7 @@ class WomenClinicNotificationService
         $this->notifications->enqueueWhatsapp(
             $phone,
             $clinicLabel.' - Consulta agendada',
-            "Sua consulta foi agendada para {$formattedDate}. Voce recebera outro lembrete 24 horas antes com um link seguro para cancelamento.",
+            "Sua consulta está confirmada para o dia {$formattedDate}. Fique atento: enviaremos um lembrete 24h antes com um link, caso precise cancelar. Em caso de dúvidas, entre em contato conosco (43) 3262-8400.",
             now(),
             $clinicSlug.'-'.$appointment->id.'-scheduled'
         );
@@ -61,7 +61,7 @@ class WomenClinicNotificationService
         $result = $this->notifications->enqueueWhatsapp(
             $phone,
             $clinicLabel.' - Lembrete de consulta',
-            "Lembrete: sua consulta esta marcada para {$formattedDate}. Caso precise cancelar, use este link seguro (valido por {$ttlHours} horas): {$cancelLink}. Na pagina, informe CPF e data de nascimento para confirmar o cancelamento.",
+            "Olá! Sua consulta está confirmada para {$formattedDate}. Caso precise cancelar, acesse este link seguro (válido por {$ttlHours} horas): {$cancelLink}. Para sua segurança, será necessário informar seu CPF e data de nascimento no portal.",
             now(),
             $clinicSlug.'-'.$appointment->id.'-reminder-24h'
         );
@@ -85,7 +85,7 @@ class WomenClinicNotificationService
         $this->notifications->enqueueWhatsapp(
             $phone,
             $clinicLabel.' - Check-in realizado',
-            'Seu check-in foi realizado com sucesso'.($formattedDate !== null ? " para a consulta de {$formattedDate}" : '').'. Aguarde o atendimento medico.',
+            'Seu check-in foi realizado com sucesso'.($formattedDate !== null ? " para a consulta de {$formattedDate}" : '').'. Por favor, aguarde o chamado do profissional.',
             now(),
             $clinicSlug.'-'.$appointment->id.'-checkin-'.($appointment->checked_in_at?->timestamp ?? now()->timestamp)
         );
@@ -102,10 +102,68 @@ class WomenClinicNotificationService
 
         $this->notifications->enqueueWhatsapp(
             $phone,
-            $clinicLabel.' - Consulta finalizada',
-            "Sua consulta foi finalizada. Para avaliar o atendimento, acesse este link: {$feedbackLink}",
+            $clinicLabel.' - Atendimento Concluído',
+            "Sua consulta foi finalizada. Sua opinião é muito importante para melhorarmos nossos serviços! Poderia avaliar seu atendimento neste link? {$feedbackLink}",
             now(),
             $clinicSlug.'-'.$appointment->id.'-checkout-'.($appointment->checked_out_at?->timestamp ?? now()->timestamp)
+        );
+    }
+
+    public function sendCancelled(WomenClinicAppointment $appointment): void
+    {
+        $appointment->loadMissing('citizen');
+        $clinicLabel = WomenClinicAppointment::clinicLabel($appointment->clinic_type);
+        $clinicSlug = str_replace('_', '-', strtolower(WomenClinicAppointment::resolveClinicType($appointment->clinic_type)));
+
+        $phone = (string) ($appointment->citizen->phone ?? '');
+        $formattedDate = $appointment->scheduled_for?->format('d/m/Y H:i') ?? 'N/A';
+
+        $this->notifications->enqueueWhatsapp(
+            $phone,
+            $clinicLabel.' - Confirmação de Cancelamento',
+            "Sua consulta marcada para o dia {$formattedDate} foi cancelada com sucesso. Caso deseje realizar um novo agendamento, entre em contato conosco pelo telefone (43) 3262-8400.",
+            now(),
+            $clinicSlug.'-'.$appointment->id.'-cancelled-'.now()->timestamp
+        );
+    }
+
+    public function sendRescheduled(WomenClinicAppointment $appointment): void
+    {
+        $appointment->loadMissing('citizen');
+        $clinicLabel = WomenClinicAppointment::clinicLabel($appointment->clinic_type);
+        $clinicSlug = str_replace('_', '-', strtolower(WomenClinicAppointment::resolveClinicType($appointment->clinic_type)));
+
+        $phone = (string) ($appointment->citizen->phone ?? '');
+        $formattedDate = $appointment->scheduled_for?->format('d/m/Y H:i');
+
+        if ($formattedDate === null) {
+            return;
+        }
+
+        $this->notifications->enqueueWhatsapp(
+            $phone,
+            $clinicLabel.' - Consulta Reagendada',
+            "Sua consulta foi atualizada para o dia {$formattedDate}. Fique atento: enviaremos um novo lembrete 24h antes. Em caso de dúvidas, ligue (43) 3262-8400.",
+            now(),
+            $clinicSlug.'-'.$appointment->id.'-rescheduled-'.now()->timestamp
+        );
+    }
+
+    public function sendEdited(WomenClinicAppointment $appointment): void
+    {
+        $appointment->loadMissing('citizen');
+        $clinicLabel = WomenClinicAppointment::clinicLabel($appointment->clinic_type);
+        $clinicSlug = str_replace('_', '-', strtolower(WomenClinicAppointment::resolveClinicType($appointment->clinic_type)));
+
+        $phone = (string) ($appointment->citizen->phone ?? '');
+        $formattedDate = $appointment->scheduled_for?->format('d/m/Y H:i') ?? 'N/A';
+
+        $this->notifications->enqueueWhatsapp(
+            $phone,
+            $clinicLabel.' - Consulta atualizada',
+            "Os detalhes da sua consulta marcada para {$formattedDate} foram atualizados. Por favor, fique atento aos próximos lembretes. Em caso de dúvidas, ligue para (43) 3262-8400.",
+            now(),
+            $clinicSlug.'-'.$appointment->id.'-edited-'.now()->timestamp
         );
     }
 
