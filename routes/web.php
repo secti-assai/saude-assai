@@ -109,6 +109,14 @@ Route::middleware(['auth', 'module.context'])->group(function () {
         ->middleware('permission:women_clinic.schedule')
         ->name('clinic-scheduler.schedule');
 
+    Route::put('/agendamentos/{womenClinicAppointment}/reagendar', [WomenClinicController::class, 'reschedule'])
+        ->middleware('permission:women_clinic.schedule')
+        ->name('clinic-scheduler.reschedule');
+
+    Route::post('/agendamentos/{womenClinicAppointment}/cancelar-consulta', [WomenClinicController::class, 'cancelAppointment'])
+        ->middleware('permission:women_clinic.schedule')
+        ->name('clinic-scheduler.cancel-appointment');
+
     Route::get('/clinica-mulher/agendador', [WomenClinicController::class, 'agendadorArea'])
         ->middleware('permission:women_clinic.schedule')
         ->name('women-clinic.agendador');
@@ -270,6 +278,10 @@ Route::middleware(['auth', 'module.context'])->group(function () {
     Route::get('/admin/relatorios', [AdminManagementController::class, 'reportsArea'])
         ->middleware('role:admin')
         ->name('admin.reports');
+
+    Route::post('/admin/farmacia-central/importar-dispensacoes', [AdminManagementController::class, 'importPharmacyExternalDispensations'])
+        ->middleware('role:admin')
+        ->name('admin.pharmacy-import.store');
 
     Route::fallback(function () {
         return redirect()->route('dashboard');

@@ -51,6 +51,8 @@ class PharmacyDispensationService
 
         $resolvedLevel = $level !== null ? (int) $level : 0;
 
+        $origem = Arr::get($govResponse, 'origem');
+
         // Merge Gov.Assai and local data for the unified pharmacy screen.
         return [
             'success' => true,
@@ -62,6 +64,7 @@ class PharmacyDispensationService
             'pharmacy_lock_flag' => $citizen ? $citizen->pharmacy_lock_flag : false,
             'gov_lookup_status' => $lookupStatus,
             'gov_lookup_message' => $lookupMessage,
+            'origem' => $origem,
         ];
     }
 
@@ -139,21 +142,25 @@ class PharmacyDispensationService
             }
         }
 
-        // 2. Logic for Level 2 or Level <= 1
-        if ($level >= 2) {
+        // 2. Logic for Level 2, integracao_esus, or Level <= 1
+        $isEsusIntegration = ($info['origem'] ?? null) === 'integracao_esus';
+
+        if ($level >= 2 || $isEsusIntegration) {
             // If they had the block flag, they have regularized now. Remove it!
             if ($citizen->pharmacy_lock_flag) {
                 $citizen->update(['pharmacy_lock_flag' => false]);
-                $this->audit->log($request, 'FARMACIA_CENTRAL', 'DESBLOQUEAR_FARMACIA_CIDADAO', Citizen::class, $citizen->id, ['reason' => 'Atingiu Nivel 2.']);
+                $reason = $isEsusIntegration ? 'Liberado via integracao e-SUS PEC.' : 'Atingiu Nivel 2.';
+                $this->audit->log($request, 'FARMACIA_CENTRAL', 'DESBLOQUEAR_FARMACIA_CIDADAO', Citizen::class, $citizen->id, ['reason' => $reason]);
             }
 
             $pharmacyRequest = $this->logDispensation($citizen, $attendantUserId, $data, $level, $request);
             $this->pharmacyNotifications->sendDispenseFeedback($pharmacyRequest);
 
+            $levelLabel = $isEsusIntegration ? 'e-SUS PEC' : 'Nivel '.$level;
             return [
                 'success' => true,
                 'action' => 'DISPENSED',
-                'message' => 'O cidadao esta regularizado com o Gov.Assai (Nivel '.$level.'). A dispensa foi realizada e registrada!',
+                'message' => 'O cidadao esta regularizado ('.$levelLabel.'). A dispensa foi realizada e registrada!',
             ];
         } else {
             // Level 1 or 0 (Not Found)
@@ -211,10 +218,11 @@ class PharmacyDispensationService
             ];
         }
 
-        $level = (int) ($info['level'] ?? 0);
-        if (! $citizen->pharmacy_lock_flag || $level >= 2) {
-            return [
-                'success' => false,
+        $level = (int) ($info['level'] ?? 0);\r
+        $isEsusIntegration = ($info['origem'] ?? null) === 'integracao_esus';\r
+        if (! $citizen->pharmacy_lock_flag || $level >= 2 || $isEsusIntegration) {\r
+            return [\r
+                'success' => false,\r
                 'action' => 'BLOCK_NOT_ACTIVE',
                 'message' => 'Este cidadao nao esta mais bloqueado para dispensacao.',
             ];

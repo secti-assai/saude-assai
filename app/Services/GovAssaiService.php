@@ -87,6 +87,7 @@ class GovAssaiService
                 'message' => (string) Arr::get($payload, 'message', 'Consulta realizada com sucesso'),
                 'error_code' => null,
                 'data' => Arr::get($payload, 'data'),
+                'origem' => Arr::get($payload, 'origem'),
             ];
         }
 

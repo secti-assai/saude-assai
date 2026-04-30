@@ -38,9 +38,11 @@
         @php
             $govStatus = $info['gov_lookup_status'] ?? 'UNAVAILABLE';
             $canProceedWithDispense = in_array($govStatus, ['FOUND', 'NOT_FOUND'], true);
+            $isEsusIntegration = ($info['origem'] ?? null) === 'integracao_esus';
+            $isRegularized = ($info['success'] && $info['level'] >= 2) || $isEsusIntegration;
         @endphp
         <!-- Card de Ação (Aparece após busca) -->
-        <div class="sa-card border-t-4 {{ $info['success'] && $info['level'] >= 2 ? 'border-emerald-500' : 'border-amber-500' }}">
+        <div class="sa-card border-t-4 {{ $isRegularized ? 'border-emerald-500' : 'border-amber-500' }}">
             <div class="p-6">
                 <!-- Message Banner based on Level -->
                 @if($govStatus !== 'FOUND' && $govStatus !== 'NOT_FOUND')
@@ -50,11 +52,16 @@
                             <p class="text-sm">{{ $info['gov_lookup_message'] ?? 'Tente novamente em instantes.' }}</p>
                         </div>
                     </div>
-                @elseif($info['success'] && $info['level'] >= 2)
+                @elseif($isRegularized)
                     <div class="mb-6 p-4 rounded-lg bg-emerald-50 text-emerald-800 border bg-emerald-100 flex items-center">
                         <div>
-                            <p class="font-bold text-lg">Cidadão Regularizado (Nível {{ $info['level'] }})</p>
-                            <p class="text-sm border-l-4 border-emerald-500">A pessoa está regularizada com o Gov.Assaí e pode retirar a medicação.</p>
+                            @if($isEsusIntegration)
+                                <p class="font-bold text-lg">Cidadão Identificado via e-SUS PEC</p>
+                                <p class="text-sm border-l-4 border-emerald-500">A pessoa foi localizada na base do e-SUS PEC do município e está liberada para retirada.</p>
+                            @else
+                                <p class="font-bold text-lg">Cidadão Regularizado (Nível {{ $info['level'] }})</p>
+                                <p class="text-sm border-l-4 border-emerald-500">A pessoa está regularizada com o Gov.Assaí e pode retirar a medicação.</p>
+                            @endif
                         </div>
                     </div>
                 @else
@@ -94,7 +101,7 @@
                     @endif
                 @endif
                 
-                @if($canProceedWithDispense && (!$info['pharmacy_lock_flag'] || $info['level'] >= 2))
+                @if($canProceedWithDispense && (!$info['pharmacy_lock_flag'] || $isRegularized))
                 <!-- Form de Cadastro / Dispensação (Se permitido) -->
                 <form method="POST" action="{{ route('central-pharmacy.unified.dispense') }}" class="space-y-4">
                     @csrf
@@ -154,7 +161,7 @@
                     </div>
                     
                     <div class="mt-6 flex justify-end">
-                        @if($info['level'] >= 2)
+                        @if($isRegularized)
                             <button type="submit" class="sa-btn-primary px-8 py-3 text-lg font-bold">OKAY - Finalizar Dispensação</button>
                         @else
                             <button type="submit" class="sa-btn-warning px-8 py-3 text-lg font-bold">NOTIFICAR E DISPENSAR</button>

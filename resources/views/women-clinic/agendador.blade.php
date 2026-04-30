@@ -288,6 +288,7 @@
                     <th class="p-3">Paciente</th>
                     <th class="p-3">Serviço/Espec.</th>
                     <th class="p-3">Status</th>
+                    <th class="p-3 text-center">Ações</th>
                 </tr></thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($appointments as $appointment)
@@ -312,12 +313,80 @@
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">{{ $appointment->status }}</span>
                                 @endif
                             </td>
+                            <td class="p-3 text-center whitespace-nowrap">
+                                @if($appointment->status === 'AGENDADO')
+                                    <button type="button"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 transition-colors"
+                                        onclick="openRescheduleModal('{{ $appointment->id }}', '{{ $appointment->scheduled_for?->format('Y-m-d\TH:i') }}', '{{ $appointment->clinic_type }}', '{{ $appointment->specialty }}', {{ json_encode($appointment->notes ?? '') }}, '{{ $appointment->citizen?->full_name ?? '—' }}')"
+                                        title="Editar / Reagendar">
+                                        <i class="fas fa-pen"></i> Editar
+                                    </button>
+                                    <form method="POST" action="{{ route('clinic-scheduler.cancel-appointment', $appointment) }}" class="inline" onsubmit="return confirm('Tem certeza que deseja CANCELAR esta consulta?')">
+                                        @csrf
+                                        <button type="submit"
+                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:border-red-300 transition-colors"
+                                            title="Cancelar Consulta">
+                                            <i class="fas fa-times"></i> Cancelar
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-xs text-gray-400">—</span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="text-center text-gray-500 py-8"><i class="fas fa-inbox text-gray-300 text-3xl mb-2 block"></i>Nenhuma consulta encontrada com os filtros atuais.</td></tr>
+                        <tr><td colspan="5" class="text-center text-gray-500 py-8"><i class="fas fa-inbox text-gray-300 text-3xl mb-2 block"></i>Nenhuma consulta encontrada com os filtros atuais.</td></tr>
                     @endforelse
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- ══════════ Modal de Reagendamento ══════════ -->
+    <div id="reschedule-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeRescheduleModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg pointer-events-auto border border-gray-200 overflow-hidden transform transition-all">
+                <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-4 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-white font-bold text-lg"><i class="fas fa-calendar-pen mr-2"></i>Reagendar Consulta</h3>
+                        <p class="text-amber-100 text-xs mt-0.5" id="modal-patient-name"></p>
+                    </div>
+                    <button onclick="closeRescheduleModal()" class="text-white/80 hover:text-white text-xl leading-none">&times;</button>
+                </div>
+                <form id="reschedule-form" method="POST" class="p-6 space-y-4">
+                    @csrf
+                    @method('PUT')
+                    <div>
+                        <label class="sa-label text-xs font-bold text-gray-700">Nova Data e Hora *</label>
+                        <input type="datetime-local" name="scheduled_for" id="modal-scheduled-for" class="sa-input font-medium" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="sa-label text-xs font-bold text-gray-700">Clínica *</label>
+                            <select name="clinic_type" id="modal-clinic-type" class="sa-select" required>
+                                @foreach(($clinicOptions ?? []) as $clinicValue => $clinicLabel)
+                                    <option value="{{ $clinicValue }}">{{ $clinicLabel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="sa-label text-xs font-bold text-gray-700">Especialidade *</label>
+                            <select name="specialty" id="modal-specialty" class="sa-select" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="sa-label text-xs font-bold text-gray-700">Observações</label>
+                        <textarea name="notes" id="modal-notes" class="sa-input resize-none" rows="2" maxlength="1000" placeholder="Motivo do reagendamento, observações..."></textarea>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+                        <button type="button" onclick="closeRescheduleModal()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">Cancelar</button>
+                        <button type="submit" class="sa-btn-primary px-6 py-2.5 font-bold shadow-sm"><i class="fas fa-check mr-2"></i>Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -686,5 +755,55 @@
                     });
             }
         })();
+    </script>
+
+    <script>
+        // ── Reschedule Modal ──
+        const modalSpecsByClinic = @json($specialtiesByClinic ?? []);
+
+        function openRescheduleModal(appointmentId, scheduledFor, clinicType, specialty, notes, patientName) {
+            const form = document.getElementById('reschedule-form');
+            form.action = '/agendamentos/' + appointmentId + '/reagendar';
+
+            document.getElementById('modal-scheduled-for').value = scheduledFor;
+            document.getElementById('modal-clinic-type').value = clinicType;
+            document.getElementById('modal-notes').value = notes || '';
+            document.getElementById('modal-patient-name').textContent = 'Paciente: ' + patientName;
+
+            populateModalSpecialties(clinicType, specialty);
+
+            document.getElementById('reschedule-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => document.getElementById('modal-scheduled-for').focus(), 100);
+        }
+
+        function closeRescheduleModal() {
+            document.getElementById('reschedule-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function populateModalSpecialties(clinicType, targetSpecialty) {
+            const select = document.getElementById('modal-specialty');
+            const specialties = modalSpecsByClinic[clinicType] || {};
+            select.innerHTML = '<option value="">Selecione...</option>';
+
+            Object.entries(specialties).forEach(([value, label]) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
+                if (targetSpecialty === value) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        document.getElementById('modal-clinic-type').addEventListener('change', function () {
+            populateModalSpecialties(this.value, null);
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeRescheduleModal();
+        });
     </script>
 </x-app-layout>

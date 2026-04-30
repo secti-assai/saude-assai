@@ -37,7 +37,7 @@ class PharmacyReportService
                     (string) ($row->prescriber_name ?? ''),
                     (string) ($row->prescription_code ?? ''),
                     $row->prescription_date?->format('d/m/Y') ?? '',
-                    (string) ($row->attendant->name ?? ''),
+                    (string) ($row->attendant_display_name ?? ''),
                     (string) ($row->reception->name ?? ''),
                     (string) ($row->residence_status ?? ''),
                     (string) ($row->refusal_reason ?? ''),

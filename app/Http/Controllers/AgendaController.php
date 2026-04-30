@@ -50,6 +50,8 @@ class AgendaController extends Controller
             $slots[] = [
                 'time' => $timeStr,
                 'available' => !$busy,
+                'appointment_id' => $busy ? $busy->id : null,
+                'appointment_status' => $busy ? $busy->status : null,
                 'patient_name' => $busy ? ($busy->citizen->full_name ?? 'Cidadão') : null,
                 'patient_phone' => $busy ? ($busy->citizen->phone ?? '') : null,
                 'is_conected_sus' => $busy ? true : false, // Simulating PEC UI

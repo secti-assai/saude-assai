@@ -17,11 +17,17 @@ class SaudeCitizenApiController extends Controller
         $result = $this->govAssai->fetchCitizenByCpf($cpf);
 
         if ($result['success']) {
-            return response()->json([
+            $response = [
                 'success' => true,
                 'message' => $result['message'],
                 'data' => $result['data'],
-            ], 200);
+            ];
+
+            if (! empty($result['origem'])) {
+                $response['origem'] = $result['origem'];
+            }
+
+            return response()->json($response, 200);
         }
 
         return response()->json([

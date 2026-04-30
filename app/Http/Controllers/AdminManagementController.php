@@ -6,6 +6,7 @@ use App\Models\HealthUnit;
 use App\Models\User;
 use App\Models\WomenClinicAppointment;
 use App\Services\AuditService;
+use App\Services\PharmacyExternalImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +25,10 @@ class AdminManagementController extends Controller
         'Farmácia Central',
     ];
 
-    public function __construct(private readonly AuditService $audit)
+    public function __construct(
+        private readonly AuditService $audit,
+        private readonly PharmacyExternalImportService $externalImportService,
+    )
     {
     }
 
@@ -161,6 +165,8 @@ class AdminManagementController extends Controller
 
     public function reportsArea(): View
     {
+        $externalDashboard = $this->externalImportService->buildDashboard();
+
         $usersByRole = User::query()
             ->select('role', DB::raw('COUNT(*) as total'))
             ->groupBy('role')
@@ -183,7 +189,41 @@ class AdminManagementController extends Controller
             'usersByRole' => $usersByRole,
             'activityByModule' => $activityByModule,
             'recentAudits' => $recentAudits,
+            'externalImportTotals' => $externalDashboard['externalImportTotals'],
+            'recentPharmacyImports' => $externalDashboard['recentPharmacyImports'],
+            'recentBypassRows' => $externalDashboard['recentBypassRows'],
+            'recurrenceAlerts' => $externalDashboard['recurrenceAlerts'],
         ]);
+    }
+
+    public function importPharmacyExternalDispensations(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'betha_csv' => ['required', 'file', 'max:20480', 'extensions:csv,txt'],
+            'daily_txt' => ['required', 'file', 'max:20480', 'extensions:txt,csv'],
+        ]);
+
+        $bethaFile = $request->file('betha_csv');
+        $dailyFile = $request->file('daily_txt');
+
+        if ($bethaFile === null || $dailyFile === null) {
+            return back()->withErrors(['betha_csv' => 'Arquivos de importacao invalidos.']);
+        }
+
+        $result = $this->externalImportService->import($request, $bethaFile, $dailyFile);
+        $summary = $result['summary'] ?? [];
+
+        $message = sprintf(
+            'Importacao concluida. Processados: %d | Atendimentos criados: %d | Bypass detectados: %d | Bloqueios acionados: %d',
+            (int) ($summary['processed_rows'] ?? 0),
+            (int) ($summary['synthetic_created'] ?? 0),
+            (int) ($summary['bypass_detected'] ?? 0),
+            (int) ($summary['citizens_locked'] ?? 0),
+        );
+
+        return redirect()->route('admin.reports')
+            ->with('status', $message)
+            ->with('import_summary', $result);
     }
 
     private function allowedUserHealthUnitsQuery()

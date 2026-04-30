@@ -12,7 +12,7 @@ class CitizenEligibilityService
     }
 
     /**
-     * @return array{eligible:bool,message:string,residence_status:string,gov_assai_level:?string,citizen:?Citizen,cpf:string,error_code:?string}
+     * @return array{eligible:bool,message:string,residence_status:string,gov_assai_level:?string,citizen:?Citizen,cpf:string,error_code:?string,origem:?string}
      */
     public function validateAndSync(string $cpf): array
     {
@@ -41,6 +41,38 @@ class CitizenEligibilityService
                 'citizen' => null,
                 'cpf' => $normalizedCpf,
                 'error_code' => $result['error_code'],
+                'origem' => $result['origem'] ?? null,
+            ];
+        }
+
+        $origem = $result['origem'] ?? null;
+
+        // ── Cidadão vindo da integracao_esus: liberar sem exigir nivel 2 ──
+        if ($origem === 'integracao_esus') {
+            $citizen = $this->syncCitizen($normalizedCpf, $result['data'] ?? []);
+
+            if (! $citizen) {
+                return [
+                    'eligible' => false,
+                    'message' => 'e-SUS PEC retornou dados incompletos do cidadao.',
+                    'residence_status' => 'RESIDENTE',
+                    'gov_assai_level' => '0',
+                    'citizen' => null,
+                    'cpf' => $normalizedCpf,
+                    'error_code' => 'ESUS_INCOMPLETE_DATA',
+                    'origem' => $origem,
+                ];
+            }
+
+            return [
+                'eligible' => true,
+                'message' => 'Cidadao elegivel via integracao e-SUS PEC.',
+                'residence_status' => 'RESIDENTE',
+                'gov_assai_level' => '0',
+                'citizen' => $citizen,
+                'cpf' => $normalizedCpf,
+                'error_code' => null,
+                'origem' => $origem,
             ];
         }
 
@@ -55,6 +87,7 @@ class CitizenEligibilityService
                 'citizen' => null,
                 'cpf' => $normalizedCpf,
                 'error_code' => 'GOV_ASSAI_LEVEL_INSUFFICIENT',
+                'origem' => $origem,
             ];
         }
 
@@ -69,6 +102,7 @@ class CitizenEligibilityService
                 'citizen' => null,
                 'cpf' => $normalizedCpf,
                 'error_code' => 'GOV_ASSAI_INCOMPLETE_DATA',
+                'origem' => $origem,
             ];
         }
 
@@ -80,6 +114,7 @@ class CitizenEligibilityService
             'citizen' => $citizen,
             'cpf' => $normalizedCpf,
             'error_code' => null,
+            'origem' => $origem,
         ];
     }
 

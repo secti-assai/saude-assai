@@ -255,7 +255,7 @@
                                 <td>
                                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $statusClass }}">{{ $row->status }}</span>
                                 </td>
-                                <td>{{ $row->attendant->name ?? '—' }}</td>
+                                <td>{{ $row->attendant_display_name ?? '—' }}</td>
                                 <td>{{ $row->reception->name ?? '—' }}</td>
                                 <td>{{ $categoryLabel }}</td>
                             </tr>

@@ -60,4 +60,35 @@ class CentralPharmacyRequest extends Model
     {
         return $this->belongsTo(User::class, 'attendant_user_id');
     }
+
+    public function getAttendantDisplayNameAttribute(): ?string
+    {
+        $externalPharmacist = $this->extractExternalPharmacistNameFromNotes();
+        if ($externalPharmacist !== null) {
+            return $externalPharmacist;
+        }
+
+        $attendantName = $this->attendant?->name;
+        if (! is_string($attendantName) || trim($attendantName) === '') {
+            return null;
+        }
+
+        return trim($attendantName);
+    }
+
+    private function extractExternalPharmacistNameFromNotes(): ?string
+    {
+        $notes = trim((string) ($this->notes ?? ''));
+        if ($notes === '') {
+            return null;
+        }
+
+        if (preg_match('/farmac[eê]utic[ao]\s+no\s+arquivo\s+externo:\s*([^|]+?)(?:\s*\||$)/iu', $notes, $matches) !== 1) {
+            return null;
+        }
+
+        $name = trim((string) ($matches[1] ?? ''));
+
+        return $name !== '' ? $name : null;
+    }
 }

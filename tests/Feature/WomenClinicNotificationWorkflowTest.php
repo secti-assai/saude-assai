@@ -224,6 +224,6 @@ class WomenClinicNotificationWorkflowTest extends TestCase
         $appointment->refresh();
         $this->assertSame('CHECKIN', $appointment->status);
 
-        Queue::assertNothingPushed();
+        Queue::assertNotPushed(SendWomenClinicLifecycleNotificationJob::class);
     }
 }

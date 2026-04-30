@@ -329,6 +329,64 @@ class CentralPharmacyReportsModuleTest extends TestCase
         $response->assertDontSee('CIDADAO SUPLEMENTO');
     }
 
+    public function test_reports_prefer_external_attendant_name_when_present_in_notes(): void
+    {
+        $viewer = User::factory()->create([
+            'role' => User::ROLE_FARMACIA,
+            'permissions' => [User::PERMISSION_CENTRAL_PHARMACY_REPORTS],
+        ]);
+
+        $importer = User::factory()->create([
+            'name' => 'ADMIN IMPORTADOR TESTE',
+            'role' => User::ROLE_ADMIN,
+        ]);
+
+        $citizen = Citizen::create([
+            'cpf' => '90012640949',
+            'cpf_hash' => hash('sha256', '90012640949'),
+            'full_name' => 'CIDADAO EXTERNO ATENDENTE',
+            'birth_date' => '1990-01-01',
+            'is_resident_assai' => false,
+            'pharmacy_lock_flag' => true,
+            'phone' => '(43) 95555-4949',
+        ]);
+
+        CentralPharmacyRequest::create([
+            'citizen_id' => $citizen->id,
+            'reception_user_id' => $importer->id,
+            'attendant_user_id' => $importer->id,
+            'prescription_date' => now()->toDateString(),
+            'prescriber_name' => 'Dr. Externo',
+            'medication_name' => 'MEDICACAO',
+            'concentration' => '500mg',
+            'quantity' => 1,
+            'dosage' => '1 comprimido',
+            'gov_assai_level' => '0',
+            'status' => 'DISPENSADO',
+            'residence_status' => 'PENDENTE',
+            'notes' => 'IMPORTACAO EXTERNA BETHA/TXT | Farmaceutica no arquivo externo: MARIA DA SILVA FERREIRA | Numero da dispensa externa: 123456',
+            'dispensed_at' => now(),
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('central-pharmacy.reports', [
+            'citizen_name' => 'EXTERNO ATENDENTE',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('MARIA DA SILVA FERREIRA');
+
+        $csvResponse = $this->actingAs($viewer)->get(route('central-pharmacy.reports.export-csv', [
+            'date_start' => now()->toDateString(),
+            'date_end' => now()->toDateString(),
+            'citizen_name' => 'EXTERNO ATENDENTE',
+        ]));
+
+        $csvResponse->assertOk();
+
+        $csv = ltrim($csvResponse->streamedContent(), "\xEF\xBB\xBF");
+        $this->assertStringContainsString(';"MARIA DA SILVA FERREIRA";"ADMIN IMPORTADOR TESTE";', $csv);
+    }
+
     public function test_reports_csv_export_downloads_all_records_for_selected_period(): void
     {
         $viewer = User::factory()->create([

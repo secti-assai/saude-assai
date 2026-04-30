@@ -650,4 +650,99 @@ class WomenClinicController extends Controller
 
         return $clinicType === null || $clinicType === WomenClinicAppointment::CLINIC_WOMEN;
     }
+
+    /**
+     * Reagendar uma consulta existente (alterar data/hora, clínica, especialidade ou observações).
+     */
+    public function reschedule(Request $request, WomenClinicAppointment $womenClinicAppointment): RedirectResponse
+    {
+        if (! in_array($womenClinicAppointment->status, ['AGENDADO'], true)) {
+            return back()->withErrors(['error' => 'Somente consultas com status AGENDADO podem ser reagendadas.']);
+        }
+
+        $data = $request->validate([
+            'scheduled_for' => ['required', 'date', 'after_or_equal:today'],
+            'clinic_type'   => ['required', 'string', Rule::in(WomenClinicAppointment::clinicValues())],
+            'specialty'     => ['required', 'string', Rule::in(WomenClinicAppointment::specialtyValues())],
+            'notes'         => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $clinicType = WomenClinicAppointment::resolveClinicType((string) ($data['clinic_type'] ?? ''));
+
+        if (! WomenClinicAppointment::isSpecialtyAllowedForClinic($clinicType, (string) ($data['specialty'] ?? ''))) {
+            return back()->withErrors([
+                'specialty' => 'A especialidade selecionada nao pertence a clinica informada.',
+            ])->withInput();
+        }
+
+        $specialty = WomenClinicAppointment::normalizeSpecialty((string) ($data['specialty'] ?? ''));
+        if ($specialty === null) {
+            return back()->withErrors([
+                'specialty' => 'Especialidade invalida.',
+            ])->withInput();
+        }
+
+        $scheduledFor = \Carbon\Carbon::parse($data['scheduled_for']);
+
+        // Validação de conflito — ignora a própria consulta
+        $conflict = WomenClinicAppointment::where('clinic_type', $clinicType)
+            ->where('specialty', $specialty)
+            ->where('scheduled_for', clone $scheduledFor)
+            ->whereNotIn('status', ['CANCELADO'])
+            ->where('id', '!=', $womenClinicAppointment->id)
+            ->exists();
+
+        if ($conflict) {
+            return back()->withErrors(['scheduled_for' => 'Este horário já está preenchido para esta especialidade. Selecione outro.'])->withInput();
+        }
+
+        $oldScheduledFor = $womenClinicAppointment->scheduled_for?->toIso8601String();
+        $oldClinicType = $womenClinicAppointment->clinic_type;
+        $oldSpecialty = $womenClinicAppointment->specialty;
+
+        $womenClinicAppointment->update([
+            'scheduled_for' => $scheduledFor,
+            'clinic_type'   => $clinicType,
+            'specialty'     => $specialty,
+            'notes'         => $data['notes'] ?? $womenClinicAppointment->notes,
+        ]);
+
+        $this->audit->log($request, $this->auditModuleForClinic($clinicType), 'REAGENDAR_CONSULTA', WomenClinicAppointment::class, null, [
+            'appointment_id' => $womenClinicAppointment->id,
+            'citizen_id'     => $womenClinicAppointment->citizen_id,
+            'old_scheduled_for' => $oldScheduledFor,
+            'new_scheduled_for' => $scheduledFor->toIso8601String(),
+            'old_clinic_type'   => $oldClinicType,
+            'new_clinic_type'   => $clinicType,
+            'old_specialty'     => $oldSpecialty,
+            'new_specialty'     => $specialty,
+        ]);
+
+        return back()->with('status', 'Consulta reagendada com sucesso para ' . $scheduledFor->format('d/m/Y H:i') . '.');
+    }
+
+    /**
+     * Cancelar uma consulta agendada.
+     */
+    public function cancelAppointment(Request $request, WomenClinicAppointment $womenClinicAppointment): RedirectResponse
+    {
+        if (! in_array($womenClinicAppointment->status, ['AGENDADO'], true)) {
+            return back()->withErrors(['error' => 'Somente consultas com status AGENDADO podem ser canceladas.']);
+        }
+
+        $clinicType = WomenClinicAppointment::resolveClinicType($womenClinicAppointment->clinic_type);
+
+        $womenClinicAppointment->update([
+            'status'       => 'CANCELADO',
+            'cancelled_at' => now(),
+        ]);
+
+        $this->audit->log($request, $this->auditModuleForClinic($clinicType), 'CANCELAR_CONSULTA_AGENDADOR', WomenClinicAppointment::class, null, [
+            'appointment_id' => $womenClinicAppointment->id,
+            'citizen_id'     => $womenClinicAppointment->citizen_id,
+            'scheduled_for'  => $womenClinicAppointment->scheduled_for?->toIso8601String(),
+        ]);
+
+        return back()->with('status', 'Consulta cancelada com sucesso.');
+    }
 }
