@@ -186,6 +186,19 @@ class WomenClinicAppointment extends Model
         return in_array($normalizedSpecialty, self::specialtyValuesForClinic($clinicType), true);
     }
 
+    public static function getSlotCapacity(string $clinicType, string $specialty, \Carbon\Carbon $date, string $timeStr): int
+    {
+        if ($clinicType === self::CLINIC_WOMEN) {
+            if ($specialty === self::SPECIALTY_ORTOPEDIA && $timeStr === '07:30') {
+                return 25;
+            }
+            if ($specialty === self::SPECIALTY_CARDIOLOGIA && $timeStr === '14:00' && $date->dayOfWeek === \Carbon\Carbon::TUESDAY) {
+                return 50;
+            }
+        }
+        return 1;
+    }
+
     public function citizen(): BelongsTo
     {
         return $this->belongsTo(Citizen::class);

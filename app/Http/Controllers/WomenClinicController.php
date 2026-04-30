@@ -437,7 +437,7 @@ class WomenClinicController extends Controller
         }
 
         $data = $request->validate([
-            'scheduled_for' => ['required', 'date', 'after_or_equal:today'],
+            'scheduled_for' => ['required', 'date'],
             'clinic_type' => ['required', 'string', Rule::in(WomenClinicAppointment::clinicValues())],
             'specialty' => ['required', 'string', Rule::in(WomenClinicAppointment::specialtyValues())],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -474,13 +474,27 @@ class WomenClinicController extends Controller
         // Validação de conflito de agenda (evita overbooking no mesmo dia/hora, clínica e especialidade)
         $scheduledFor = \Carbon\Carbon::parse($data['scheduled_for']);
         
-        $conflict = WomenClinicAppointment::where('clinic_type', $clinicType)
+        // Bloqueio: Impede que o MESMO cidadão agende a mesma especialidade e no mesmo dia
+        $samePatientExists = WomenClinicAppointment::where('citizen_id', $validation['citizen']->id)
+            ->where('clinic_type', $clinicType)
+            ->where('specialty', $specialty)
+            ->whereDate('scheduled_for', $scheduledFor->toDateString())
+            ->whereNotIn('status', ['CANCELADO', 'FINALIZADO'])
+            ->exists();
+            
+        if ($samePatientExists) {
+            return back()->withErrors(['scheduled_for' => 'Este cidadão já possui uma consulta agendada para esta especialidade neste dia.'])->withInput();
+        }
+
+        $capacity = WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $scheduledFor, $scheduledFor->format('H:i'));
+        
+        $scheduledCount = WomenClinicAppointment::where('clinic_type', $clinicType)
             ->where('specialty', $specialty)
             ->where('scheduled_for', clone $scheduledFor)
             ->whereNotIn('status', ['CANCELADO'])
-            ->exists();
+            ->count();
 
-        if ($conflict) {
+        if ($scheduledCount >= $capacity) {
             return back()->withErrors(['scheduled_for' => 'Este horário já está preenchido para esta especialidade. Selecione outro.'])->withInput();
         }
 
@@ -661,7 +675,7 @@ class WomenClinicController extends Controller
         }
 
         $data = $request->validate([
-            'scheduled_for' => ['required', 'date', 'after_or_equal:today'],
+            'scheduled_for' => ['required', 'date'],
             'clinic_type'   => ['required', 'string', Rule::in(WomenClinicAppointment::clinicValues())],
             'specialty'     => ['required', 'string', Rule::in(WomenClinicAppointment::specialtyValues())],
             'notes'         => ['nullable', 'string', 'max:1000'],
@@ -684,15 +698,30 @@ class WomenClinicController extends Controller
 
         $scheduledFor = \Carbon\Carbon::parse($data['scheduled_for']);
 
+        $capacity = WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $scheduledFor, $scheduledFor->format('H:i'));
+
+        // Bloqueio: Impede editar para um dia em que o MESMO cidadão já tenha agendamento para essa especialidade
+        $samePatientExists = WomenClinicAppointment::where('citizen_id', $womenClinicAppointment->citizen_id)
+            ->where('clinic_type', $clinicType)
+            ->where('specialty', $specialty)
+            ->whereDate('scheduled_for', $scheduledFor->toDateString())
+            ->whereNotIn('status', ['CANCELADO', 'FINALIZADO'])
+            ->where('id', '!=', $womenClinicAppointment->id)
+            ->exists();
+            
+        if ($samePatientExists) {
+            return back()->withErrors(['scheduled_for' => 'Este cidadão já possui uma consulta agendada para esta especialidade neste dia.'])->withInput();
+        }
+
         // Validação de conflito — ignora a própria consulta
-        $conflict = WomenClinicAppointment::where('clinic_type', $clinicType)
+        $scheduledCount = WomenClinicAppointment::where('clinic_type', $clinicType)
             ->where('specialty', $specialty)
             ->where('scheduled_for', clone $scheduledFor)
             ->whereNotIn('status', ['CANCELADO'])
             ->where('id', '!=', $womenClinicAppointment->id)
-            ->exists();
+            ->count();
 
-        if ($conflict) {
+        if ($scheduledCount >= $capacity) {
             return back()->withErrors(['scheduled_for' => 'Este horário já está preenchido para esta especialidade. Selecione outro.'])->withInput();
         }
 
