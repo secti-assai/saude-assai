@@ -165,37 +165,52 @@ class PharmacyExternalImportService
      */
     public function buildDashboard(): array
     {
-        $recentImports = PharmacyExternalImport::query()
-            ->with('uploader')
-            ->orderByDesc('created_at')
-            ->limit(10)
-            ->get();
+        try {
+            $recentImports = PharmacyExternalImport::query()
+                ->with('uploader')
+                ->orderByDesc('created_at')
+                ->limit(10)
+                ->get();
 
-        $recentBypassRows = PharmacyExternalImportRow::query()
-            ->with(['importBatch', 'citizen', 'pharmacistUser'])
-            ->where('bypass_detected', true)
-            ->orderByDesc('created_at')
-            ->limit(20)
-            ->get();
+            $recentBypassRows = PharmacyExternalImportRow::query()
+                ->with(['importBatch', 'citizen', 'pharmacistUser'])
+                ->where('bypass_detected', true)
+                ->orderByDesc('created_at')
+                ->limit(20)
+                ->get();
 
-        $recurrenceAlerts = PharmacyExternalImportRow::query()
-            ->with(['importBatch', 'citizen', 'pharmacistUser'])
-            ->whereIn('recurrence_alert_level', ['ALTO', 'MEDIO'])
-            ->orderByDesc('created_at')
-            ->limit(20)
-            ->get();
+            $recurrenceAlerts = PharmacyExternalImportRow::query()
+                ->with(['importBatch', 'citizen', 'pharmacistUser'])
+                ->whereIn('recurrence_alert_level', ['ALTO', 'MEDIO'])
+                ->orderByDesc('created_at')
+                ->limit(20)
+                ->get();
 
-        return [
-            'externalImportTotals' => [
-                'imports' => PharmacyExternalImport::query()->count(),
-                'bypass_rows' => PharmacyExternalImportRow::query()->where('bypass_detected', true)->count(),
-                'alerts_high' => PharmacyExternalImportRow::query()->where('recurrence_alert_level', 'ALTO')->count(),
-                'alerts_medium' => PharmacyExternalImportRow::query()->where('recurrence_alert_level', 'MEDIO')->count(),
-            ],
-            'recentPharmacyImports' => $recentImports,
-            'recentBypassRows' => $recentBypassRows,
-            'recurrenceAlerts' => $recurrenceAlerts,
-        ];
+            return [
+                'externalImportTotals' => [
+                    'imports' => PharmacyExternalImport::query()->count(),
+                    'bypass_rows' => PharmacyExternalImportRow::query()->where('bypass_detected', true)->count(),
+                    'alerts_high' => PharmacyExternalImportRow::query()->where('recurrence_alert_level', 'ALTO')->count(),
+                    'alerts_medium' => PharmacyExternalImportRow::query()->where('recurrence_alert_level', 'MEDIO')->count(),
+                ],
+                'recentPharmacyImports' => $recentImports,
+                'recentBypassRows' => $recentBypassRows,
+                'recurrenceAlerts' => $recurrenceAlerts,
+            ];
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('PharmacyExternalImportService: Failed to build dashboard (table might be missing). ' . $e->getMessage());
+            return [
+                'externalImportTotals' => [
+                    'imports' => 0,
+                    'bypass_rows' => 0,
+                    'alerts_high' => 0,
+                    'alerts_medium' => 0,
+                ],
+                'recentPharmacyImports' => collect([]),
+                'recentBypassRows' => collect([]),
+                'recurrenceAlerts' => collect([]),
+            ];
+        }
     }
 
     /**
