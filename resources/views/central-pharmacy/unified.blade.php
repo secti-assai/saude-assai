@@ -37,7 +37,7 @@
         @if(isset($info))
         @php
             $govStatus = $info['gov_lookup_status'] ?? 'UNAVAILABLE';
-            $canProceedWithDispense = in_array($govStatus, ['FOUND', 'NOT_FOUND'], true);
+            $canProceedWithDispense = in_array($govStatus, ['FOUND', 'NOT_FOUND', 'AWAITING_ACS_VALIDATION'], true);
             $isEsusIntegration = ($info['origem'] ?? null) === 'integracao_esus';
             $isRegularized = ($info['success'] && $info['level'] >= 2) || $isEsusIntegration;
         @endphp
@@ -45,7 +45,7 @@
         <div class="sa-card border-t-4 {{ $isRegularized ? 'border-emerald-500' : 'border-amber-500' }}">
             <div class="p-6">
                 <!-- Message Banner based on Level -->
-                @if($govStatus !== 'FOUND' && $govStatus !== 'NOT_FOUND')
+                @if($govStatus !== 'FOUND' && $govStatus !== 'NOT_FOUND' && $govStatus !== 'AWAITING_ACS_VALIDATION')
                     <div class="mb-6 p-4 rounded-lg bg-amber-50 text-amber-800 border border-amber-300 flex items-center">
                         <div>
                             <p class="font-bold text-lg">Nao foi possivel validar o Gov.Assai agora</p>
@@ -92,12 +92,21 @@
                             </div>
                         </form>
                     @else
-                        <div class="mb-6 p-4 rounded-lg bg-amber-50 text-amber-800 border border-amber-300 flex items-center">
-                            <div>
-                                <p class="font-bold text-lg">A pessoa precisa se regularizar (Nível atual: {{ $info['level'] }})</p>
-                                <p class="text-sm">Notifique que a próxima vez ela não conseguirá retirar sem o Nível 2 do Gov.Assaí.</p>
+                        @if($govStatus === 'AWAITING_ACS_VALIDATION')
+                            <div class="mb-6 p-4 rounded-lg bg-amber-50 text-amber-800 border border-amber-300 flex items-center">
+                                <div>
+                                    <p class="font-bold text-lg">Aguardando Validação do ACS</p>
+                                    <p class="text-sm">O cidadão foi encontrado na base municipal, mas ainda não foi validado pelo Agente de Saúde. A próxima vez ele não conseguirá retirar sem regularização.</p>
+                                </div>
                             </div>
-                        </div>
+                        @else
+                            <div class="mb-6 p-4 rounded-lg bg-amber-50 text-amber-800 border border-amber-300 flex items-center">
+                                <div>
+                                    <p class="font-bold text-lg">A pessoa precisa se regularizar (Nível atual: {{ $info['level'] }})</p>
+                                    <p class="text-sm">Notifique que a próxima vez ela não conseguirá retirar sem o Nível 2 do Gov.Assaí.</p>
+                                </div>
+                            </div>
+                        @endif
                     @endif
                 @endif
                 
@@ -114,7 +123,7 @@
                             <input
                                 name="full_name"
                                 class="sa-input"
-                                value="{{ old('full_name', $info['citizen'] ? $info['citizen']->full_name : ($info['gov_data']['cidadao']['nome'] ?? '')) }}"
+                                value="{{ old('full_name', $info['citizen'] ? $info['citizen']->full_name : (Arr::get($info, 'gov_data.cidadao.nome') ?? '')) }}"
                                 maxlength="255"
                                 required
                                 style="text-transform: uppercase;"
@@ -122,6 +131,8 @@
                             >
                             @if($govStatus === 'NOT_FOUND')
                                 <span class="text-xs text-amber-600">Não encontrado no Gov.Assaí. Insira os dados.</span>
+                            @elseif($govStatus === 'AWAITING_ACS_VALIDATION')
+                                <span class="text-xs text-amber-600">Cadastro pendente de validação ACS. Confirme os dados.</span>
                             @elseif($govStatus !== 'FOUND')
                                 <span class="text-xs text-amber-600">Não foi possível confirmar os dados no Gov.Assaí agora.</span>
                             @endif
@@ -131,7 +142,7 @@
                             <input
                                 name="phone"
                                 class="sa-input"
-                                value="{{ old('phone', $info['citizen'] ? $info['citizen']->phone : ($info['gov_data']['contato']['celular'] ?? '')) }}"
+                                value="{{ old('phone', $info['citizen'] ? $info['citizen']->phone : (Arr::get($info, 'gov_data.contato.celular') ?? '')) }}"
                                 placeholder="(00) 00000-0000"
                                 inputmode="numeric"
                                 maxlength="15"
