@@ -204,7 +204,7 @@ class CitizenEligibilityService
                 'full_name' => $name,
                 'social_name' => Arr::get($data, 'cidadao.nome_social'),
                 'birth_date' => $birthDate,
-                'sexo' => Arr::get($data, 'cidadao.sexo'),
+                'sexo' => strtoupper(substr((string) Arr::get($data, 'cidadao.sexo', 'M'), 0, 1)),
                 'address' => $this->buildAddress($data),
                 'phone' => Arr::get($data, 'contato.celular'),
                 'email' => Arr::get($data, 'contato.email'),
