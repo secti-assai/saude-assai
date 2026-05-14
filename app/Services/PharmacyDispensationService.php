@@ -142,22 +142,15 @@ class PharmacyDispensationService
             }
         }
 
-        // 2. Logic for Level 2, integracao_esus, or Level <= 1
+        // 2. Logic for Level 2, integracao_esus (ACS validated), or Level <= 1
         $isEsusIntegration = ($info['origem'] ?? null) === 'integracao_esus';
 
         if ($level >= 2 || $isEsusIntegration) {
-            // If they had the block flag, they have regularized now. Remove it!
-            if ($citizen->pharmacy_lock_flag) {
-                $citizen->update(['pharmacy_lock_flag' => false]);
-                $reason = $isEsusIntegration ? 'Liberado via integracao e-SUS PEC.' : 'Atingiu Nivel 2.';
-                $this->audit->log($request, 'FARMACIA_CENTRAL', 'DESBLOQUEAR_FARMACIA_CIDADAO', Citizen::class, $citizen->id, ['reason' => $reason]);
-            }
-
             $pharmacyRequest = $this->logDispensation($citizen, $attendantUserId, $data, $level, $request);
             $this->pharmacyNotifications->sendDispenseFeedback($pharmacyRequest);
 
             $message = $isEsusIntegration
-                ? 'Cidadão localizado na base de dados do município. A dispensa foi realizada e registrada!'
+                ? 'Cidadão localizado na base de dados do município e validado. A dispensa foi realizada e registrada!'
                 : 'O cidadão está regularizado (Nível '.$level.'). A dispensa foi realizada e registrada!';
 
             return [
@@ -167,32 +160,14 @@ class PharmacyDispensationService
             ];
         } else {
             // Level 1 or 0 (Not Found)
-            if ($citizen->pharmacy_lock_flag) {
-                // Blocked
-                $this->pharmacyNotifications->sendRegularizationGuidance($citizen, $level, 'blocked-'.$citizen->id.'-'.now()->format('YmdHis'));
+            // Hard block immediately. No grace period.
+            $this->pharmacyNotifications->sendRegularizationGuidance($citizen, $level, 'blocked-'.$citizen->id.'-'.now()->format('YmdHis'));
 
-                return [
-                    'success' => false,
-                    'action' => 'BLOCKED',
-                    'message' => 'BLOQUEADO: O cidadao ja foi notificado anteriormente e nao atingiu Nivel 2. Dispensacao nao autorizada.',
-                ];
-            } else {
-                // First time -> Lock for next times
-                $citizen->update(['pharmacy_lock_flag' => true]);
-                $this->audit->log($request, 'FARMACIA_CENTRAL', 'BLOQUEAR_FARMACIA_CIDADAO', Citizen::class, $citizen->id, [
-                    'reason' => 'Nivel '.$level.' no momento da dispensacao com aviso de regularizacao.',
-                ]);
-
-                $pharmacyRequest = $this->logDispensation($citizen, $attendantUserId, $data, $level, $request);
-                $this->pharmacyNotifications->sendRegularizationGuidance($citizen, $level, 'dispensed-notified-'.$pharmacyRequest->id);
-                $this->pharmacyNotifications->sendDispenseFeedback($pharmacyRequest);
-
-                return [
-                    'success' => true,
-                    'action' => 'DISPENSED_NOTIFIED',
-                    'message' => 'Cidadao NOTIFICADO! Dispensacao liberada desta vez, mas a flag de bloqueio foi ativada. Na proxima, precisara de Nivel 2.',
-                ];
-            }
+            return [
+                'success' => false,
+                'action' => 'BLOCKED',
+                'message' => 'BLOQUEADO: O cidadao nao possui Nivel 2 no Gov.Assai nem aprovacao do ACS. Dispensacao nao autorizada.',
+            ];
         }
     }
 
@@ -223,11 +198,12 @@ class PharmacyDispensationService
 
         $level = (int) ($info['level'] ?? 0);
         $isEsusIntegration = ($info['origem'] ?? null) === 'integracao_esus';
-        if (! $citizen->pharmacy_lock_flag || $level >= 2 || $isEsusIntegration) {
+        
+        if ($level >= 2 || $isEsusIntegration) {
             return [
                 'success' => false,
                 'action' => 'BLOCK_NOT_ACTIVE',
-                'message' => 'Este cidadao nao esta mais bloqueado para dispensacao.',
+                'message' => 'Este cidadão está regularizado e não está bloqueado para dispensação.',
             ];
         }
 

@@ -94,7 +94,7 @@ class PharmacyDispensationServiceTest extends TestCase
         $this->assertSame('RETRY_GOV_LOOKUP', $result['action']);
     }
 
-    public function test_it_creates_manual_citizen_with_fallback_birth_date_when_not_found(): void
+    public function test_it_blocks_manual_citizen_when_not_found_in_gov_assai(): void
     {
         config()->set('services.gov_assai.base_url', 'https://gov-assai.test');
         config()->set('services.gov_assai.api_key', 'test-key');
@@ -117,41 +117,24 @@ class PharmacyDispensationServiceTest extends TestCase
             'dispense_category' => 'LEITE',
         ], (int) $attendant->id, new Request());
 
-        $this->assertTrue($result['success']);
-        $this->assertSame('DISPENSED_NOTIFIED', $result['action']);
+        $this->assertFalse($result['success']);
+        $this->assertSame('BLOCKED', $result['action']);
 
         $citizen = Citizen::where('cpf_hash', hash('sha256', '90012640930'))->first();
-
         $this->assertNotNull($citizen);
         $this->assertSame('ALEXSANDER KAKUBO', $citizen->full_name);
-        $this->assertSame('(43) 99905-8050', $citizen->phone);
-        $this->assertSame('1900-01-01', $citizen->birth_date?->format('Y-m-d'));
-
-        $request = \App\Models\CentralPharmacyRequest::where('citizen_id', $citizen->id)->latest()->first();
-        $this->assertNotNull($request);
-        $this->assertSame('LEITE', $request->medication_name);
+        
+        $request = \App\Models\CentralPharmacyRequest::where('citizen_id', $citizen->id)->first();
+        $this->assertNull($request); // Should not have logged a dispensation
     }
 
-    public function test_it_unlocks_citizen_after_regularizing_to_level_two(): void
+    public function test_it_blocks_level_one_immediately_and_dispenses_when_level_two(): void
     {
         config()->set('services.gov_assai.base_url', 'https://gov-assai.test');
         config()->set('services.gov_assai.api_key', 'test-key');
 
         Http::fake([
             'https://gov-assai.test/api/saude/cidadaos/cpf/*' => Http::sequence()
-                ->push([
-                    'success' => true,
-                    'message' => 'Consulta realizada com sucesso',
-                    'data' => [
-                        'cidadao' => [
-                            'nome' => 'ALEXSANDER KAKUBO',
-                            'data_nascimento' => '1994-01-20',
-                        ],
-                        'gov_assai' => [
-                            'nivel' => 1,
-                        ],
-                    ],
-                ], 200)
                 ->push([
                     'success' => true,
                     'message' => 'Consulta realizada com sucesso',
@@ -190,12 +173,8 @@ class PharmacyDispensationServiceTest extends TestCase
             'dispense_category' => 'MEDICACAO',
         ], (int) $attendant->id, new Request());
 
-        $this->assertTrue($firstAttempt['success']);
-        $this->assertSame('DISPENSED_NOTIFIED', $firstAttempt['action']);
-
-        $citizen = Citizen::where('cpf_hash', hash('sha256', '90012640930'))->first();
-        $this->assertNotNull($citizen);
-        $this->assertTrue((bool) $citizen->pharmacy_lock_flag);
+        $this->assertFalse($firstAttempt['success']);
+        $this->assertSame('BLOCKED', $firstAttempt['action']);
 
         $secondAttempt = $service->processDispensation([
             'cpf' => '90012640930',
@@ -204,20 +183,7 @@ class PharmacyDispensationServiceTest extends TestCase
             'dispense_category' => 'SUPLEMENTO',
         ], (int) $attendant->id, new Request());
 
-        $this->assertFalse($secondAttempt['success']);
-        $this->assertSame('BLOCKED', $secondAttempt['action']);
-
-        $thirdAttempt = $service->processDispensation([
-            'cpf' => '90012640930',
-            'full_name' => 'Alexsander Kakubo',
-            'phone' => '(43) 99905-8050',
-            'dispense_category' => 'LEITE',
-        ], (int) $attendant->id, new Request());
-
-        $this->assertTrue($thirdAttempt['success']);
-        $this->assertSame('DISPENSED', $thirdAttempt['action']);
-
-        $citizen->refresh();
-        $this->assertFalse((bool) $citizen->pharmacy_lock_flag);
+        $this->assertTrue($secondAttempt['success']);
+        $this->assertSame('DISPENSED', $secondAttempt['action']);
     }
 }
