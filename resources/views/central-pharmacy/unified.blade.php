@@ -65,52 +65,40 @@
                         </div>
                     </div>
                 @else
-                    @if($info['pharmacy_lock_flag'])
-                        <div class="mb-6 p-4 rounded-lg bg-red-50 text-red-800 border-red-300 border flex items-center">
-                            <div>
+                @else
+                    <div class="mb-6 p-4 rounded-lg bg-red-50 text-red-800 border-red-300 border flex items-center">
+                        <div>
+                            @if($govStatus === 'AWAITING_ACS_VALIDATION')
+                                <p class="font-bold text-lg">Dispensação Bloqueada - Aguardando Validação do ACS</p>
+                                <p class="text-sm">O cidadão foi encontrado na base, mas ainda não foi validado pelo Agente de Saúde. Não pode retirar medicamentos sem regularização.</p>
+                            @else
                                 <p class="font-bold text-lg">Dispensação Bloqueada - Nível Insuficiente</p>
-                                <p class="text-sm">Este cidadão já foi notificado anteriormente e não atingiu o nível 2. Não pode retirar medicamentos.</p>
-                            </div>
+                                <p class="text-sm">O cidadão possui Nível {{ $info['level'] }} no Gov.Assaí. Não pode retirar medicamentos até atingir o Nível 2.</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ route('central-pharmacy.unified.no-dispense-blocked') }}" class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-end bg-red-50 border border-red-200 rounded-lg p-4">
+                        @csrf
+                        <input type="hidden" name="cpf" value="{{ $info['normalized_cpf'] }}">
+
+                        <div>
+                            <label class="sa-label">Categoria não dispensada *</label>
+                            @php($blockedCategory = old('dispense_category', 'MEDICACAO'))
+                            <select name="dispense_category" class="sa-select" required>
+                                <option value="MEDICACAO" {{ $blockedCategory === 'MEDICACAO' ? 'selected' : '' }}>MEDICAÇÃO</option>
+                                <option value="LEITE" {{ $blockedCategory === 'LEITE' ? 'selected' : '' }}>LEITE</option>
+                                <option value="SUPLEMENTO" {{ $blockedCategory === 'SUPLEMENTO' ? 'selected' : '' }}>SUPLEMENTO</option>
+                            </select>
                         </div>
 
-                        <form method="POST" action="{{ route('central-pharmacy.unified.no-dispense-blocked') }}" class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-end bg-red-50 border border-red-200 rounded-lg p-4">
-                            @csrf
-                            <input type="hidden" name="cpf" value="{{ $info['normalized_cpf'] }}">
-
-                            <div>
-                                <label class="sa-label">Categoria não dispensada *</label>
-                                @php($blockedCategory = old('dispense_category', 'MEDICACAO'))
-                                <select name="dispense_category" class="sa-select" required>
-                                    <option value="MEDICACAO" {{ $blockedCategory === 'MEDICACAO' ? 'selected' : '' }}>MEDICAÇÃO</option>
-                                    <option value="LEITE" {{ $blockedCategory === 'LEITE' ? 'selected' : '' }}>LEITE</option>
-                                    <option value="SUPLEMENTO" {{ $blockedCategory === 'SUPLEMENTO' ? 'selected' : '' }}>SUPLEMENTO</option>
-                                </select>
-                            </div>
-
-                            <div class="flex justify-end">
-                                <button type="submit" class="sa-btn-danger">Não Dispensar</button>
-                            </div>
-                        </form>
-                    @else
-                        @if($govStatus === 'AWAITING_ACS_VALIDATION')
-                            <div class="mb-6 p-4 rounded-lg bg-amber-50 text-amber-800 border border-amber-300 flex items-center">
-                                <div>
-                                    <p class="font-bold text-lg">Aguardando Validação do ACS</p>
-                                    <p class="text-sm">O cidadão foi encontrado na base municipal, mas ainda não foi validado pelo Agente de Saúde. A próxima vez ele não conseguirá retirar sem regularização.</p>
-                                </div>
-                            </div>
-                        @else
-                            <div class="mb-6 p-4 rounded-lg bg-amber-50 text-amber-800 border border-amber-300 flex items-center">
-                                <div>
-                                    <p class="font-bold text-lg">A pessoa precisa se regularizar (Nível atual: {{ $info['level'] }})</p>
-                                    <p class="text-sm">Notifique que a próxima vez ela não conseguirá retirar sem o Nível 2 do Gov.Assaí.</p>
-                                </div>
-                            </div>
-                        @endif
-                    @endif
+                        <div class="flex justify-end">
+                            <button type="submit" class="sa-btn-danger">Registrar Não Dispensação</button>
+                        </div>
+                    </form>
                 @endif
                 
-                @if($canProceedWithDispense && (!$info['pharmacy_lock_flag'] || $isRegularized))
+                @if($canProceedWithDispense && $isRegularized)
                 <!-- Form de Cadastro / Dispensação (Se permitido) -->
                 <form method="POST" action="{{ route('central-pharmacy.unified.dispense') }}" class="space-y-4">
                     @csrf
