@@ -65,7 +65,6 @@
                         </div>
                     </div>
                 @else
-                @else
                     <div class="mb-6 p-4 rounded-lg bg-red-50 text-red-800 border-red-300 border flex items-center">
                         <div>
                             @if($govStatus === 'AWAITING_ACS_VALIDATION')
