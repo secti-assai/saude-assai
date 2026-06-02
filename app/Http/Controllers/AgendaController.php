@@ -17,6 +17,12 @@ class AgendaController extends Controller
                     ['time' => '07:30', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '07:30')],
                 ];
             }
+            if ($specialty === WomenClinicAppointment::SPECIALTY_PSIQUIATRIA) {
+                // 25 pessoas as 07h30 (qualquer dia que tenha agenda aberta)
+                return [
+                    ['time' => '07:30', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '07:30')],
+                ];
+            }
             if ($specialty === WomenClinicAppointment::SPECIALTY_CARDIOLOGIA) {
                 // 50 pessoas das 14 as 17h, somente a terca-feira
                 if ($date->dayOfWeek === Carbon::TUESDAY) {
