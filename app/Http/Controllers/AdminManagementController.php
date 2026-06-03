@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\HealthUnit;
 use App\Models\User;
 use App\Models\WomenClinicAppointment;
+use App\Models\Citizen;
+use App\Models\PharmacyExternalImportRow;
 use App\Services\AuditService;
 use App\Services\PharmacyExternalImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -224,6 +227,320 @@ class AdminManagementController extends Controller
         return redirect()->route('admin.reports')
             ->with('status', $message)
             ->with('import_summary', $result);
+    }
+
+    public function borderControlArea(Request $request): View
+    {
+        $dateStart = trim((string) ($request->input('date_start') ?? now()->subDays(30)->toDateString()));
+        $dateEnd = trim((string) ($request->input('date_end') ?? now()->toDateString()));
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStart)) {
+            $dateStart = now()->subDays(30)->toDateString();
+        }
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateEnd)) {
+            $dateEnd = now()->toDateString();
+        }
+
+        if ($dateStart > $dateEnd) {
+            [$dateStart, $dateEnd] = [$dateEnd, $dateStart];
+        }
+
+        $bypassOnly = $request->boolean('bypass_only');
+        $highCostOnly = $request->boolean('high_cost_only');
+        $citizenSearch = trim((string) $request->input('citizen_search'));
+        $medicationSearch = trim((string) $request->input('medication_search'));
+
+        // Query for paginated rows
+        $baseQuery = PharmacyExternalImportRow::query()
+            ->with(['citizen', 'pharmacistUser', 'importBatch'])
+            ->whereDate('dispensed_at', '>=', $dateStart)
+            ->whereDate('dispensed_at', '<=', $dateEnd);
+
+        if ($bypassOnly) {
+            $baseQuery->where('bypass_detected', true);
+        }
+
+        if ($highCostOnly) {
+            $highCostKeywords = config('pharmacy.alto_custo_keywords', []);
+            if (!empty($highCostKeywords)) {
+                $baseQuery->where(function ($q) use ($highCostKeywords) {
+                    foreach ($highCostKeywords as $keyword) {
+                        $needle = '%' . strtolower($keyword) . '%';
+                        $q->orWhereRaw('LOWER(medication_name_raw) LIKE ?', [$needle]);
+                    }
+                });
+            }
+        }
+
+        if ($citizenSearch !== '') {
+            $needle = '%' . strtolower($citizenSearch) . '%';
+            $baseQuery->where(function ($q) use ($needle) {
+                $q->whereRaw('LOWER(customer_name_raw) LIKE ?', [$needle])
+                  ->orWhereRaw('LOWER(customer_name_normalized) LIKE ?', [$needle])
+                  ->orWhereHas('citizen', function ($qc) use ($needle) {
+                      $qc->whereRaw('LOWER(full_name) LIKE ?', [$needle]);
+                  });
+            });
+        }
+
+        if ($medicationSearch !== '') {
+            $needle = '%' . strtolower($medicationSearch) . '%';
+            $baseQuery->whereRaw('LOWER(medication_name_raw) LIKE ?', [$needle]);
+        }
+
+        $rows = (clone $baseQuery)
+            ->orderByDesc('dispensed_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        // Calculations for period (based on date filters + query filters for synchronized KPIs)
+        $statsQuery = PharmacyExternalImportRow::query()
+            ->whereDate('dispensed_at', '>=', $dateStart)
+            ->whereDate('dispensed_at', '<=', $dateEnd);
+
+        if ($bypassOnly) {
+            $statsQuery->where('bypass_detected', true);
+        }
+
+        if ($highCostOnly) {
+            $highCostKeywords = config('pharmacy.alto_custo_keywords', []);
+            if (!empty($highCostKeywords)) {
+                $statsQuery->where(function ($q) use ($highCostKeywords) {
+                    foreach ($highCostKeywords as $keyword) {
+                        $needle = '%' . strtolower($keyword) . '%';
+                        $q->orWhereRaw('LOWER(medication_name_raw) LIKE ?', [$needle]);
+                    }
+                });
+            }
+        }
+
+        if ($citizenSearch !== '') {
+            $needle = '%' . strtolower($citizenSearch) . '%';
+            $statsQuery->where(function ($q) use ($needle) {
+                $q->whereRaw('LOWER(customer_name_raw) LIKE ?', [$needle])
+                  ->orWhereRaw('LOWER(customer_name_normalized) LIKE ?', [$needle])
+                  ->orWhereHas('citizen', function ($qc) use ($needle) {
+                      $qc->whereRaw('LOWER(full_name) LIKE ?', [$needle]);
+                  });
+            });
+        }
+
+        if ($medicationSearch !== '') {
+            $needle = '%' . strtolower($medicationSearch) . '%';
+            $statsQuery->whereRaw('LOWER(medication_name_raw) LIKE ?', [$needle]);
+        }
+
+        $totalDispensations = (clone $statsQuery)->count();
+        $totalBypasses = (clone $statsQuery)->where('bypass_detected', true)->count();
+        $totalRegular = $totalDispensations - $totalBypasses;
+        $complianceRate = $totalDispensations > 0 ? round(($totalRegular / $totalDispensations) * 100, 1) : 100.0;
+
+        $uniqueLockedCitizens = (clone $statsQuery)
+            ->where('bypass_detected', true)
+            ->distinct('citizen_id')
+            ->count('citizen_id');
+
+        // Dynamic Daily Breakdown: group by date
+        $dailyData = (clone $statsQuery)
+            ->select(
+                DB::raw('DATE(dispensed_at) as date_only'),
+                DB::raw('COUNT(*) as total_day'),
+                DB::raw('SUM(CASE WHEN bypass_detected THEN 1 ELSE 0 END) as bypass_day')
+            )
+            ->groupBy(DB::raw('DATE(dispensed_at)'))
+            ->orderBy('date_only', 'asc')
+            ->get()
+            ->map(function ($day) {
+                $total = (int) $day->total_day;
+                $bypass = (int) $day->bypass_day;
+                $regular = $total - $bypass;
+                $rate = $total > 0 ? round(($regular / $total) * 100, 1) : 100.0;
+                return [
+                    'date' => Carbon::parse($day->date_only)->format('d/m/Y'),
+                    'date_raw' => $day->date_only,
+                    'total' => $total,
+                    'bypass' => $bypass,
+                    'regular' => $regular,
+                    'rate' => $rate
+                ];
+            });
+
+        return view('admin.border-control', [
+            'date_start' => $dateStart,
+            'date_end' => $dateEnd,
+            'bypass_only' => $bypassOnly,
+            'high_cost_only' => $highCostOnly,
+            'citizen_search' => $citizenSearch,
+            'medication_search' => $medicationSearch,
+            'rows' => $rows,
+            'stats' => [
+                'total' => $totalDispensations,
+                'regular' => $totalRegular,
+                'bypass' => $totalBypasses,
+                'compliance_rate' => $complianceRate,
+                'unique_locked' => $uniqueLockedCitizens,
+            ],
+            'dailyData' => $dailyData,
+        ]);
+    }
+
+    public function exportBorderControlCsv(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $dateStart = trim((string) ($request->input('date_start') ?? now()->subDays(30)->toDateString()));
+        $dateEnd = trim((string) ($request->input('date_end') ?? now()->toDateString()));
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStart)) {
+            $dateStart = now()->subDays(30)->toDateString();
+        }
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateEnd)) {
+            $dateEnd = now()->toDateString();
+        }
+
+        if ($dateStart > $dateEnd) {
+            [$dateStart, $dateEnd] = [$dateEnd, $dateStart];
+        }
+
+        $bypassOnly = $request->boolean('bypass_only');
+        $highCostOnly = $request->boolean('high_cost_only');
+        $citizenSearch = trim((string) $request->input('citizen_search'));
+        $medicationSearch = trim((string) $request->input('medication_search'));
+
+        $query = PharmacyExternalImportRow::query()
+            ->with(['citizen', 'pharmacistUser'])
+            ->whereDate('dispensed_at', '>=', $dateStart)
+            ->whereDate('dispensed_at', '<=', $dateEnd);
+
+        if ($bypassOnly) {
+            $query->where('bypass_detected', true);
+        }
+
+        if ($highCostOnly) {
+            $highCostKeywords = config('pharmacy.alto_custo_keywords', []);
+            if (!empty($highCostKeywords)) {
+                $query->where(function ($q) use ($highCostKeywords) {
+                    foreach ($highCostKeywords as $keyword) {
+                        $needle = '%' . strtolower($keyword) . '%';
+                        $q->orWhereRaw('LOWER(medication_name_raw) LIKE ?', [$needle]);
+                    }
+                });
+            }
+        }
+
+        if ($citizenSearch !== '') {
+            $needle = '%' . strtolower($citizenSearch) . '%';
+            $query->where(function ($q) use ($needle) {
+                $q->whereRaw('LOWER(customer_name_raw) LIKE ?', [$needle])
+                  ->orWhereRaw('LOWER(customer_name_normalized) LIKE ?', [$needle])
+                  ->orWhereHas('citizen', function ($qc) use ($needle) {
+                      $qc->whereRaw('LOWER(full_name) LIKE ?', [$needle]);
+                  });
+            });
+        }
+
+        if ($medicationSearch !== '') {
+            $needle = '%' . strtolower($medicationSearch) . '%';
+            $query->whereRaw('LOWER(medication_name_raw) LIKE ?', [$needle]);
+        }
+
+        $filename = sprintf('auditoria-controle-borda-%s-a-%s.csv', $dateStart, $dateEnd);
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () use ($query) {
+            $file = fopen('php://output', 'w');
+            
+            // Add UTF-8 BOM
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Headers
+            fputcsv($file, [
+                'ID Registro',
+                'Numero Guia Externa',
+                'Data Dispensacao',
+                'CPF Cidadao',
+                'Nome Cidadao',
+                'Nivel Gov.Assai',
+                'Status Residencia',
+                'Bloqueado Farmacia',
+                'Medicamento',
+                'Quantidade',
+                'Farmaceutico Importado',
+                'Farmaceutico Sistema',
+                'Bypass Detectado',
+                'Intervalo Recorrencia (Dias)',
+                'Alerta Recorrencia',
+            ], ';');
+
+            $query->chunk(500, function ($rows) use ($file) {
+                foreach ($rows as $row) {
+                    $cpf = 'N/A';
+                    $govLevel = 'N/A';
+                    $residenceStatus = 'N/A';
+                    $isLocked = 'N/A';
+
+                    if ($row->citizen) {
+                        $cpf = $row->citizen->cpf ?? 'N/A';
+                        $govLevel = $row->citizen->gov_assai_level ?? '0';
+                        $residenceStatus = $row->citizen->is_resident_assai ? 'RESIDENTE' : 'PENDENTE';
+                        $isLocked = $row->citizen->pharmacy_lock_flag ? 'SIM' : 'NAO';
+                    }
+
+                    fputcsv($file, [
+                        $row->id,
+                        $row->external_dispense_number ?? 'N/A',
+                        $row->dispensed_at ? $row->dispensed_at->format('d/m/Y H:i:s') : 'N/A',
+                        $cpf,
+                        $row->citizen ? $row->citizen->full_name : $row->customer_name_raw,
+                        $govLevel,
+                        $residenceStatus,
+                        $isLocked,
+                        $row->medication_name_raw ?? 'N/A',
+                        $row->quantity ?? 1,
+                        $row->pharmacist_name_raw ?? 'N/A',
+                        $row->pharmacistUser ? $row->pharmacistUser->name : 'N/A',
+                        $row->bypass_detected ? 'SIM - BYPASS' : 'NAO',
+                        $row->recurrence_interval_days ?? 'N/A',
+                        $row->recurrence_alert_level ?? 'N/A',
+                    ], ';');
+                }
+            });
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function toggleCitizenLock(Request $request, Citizen $citizen): RedirectResponse
+    {
+        $newFlag = ! (bool) $citizen->pharmacy_lock_flag;
+        $citizen->update(['pharmacy_lock_flag' => $newFlag]);
+
+        $action = $newFlag ? 'BLOQUEIO_FARMA_ATIVADO' : 'BLOQUEIO_FARMA_DESATIVADO';
+
+        $this->audit->log(
+            $request,
+            'ADMIN_CONTROLE_BORDA',
+            $action,
+            Citizen::class,
+            (int) $citizen->id,
+            [
+                'citizen_name' => $citizen->full_name,
+                'pharmacy_lock_flag' => $newFlag,
+            ]
+        );
+
+        $message = $newFlag 
+            ? "Cidadao {$citizen->full_name} foi bloqueado com sucesso na farmacia." 
+            : "Cidadao {$citizen->full_name} foi desbloqueado com sucesso na farmacia.";
+
+        return back()->with('status', $message);
     }
 
     private function allowedUserHealthUnitsQuery()

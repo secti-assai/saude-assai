@@ -279,6 +279,18 @@ Route::middleware(['auth', 'module.context'])->group(function () {
         ->middleware('role:admin')
         ->name('admin.reports');
 
+    Route::get('/admin/controle-borda', [AdminManagementController::class, 'borderControlArea'])
+        ->middleware('role:admin')
+        ->name('admin.border-control');
+
+    Route::get('/admin/controle-borda/exportar', [AdminManagementController::class, 'exportBorderControlCsv'])
+        ->middleware('role:admin')
+        ->name('admin.border-control.export');
+
+    Route::post('/admin/controle-borda/alternar-bloqueio/{citizen}', [AdminManagementController::class, 'toggleCitizenLock'])
+        ->middleware('role:admin')
+        ->name('admin.border-control.toggle-lock');
+
     Route::post('/admin/farmacia-central/importar-dispensacoes', [AdminManagementController::class, 'importPharmacyExternalDispensations'])
         ->middleware('role:admin')
         ->name('admin.pharmacy-import.store');
