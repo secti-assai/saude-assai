@@ -73,6 +73,19 @@ class AdminBorderControlTest extends TestCase
             'stats' => [],
         ]);
 
+        $req = \App\Models\CentralPharmacyRequest::create([
+            'citizen_id' => $citizen->id,
+            'reception_user_id' => $this->admin->id,
+            'attendant_user_id' => $this->admin->id,
+            'prescription_code' => '10001',
+            'medication_name' => 'MEDICACAO',
+            'quantity' => 20,
+            'gov_assai_level' => '2',
+            'residence_status' => 'RESIDENTE',
+            'status' => 'DISPENSADO',
+            'dispensed_at' => Carbon::parse('2026-05-28 10:00:00'),
+        ]);
+
         // Regular row (bypass_detected = false)
         PharmacyExternalImportRow::create([
             'import_id' => $import->id,
@@ -85,6 +98,7 @@ class AdminBorderControlTest extends TestCase
             'quantity' => 20,
             'bypass_detected' => false,
             'citizen_id' => $citizen->id,
+            'central_pharmacy_request_id' => $req->id,
         ]);
 
         // Bypass row (bypass_detected = true)
@@ -115,16 +129,33 @@ class AdminBorderControlTest extends TestCase
             'citizen_id' => $citizen->id,
         ]);
 
+        // Also create a clinic appointment to test clinic stats
+        \App\Models\WomenClinicAppointment::create([
+            'citizen_id' => $citizen->id,
+            'scheduler_user_id' => $this->admin->id,
+            'scheduled_for' => Carbon::parse('2026-05-28 14:00:00'),
+            'clinic_type' => \App\Models\WomenClinicAppointment::CLINIC_WOMEN,
+            'specialty' => \App\Models\WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
+            'gov_assai_level' => '2',
+            'residence_status' => 'RESIDENTE',
+            'status' => 'PENDENTE',
+        ]);
+
         $response = $this->actingAs($this->admin)->get('/admin/controle-borda?date_start=2026-05-28&date_end=2026-05-28');
 
         $response->assertStatus(200);
-        $response->assertViewHas('stats', [
-            'total' => 3,
-            'regular' => 1,
-            'bypass' => 2,
-            'compliance_rate' => 33.3,
-            'unique_locked' => 1,
-        ]);
+        
+        $stats = $response->viewData('stats');
+        $this->assertEquals(3, $stats['total']);
+        $this->assertEquals(1, $stats['regular']);
+        $this->assertEquals(2, $stats['bypass']);
+        $this->assertEquals(33.3, $stats['compliance_rate']);
+        $this->assertEquals(1, $stats['unique_locked']);
+        $this->assertEquals(1, $stats['dispensations_gov_assai']);
+        $this->assertEquals(0, $stats['dispensations_acs']);
+        $this->assertEquals(1, $stats['citizens_level_2']);
+        $this->assertEquals(0, $stats['citizens_validated_acs']);
+        $this->assertEquals(1, $stats['women_clinic_appointments']);
 
         // Daily breakdown checks
         $dailyData = $response->viewData('dailyData');
@@ -150,6 +181,14 @@ class AdminBorderControlTest extends TestCase
         $responseHighCost->assertSee('INSULINA GLARGINA');
         $responseHighCost->assertDontSee('DIPIRONA SODICA');
         $responseHighCost->assertDontSee('PARACETAMOL');
+
+        // Check view_type = citizen
+        $responseCitizenView = $this->actingAs($this->admin)->get('/admin/controle-borda?date_start=2026-05-28&date_end=2026-05-28&view_type=citizen');
+        $responseCitizenView->assertStatus(200);
+        $rows = $responseCitizenView->viewData('rows');
+        $this->assertCount(1, $rows->items()); // Grouped by citizen
+        $this->assertEquals(3, $rows->items()[0]->total_dispensations);
+        $this->assertEquals(35, $rows->items()[0]->total_quantity); // 20 + 10 + 5
     }
 
     public function test_admin_can_toggle_citizen_lock_and_audits_correctly()

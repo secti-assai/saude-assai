@@ -249,10 +249,10 @@ class AdminManagementController extends Controller
         $highCostOnly = $request->boolean('high_cost_only');
         $citizenSearch = trim((string) $request->input('citizen_search'));
         $medicationSearch = trim((string) $request->input('medication_search'));
+        $viewType = $request->input('view_type', 'item');
 
         // Query for paginated rows
         $baseQuery = PharmacyExternalImportRow::query()
-            ->with(['citizen', 'pharmacistUser', 'importBatch'])
             ->whereDate('dispensed_at', '>=', $dateStart)
             ->whereDate('dispensed_at', '<=', $dateEnd);
 
@@ -288,10 +288,25 @@ class AdminManagementController extends Controller
             $baseQuery->whereRaw('LOWER(medication_name_raw) LIKE ?', [$needle]);
         }
 
-        $rows = (clone $baseQuery)
-            ->orderByDesc('dispensed_at')
-            ->paginate(20)
-            ->withQueryString();
+        if ($viewType === 'citizen') {
+            $rows = (clone $baseQuery)
+                ->select('citizen_id')
+                ->selectRaw('COUNT(*) as total_dispensations')
+                ->selectRaw('SUM(quantity) as total_quantity')
+                ->selectRaw('MAX(dispensed_at) as last_dispensed_at')
+                ->selectRaw('MAX(CASE WHEN bypass_detected THEN 1 ELSE 0 END) as has_bypass')
+                ->with(['citizen'])
+                ->groupBy('citizen_id')
+                ->orderByDesc('last_dispensed_at')
+                ->paginate(20)
+                ->withQueryString();
+        } else {
+            $rows = (clone $baseQuery)
+                ->with(['citizen', 'pharmacistUser', 'importBatch', 'centralPharmacyRequest'])
+                ->orderByDesc('dispensed_at')
+                ->paginate(20)
+                ->withQueryString();
+        }
 
         // Calculations for period (based on date filters + query filters for synchronized KPIs)
         $statsQuery = PharmacyExternalImportRow::query()
@@ -340,6 +355,80 @@ class AdminManagementController extends Controller
             ->distinct('citizen_id')
             ->count('citizen_id');
 
+        // New stats:
+        // 1. Most dispensed medication
+        $mostDispensedMed = (clone $statsQuery)
+            ->select('medication_name_raw', DB::raw('COUNT(*) as total'))
+            ->groupBy('medication_name_raw')
+            ->orderByDesc('total')
+            ->first();
+
+        // 2. Most dispensed high cost medication
+        $highCostKeywords = config('pharmacy.alto_custo_keywords', []);
+        $mostDispensedHighCostMed = null;
+        if (!empty($highCostKeywords)) {
+            $mostDispensedHighCostMed = (clone $statsQuery)
+                ->select('medication_name_raw', DB::raw('COUNT(*) as total'))
+                ->where(function ($q) use ($highCostKeywords) {
+                    foreach ($highCostKeywords as $keyword) {
+                        $needle = '%' . strtolower($keyword) . '%';
+                        $q->orWhereRaw('LOWER(medication_name_raw) LIKE ?', [$needle]);
+                    }
+                })
+                ->groupBy('medication_name_raw')
+                ->orderByDesc('total')
+                ->first();
+        }
+
+        // 3. Dispensations with Gov.Assai
+        $dispensationsGovAssai = (clone $statsQuery)
+            ->where('bypass_detected', false)
+            ->whereHas('centralPharmacyRequest', function ($q) {
+                $q->whereIn('gov_assai_level', ['2', '3', '4', '5']);
+            })
+            ->count();
+
+        // 4. Dispensations released by ACS
+        $dispensationsAcs = (clone $statsQuery)
+            ->where('bypass_detected', false)
+            ->whereHas('centralPharmacyRequest', function ($q) {
+                $q->whereIn('gov_assai_level', ['0', '1'])
+                  ->orWhereNull('gov_assai_level');
+            })
+            ->count();
+
+        // 5. Citizens level 2 in period
+        $citizensLevel2 = (clone $statsQuery)
+            ->where('bypass_detected', false)
+            ->whereHas('centralPharmacyRequest', function ($q) {
+                $q->whereIn('gov_assai_level', ['2', '3', '4', '5']);
+            })
+            ->distinct('citizen_id')
+            ->count('citizen_id');
+
+        // 6. Citizens validated by ACS in period
+        $citizensValidatedAcs = (clone $statsQuery)
+            ->where('bypass_detected', false)
+            ->whereHas('centralPharmacyRequest', function ($q) {
+                $q->whereIn('gov_assai_level', ['0', '1'])
+                  ->orWhereNull('gov_assai_level');
+            })
+            ->distinct('citizen_id')
+            ->count('citizen_id');
+
+        // 7. Women Clinic appointments scheduled in period
+        $appointmentsQuery = \App\Models\WomenClinicAppointment::query()
+            ->where('clinic_type', \App\Models\WomenClinicAppointment::CLINIC_WOMEN)
+            ->whereDate('scheduled_for', '>=', $dateStart)
+            ->whereDate('scheduled_for', '<=', $dateEnd);
+        if ($citizenSearch !== '') {
+            $needle = '%' . strtolower($citizenSearch) . '%';
+            $appointmentsQuery->whereHas('citizen', function ($qc) use ($needle) {
+                $qc->whereRaw('LOWER(full_name) LIKE ?', [$needle]);
+            });
+        }
+        $womenClinicAppointments = $appointmentsQuery->count();
+
         // Dynamic Daily Breakdown: group by date
         $dailyData = (clone $statsQuery)
             ->select(
@@ -365,6 +454,35 @@ class AdminManagementController extends Controller
                 ];
             });
 
+        // 8. Avg dispensations per day
+        $avgDispensationsPerDay = count($dailyData) > 0 ? round($totalDispensations / count($dailyData), 1) : 0.0;
+
+        // 9. Medications Report
+        $medicationsReport = (clone $statsQuery)
+            ->select(
+                'medication_name_raw',
+                DB::raw('COUNT(*) as total_dispensations'),
+                DB::raw('SUM(quantity) as total_quantity'),
+                DB::raw('SUM(CASE WHEN bypass_detected THEN 1 ELSE 0 END) as total_bypasses')
+            )
+            ->groupBy('medication_name_raw')
+            ->orderByDesc('total_dispensations')
+            ->get()
+            ->map(function ($med) {
+                $total = (int) $med->total_dispensations;
+                $bypass = (int) $med->total_bypasses;
+                $regular = $total - $bypass;
+                $rate = $total > 0 ? round(($regular / $total) * 100, 1) : 100.0;
+                return [
+                    'name' => $med->medication_name_raw,
+                    'total' => $total,
+                    'quantity' => (int) $med->total_quantity,
+                    'bypass' => $bypass,
+                    'regular' => $regular,
+                    'rate' => $rate
+                ];
+            });
+
         return view('admin.border-control', [
             'date_start' => $dateStart,
             'date_end' => $dateEnd,
@@ -372,6 +490,7 @@ class AdminManagementController extends Controller
             'high_cost_only' => $highCostOnly,
             'citizen_search' => $citizenSearch,
             'medication_search' => $medicationSearch,
+            'view_type' => $viewType,
             'rows' => $rows,
             'stats' => [
                 'total' => $totalDispensations,
@@ -379,8 +498,17 @@ class AdminManagementController extends Controller
                 'bypass' => $totalBypasses,
                 'compliance_rate' => $complianceRate,
                 'unique_locked' => $uniqueLockedCitizens,
+                'most_dispensed_med' => $mostDispensedMed ? ($mostDispensedMed->medication_name_raw . ' (' . $mostDispensedMed->total . ')') : 'Nenhum',
+                'most_dispensed_high_cost_med' => $mostDispensedHighCostMed ? ($mostDispensedHighCostMed->medication_name_raw . ' (' . $mostDispensedHighCostMed->total . ')') : 'Nenhum',
+                'dispensations_gov_assai' => $dispensationsGovAssai,
+                'dispensations_acs' => $dispensationsAcs,
+                'citizens_level_2' => $citizensLevel2,
+                'citizens_validated_acs' => $citizensValidatedAcs,
+                'women_clinic_appointments' => $womenClinicAppointments,
+                'avg_dispensations_per_day' => $avgDispensationsPerDay,
             ],
             'dailyData' => $dailyData,
+            'medicationsReport' => $medicationsReport,
         ]);
     }
 
