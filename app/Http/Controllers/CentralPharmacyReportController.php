@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Response;
 
 class CentralPharmacyReportController extends Controller
 {
@@ -59,6 +61,26 @@ class CentralPharmacyReportController extends Controller
         }, $export['filename'], [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
+    }
+
+    public function exportPdf(Request $request): Response
+    {
+        $validated = $this->validateFilters($request);
+        $export = $this->reportService->buildPdfExport($validated);
+
+        $this->audit->log(
+            $request,
+            'FARMACIA_CENTRAL',
+            'RELATORIO_PDF_EXPORTADO',
+            null,
+            null,
+            ['filters' => $export['filters']]
+        );
+
+        $pdf = Pdf::loadView('reports.pdf.pharmacy', $export['data'])
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download($export['filename']);
     }
 
     private function validateFilters(Request $request): array

@@ -192,6 +192,9 @@ class WomenClinicAppointment extends Model
             if ($specialty === self::SPECIALTY_ORTOPEDIA && $timeStr === '07:30') {
                 return 25;
             }
+            if ($specialty === self::SPECIALTY_PSIQUIATRIA && $timeStr === '08:00') {
+                return 25;
+            }
             if ($specialty === self::SPECIALTY_CARDIOLOGIA && $timeStr === '14:00' && $date->dayOfWeek === \Carbon\Carbon::TUESDAY) {
                 return 50;
             }

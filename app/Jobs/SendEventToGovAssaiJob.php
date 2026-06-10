@@ -12,8 +12,8 @@ class SendEventToGovAssaiJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 5;
-    public $backoff = [10, 30, 60, 120, 300];
+    public $tries = 15;
+    public $backoff = [10, 30, 60, 120, 300, 600, 900, 1800, 3600];
 
     protected $queueItemId;
 

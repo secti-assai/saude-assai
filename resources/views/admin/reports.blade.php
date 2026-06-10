@@ -12,7 +12,7 @@
                 <h3 class="sa-card-title">Importacao Externa Farmacia Central (BETHA + Usuario)</h3>
             </div>
 
-            <form method="POST" action="{{ route('admin.pharmacy-import.store') }}" enctype="multipart/form-data" class="space-y-4">
+            <form id="import-form" method="POST" action="{{ route('admin.pharmacy-import.store') }}" enctype="multipart/form-data" class="space-y-4">
                 @csrf
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -32,13 +32,22 @@
                         @enderror
                     </div>
                 </div>
+            </form>
+
+            <div class="flex justify-between items-center mt-4">
+                <form method="POST" action="{{ route('admin.pharmacy-import.sweep') }}" class="inline-block">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-slate-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500" title="Verifica os registros de bypass no Gov.Assaí para atualizar o nível e desbloquear cidadãos regulares.">
+                        Sincronizar Níveis de Bypass
+                    </button>
+                </form>
 
                 <div class="flex justify-end">
-                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="button" onclick="document.getElementById('import-form').submit();" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         Importar e Reconciliar
                     </button>
                 </div>
-            </form>
+            </div>
 
             @if(session('import_summary'))
                 @php

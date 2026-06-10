@@ -25,6 +25,13 @@
             @php
                 $selectedStatus = $filters['status'] ?? 'TODOS';
                 $selectedFeedback = $filters['has_feedback'] ?? 'all';
+                $exportFilters = [
+                    'date_start' => $filters['date_start'] ?? null,
+                    'date_end' => $filters['date_end'] ?? null,
+                    'status' => $filters['status'] ?? null,
+                    'has_feedback' => $filters['has_feedback'] ?? null,
+                    'citizen_name' => $filters['citizen_name'] ?? null,
+                ];
             @endphp
 
             <form method="GET" action="{{ route('policlinica.reports') }}" class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
@@ -59,7 +66,9 @@
                     <input type="text" name="citizen_name" class="sa-input" value="{{ $filters['citizen_name'] ?? '' }}" placeholder="Buscar por nome">
                 </div>
 
-                <div class="md:col-span-5 flex justify-end gap-2">
+                <div class="md:col-span-5 flex flex-wrap justify-end gap-2">
+                    <a href="{{ route('policlinica.reports.export-csv', $exportFilters) }}" class="sa-btn-secondary">Exportar CSV</a>
+                    <a href="{{ route('policlinica.reports.export-pdf', $exportFilters) }}" class="sa-btn-secondary">Exportar PDF</a>
                     <a href="{{ route('policlinica.reports') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Limpar</a>
                     <button type="submit" class="sa-btn-primary">Aplicar filtros</button>
                 </div>

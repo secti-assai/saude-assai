@@ -16,6 +16,104 @@ class WomenClinicReportService
         return $this->build($input);
     }
 
+    public function buildCsvExport(array $input, string $clinicType): array
+    {
+        $input['clinic_type'] = $clinicType;
+        $filters = $this->normalizeFilters($input);
+
+        $rowsQuery = WomenClinicAppointment::query()
+            ->with(['citizen', 'scheduler', 'reception', 'doctor']);
+
+        $this->applyClinicFilter($rowsQuery, $filters['clinic_type']);
+        $this->applyDateFilter($rowsQuery, $filters);
+        $this->applyStatusFilter($rowsQuery, $filters['status']);
+        $this->applyTextFilters($rowsQuery, $filters);
+
+        $rows = $rowsQuery
+            ->orderByDesc('scheduled_for')
+            ->cursor()
+            ->map(function (WomenClinicAppointment $row): array {
+                return [
+                    (string) $row->id,
+                    $row->scheduled_for?->format('d/m/Y H:i') ?? '',
+                    $row->checked_in_at?->format('d/m/Y H:i') ?? '',
+                    $row->checked_out_at?->format('d/m/Y H:i') ?? '',
+                    (string) ($row->citizen->full_name ?? ''),
+                    (string) ($row->status ?? ''),
+                    (string) ($row->scheduler->name ?? ''),
+                    (string) ($row->reception->name ?? ''),
+                    (string) ($row->doctor->name ?? ''),
+                    (string) ($row->feedback_score ?? ''),
+                    (string) ($row->feedback_comment ?? ''),
+                ];
+            });
+
+        $prefix = $clinicType === WomenClinicAppointment::CLINIC_POLICLINICA ? 'policlinica' : 'clinica-mulher';
+
+        $filename = sprintf(
+            '%s-atendimentos-%s-a-%s.csv',
+            $prefix,
+            $filters['date_start'],
+            $filters['date_end']
+        );
+
+        return [
+            'filename' => $filename,
+            'filters' => $filters,
+            'headers' => [
+                'id_agendamento',
+                'data_agendada',
+                'data_checkin',
+                'data_checkout',
+                'cidadao',
+                'status',
+                'agendador',
+                'recepcao',
+                'medico',
+                'avaliacao_nota',
+                'avaliacao_comentario',
+            ],
+            'rows' => $rows,
+        ];
+    }
+
+    public function buildPdfExport(array $input, string $clinicType): array
+    {
+        $input['clinic_type'] = $clinicType;
+        $filters = $this->normalizeFilters($input);
+
+        $rowsQuery = WomenClinicAppointment::query()
+            ->with(['citizen', 'scheduler', 'reception', 'doctor']);
+
+        $this->applyClinicFilter($rowsQuery, $filters['clinic_type']);
+        $this->applyDateFilter($rowsQuery, $filters);
+        $this->applyStatusFilter($rowsQuery, $filters['status']);
+        $this->applyTextFilters($rowsQuery, $filters);
+
+        $rows = $rowsQuery
+            ->orderByDesc('scheduled_for')
+            ->get();
+
+        $prefix = $clinicType === WomenClinicAppointment::CLINIC_POLICLINICA ? 'policlinica' : 'clinica-mulher';
+
+        $filename = sprintf(
+            '%s-relatorio-%s-a-%s.pdf',
+            $prefix,
+            $filters['date_start'],
+            $filters['date_end']
+        );
+
+        return [
+            'filename' => $filename,
+            'filters' => $filters,
+            'data' => [
+                'filters' => $filters,
+                'rows' => $rows,
+                'clinic_type' => $clinicType,
+            ],
+        ];
+    }
+
     /**
      * @return array{filters:array,summary:array,statusBreakdown:Collection<int,array{status:string,total:int}>,feedbackBreakdown:Collection<int,array{score:string,total:int}>,dailyBreakdown:Collection<int,array{day:string,total:int,finalized:int,feedbacks:int}>,rows:\Illuminate\Contracts\Pagination\LengthAwarePaginator}
      */

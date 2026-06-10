@@ -181,6 +181,14 @@ Route::middleware(['auth', 'module.context'])->group(function () {
         ->middleware('permission:policlinica.reports')
         ->name('policlinica.reports');
 
+    Route::get('/policlinica/relatorios/exportar-csv', [PoliclinicaReportController::class, 'exportCsv'])
+        ->middleware('permission:policlinica.reports')
+        ->name('policlinica.reports.export-csv');
+
+    Route::get('/policlinica/relatorios/exportar-pdf', [PoliclinicaReportController::class, 'exportPdf'])
+        ->middleware('permission:policlinica.reports')
+        ->name('policlinica.reports.export-pdf');
+
     Route::post('/clinica-mulher/agendamentos/{womenClinicAppointment}/check-in', [WomenClinicController::class, 'checkIn'])
         ->middleware('permission:women_clinic.checkin')
         ->name('women-clinic.check-in');
@@ -192,6 +200,14 @@ Route::middleware(['auth', 'module.context'])->group(function () {
     Route::get('/clinica-mulher/relatorios', [WomenClinicReportController::class, 'index'])
         ->middleware('permission:women_clinic.reports')
         ->name('women-clinic.reports');
+
+    Route::get('/clinica-mulher/relatorios/exportar-csv', [WomenClinicReportController::class, 'exportCsv'])
+        ->middleware('permission:women_clinic.reports')
+        ->name('women-clinic.reports.export-csv');
+
+    Route::get('/clinica-mulher/relatorios/exportar-pdf', [WomenClinicReportController::class, 'exportPdf'])
+        ->middleware('permission:women_clinic.reports')
+        ->name('women-clinic.reports.export-pdf');
 
     // Legacy central pharmacy routes kept for backward compatibility with
     // existing flows/tests and profile redirects (recepcao_farmacia/atendimento_farmacia).
@@ -259,6 +275,10 @@ Route::middleware(['auth', 'module.context'])->group(function () {
         ->middleware('permission:central_pharmacy.reports')
         ->name('central-pharmacy.reports.export-csv');
 
+    Route::get('/farmacia-central/relatorios/exportar-pdf', [CentralPharmacyReportController::class, 'exportPdf'])
+        ->middleware('permission:central_pharmacy.reports')
+        ->name('central-pharmacy.reports.export-pdf');
+
     Route::get('/admin/usuarios', [AdminManagementController::class, 'usersArea'])
         ->middleware('role:admin')
         ->name('admin.users');
@@ -294,6 +314,10 @@ Route::middleware(['auth', 'module.context'])->group(function () {
     Route::post('/admin/farmacia-central/importar-dispensacoes', [AdminManagementController::class, 'importPharmacyExternalDispensations'])
         ->middleware('role:admin')
         ->name('admin.pharmacy-import.store');
+
+    Route::post('/admin/farmacia-central/varredura-bypasses', [AdminManagementController::class, 'triggerBypassSweep'])
+        ->middleware('role:admin')
+        ->name('admin.pharmacy-import.sweep');
 
     Route::fallback(function () {
         return redirect()->route('dashboard');

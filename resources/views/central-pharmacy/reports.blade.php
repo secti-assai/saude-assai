@@ -83,6 +83,7 @@
 
                 <div class="md:col-span-6 flex flex-wrap justify-end gap-2">
                     <a href="{{ route('central-pharmacy.reports.export-csv', $csvFilters) }}" class="sa-btn-secondary">Exportar CSV</a>
+                    <a href="{{ route('central-pharmacy.reports.export-pdf', $csvFilters) }}" class="sa-btn-secondary">Exportar PDF</a>
                     <a href="{{ route('central-pharmacy.reports') }}" class="sa-btn-outline">Limpar</a>
                     <button type="submit" class="sa-btn-primary">Aplicar filtros</button>
                 </div>

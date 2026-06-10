@@ -137,6 +137,8 @@ class PharmacyExternalImportService
                 'stats' => $summary,
             ]);
 
+            \App\Jobs\SweepImportedBypassesJob::dispatch($batch->id);
+
             return $batch;
         });
 

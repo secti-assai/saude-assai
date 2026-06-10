@@ -229,6 +229,15 @@ class AdminManagementController extends Controller
             ->with('import_summary', $result);
     }
 
+    public function triggerBypassSweep(Request $request): RedirectResponse
+    {
+        \App\Jobs\SweepImportedBypassesJob::dispatch();
+        
+        $this->audit->log($request, 'ADMIN', 'VARREDURA_BYPASS_DISPARADA', null, null, []);
+
+        return back()->with('status', 'Varredura de Bypasses iniciada em segundo plano. Os registros bloqueados serão atualizados em breve.');
+    }
+
     public function borderControlArea(Request $request): View
     {
         $dateStart = trim((string) ($request->input('date_start') ?? now()->subDays(30)->toDateString()));

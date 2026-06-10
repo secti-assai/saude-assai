@@ -83,6 +83,31 @@ class PharmacyReportService
         ];
     }
 
+    public function buildPdfExport(array $input): array
+    {
+        $filters = $this->normalizeFilters($input);
+
+        $rowsQuery = $this->baseFilteredQuery($filters);
+        $rows = $rowsQuery
+            ->orderByDesc('created_at')
+            ->get();
+
+        $filename = sprintf(
+            'farmacia-central-relatorio-%s-a-%s.pdf',
+            $filters['date_start'],
+            $filters['date_end']
+        );
+
+        return [
+            'filename' => $filename,
+            'filters' => $filters,
+            'data' => [
+                'filters' => $filters,
+                'rows' => $rows,
+            ],
+        ];
+    }
+
     /**
      * @return array{filters:array,summary:array,statusBreakdown:Collection<int,array{status:string,total:int}>,levelBreakdown:Collection<int,array{level:string,total:int}>,categoryBreakdown:Collection<int,array{category:string,total:int}>,rows:\Illuminate\Contracts\Pagination\LengthAwarePaginator}
      */
