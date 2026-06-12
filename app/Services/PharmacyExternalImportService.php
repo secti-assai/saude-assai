@@ -622,25 +622,22 @@ class PharmacyExternalImportService
         $isExternalDispense = $existingRequest === null;
 
         $centralRequest = $existingRequest;
-        $bypassDetected = false;
+
+        // NEW LOGIC: Bypass is determined strictly by the citizen's validation status
+        $bestLevel = \App\Models\CentralPharmacyRequest::query()
+            ->where('citizen_id', $citizen->id)
+            ->whereNotNull('gov_assai_level')
+            ->orderByDesc('gov_assai_level')
+            ->value('gov_assai_level');
+
+        $resolvedLevel = ($bestLevel !== null && (int) $bestLevel >= 2) ? $bestLevel : '0';
+        $bypassDetected = (int) $resolvedLevel < 2 && ! $citizen->is_resident_assai;
 
         if ($isExternalDispense) {
-            $bestLevel = \App\Models\CentralPharmacyRequest::query()
-                ->where('citizen_id', $citizen->id)
-                ->whereNotNull('gov_assai_level')
-                ->orderByDesc('gov_assai_level')
-                ->value('gov_assai_level');
-
-            $resolvedLevel = ($bestLevel !== null && (int) $bestLevel >= 2) ? $bestLevel : '0';
-            $bypassDetected = (int) $resolvedLevel < 2;
-
             $event['resolved_gov_level'] = $resolvedLevel;
             $centralRequest = $this->createSyntheticDispensationRequest($citizen, $pharmacistUser, $actor, $event);
             
             $result['synthetic_created']++;
-            if ($bypassDetected) {
-                $result['bypass_detected']++;
-            }
 
             $this->audit->log(
                 $request,
@@ -658,26 +655,12 @@ class PharmacyExternalImportService
                     'local_resolved_level' => $resolvedLevel,
                 ]
             );
-
-            if ($bypassDetected && ! (bool) $citizen->pharmacy_lock_flag) {
-                $citizen->update(['pharmacy_lock_flag' => true]);
-                $result['citizens_locked']++;
-
-                $this->audit->log(
-                    $request,
-                    'FARMACIA_CENTRAL',
-                    'IMPORTACAO_EXTERNA_BLOQUEIO_CIDADAO',
-                    Citizen::class,
-                    (int) $citizen->id,
-                    [
-                        'import_id' => $batch->id,
-                        'import_row_hash' => $rowHash,
-                        'external_dispense_number' => $event['dispense_number'],
-                    ]
-                );
-            }
         } else {
             $result['matched_existing']++;
+        }
+
+        if ($bypassDetected) {
+            $result['bypass_detected']++;
         }
 
         $recurrence = $this->computeRecurrenceForCitizen($citizen);
@@ -736,7 +719,7 @@ class PharmacyExternalImportService
             $candidates = $citizenIndex['map'][$normalizedName];
 
             if (count($candidates) > 0) {
-                return ['citizen' => $candidates[0], 'created' => false];
+                return ['citizen' => $this->pickPreferredCitizen($candidates), 'created' => false];
             }
         }
 
@@ -748,7 +731,7 @@ class PharmacyExternalImportService
                 similar_text($normalizedName, $nameKey, $score);
                 if ($score > $bestScore && $score >= 92.0 && isset($citizens[0])) {
                     $bestScore = $score;
-                    $best = $citizens[0];
+                    $best = $this->pickPreferredCitizen($citizens);
                 }
             }
 
@@ -780,6 +763,43 @@ class PharmacyExternalImportService
         }
 
         return ['citizen' => $citizen, 'created' => true];
+    }
+
+    /**
+     * @param array<int, Citizen> $citizens
+     */
+    private function pickPreferredCitizen(array $citizens): ?Citizen
+    {
+        if ($citizens === []) {
+            return null;
+        }
+
+        $bestScore = -1;
+        $bestCitizen = null;
+
+        foreach ($citizens as $citizen) {
+            $score = 0;
+            
+            if ($citizen->cpf && !str_starts_with((string) $citizen->cpf, 'SYNC-')) {
+                $score += 100;
+            }
+            if ($citizen->is_resident_assai) {
+                $score += 50;
+            }
+            if (! $citizen->pharmacy_lock_flag) {
+                $score += 10;
+            }
+            if ($citizen->birth_date && $citizen->birth_date !== '1900-01-01') {
+                $score += 5;
+            }
+            
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestCitizen = $citizen;
+            }
+        }
+
+        return $bestCitizen ?? $citizens[0];
     }
 
     /**
@@ -1101,7 +1121,7 @@ class PharmacyExternalImportService
     {
         $map = [];
 
-        $citizens = Citizen::query()->get(['id', 'full_name', 'cpf_hash', 'pharmacy_lock_flag', 'is_resident_assai', 'birth_date']);
+        $citizens = Citizen::query()->get(['id', 'cpf', 'full_name', 'cpf_hash', 'pharmacy_lock_flag', 'is_resident_assai', 'birth_date']);
 
         foreach ($citizens as $citizen) {
             $normalized = $this->normalizePersonName((string) $citizen->full_name);

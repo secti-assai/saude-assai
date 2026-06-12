@@ -94,7 +94,7 @@
                 <p class="sa-kpi-label text-emerald-600">{{ ($view_type ?? 'item') === 'citizen' ? 'Cidadãos Regularizados' : 'Fluxo Regular' }}</p>
                 <p class="sa-kpi-value text-emerald-700">{{ $stats['regular'] }}</p>
                 <div class="text-[10px] text-emerald-500 mt-1">
-                    Gov.Assaí: <strong>{{ $stats['dispensations_gov_assai'] }}</strong> · ACS: <strong>{{ $stats['dispensations_acs'] }}</strong>
+                    Gov.Assaí: <strong>{{ ($view_type ?? 'item') === 'citizen' ? $stats['citizens_level_2'] : $stats['dispensations_gov_assai'] }}</strong> · ACS: <strong>{{ ($view_type ?? 'item') === 'citizen' ? $stats['citizens_validated_acs'] : $stats['dispensations_acs'] }}</strong>
                 </div>
             </div>
 
@@ -104,11 +104,7 @@
                 <div class="text-[10px] text-red-500 mt-1">{{ ($view_type ?? 'item') === 'citizen' ? 'Cidadãos com retiradas sem cadastro regular' : 'Retiradas sem cadastro regular (Bypass)' }}</div>
             </div>
 
-            <div class="sa-kpi cursor-pointer hover:shadow-md hover:border-blue-200 transition-all duration-200" onclick="openDetailsModal('blocked', 'Cidadãos Bloqueados (Bloqueio Ativo)')">
-                <p class="sa-kpi-label text-blue-600">Cidadãos Bloqueados</p>
-                <p class="sa-kpi-value text-blue-700">{{ $stats['unique_locked'] }}</p>
-                <div class="text-[10px] text-blue-500 mt-1">Bloqueios de cidadãos ativados no período</div>
-            </div>
+
 
             <div class="sa-kpi flex flex-col justify-between">
                 <div>
@@ -238,7 +234,6 @@
                                 <tr>
                                     @if(($view_type ?? 'item') === 'citizen')
                                         <th>Cidadão / Status</th>
-                                        <th>Bloqueio</th>
                                         <th>Dispensações (Itens)</th>
                                         <th>Total Unidades</th>
                                         <th>Última Retirada</th>
@@ -246,7 +241,6 @@
                                     @else
                                         <th>Data / Guia</th>
                                         <th>Cidadão / Status</th>
-                                        <th>Bloqueio</th>
                                         <th>Item</th>
                                         <th>Situação</th>
                                     @endif
@@ -275,27 +269,7 @@
                                                     </div>
                                                 @endif
                                             </td>
-                                            <td>
-                                                @if($row->citizen)
-                                                    <form method="POST" action="{{ route('admin.border-control.toggle-lock', $row->citizen->id) }}">
-                                                        @csrf
-                                                        <button type="submit" class="sa-btn px-3 py-1 text-xs font-semibold rounded-lg shadow-sm border transition-all duration-200
-                                                            @if($row->citizen->pharmacy_lock_flag)
-                                                                bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100
-                                                            @else
-                                                                bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100
-                                                            @endif">
-                                                            @if($row->citizen->pharmacy_lock_flag)
-                                                                Bloqueado 🔒
-                                                            @else
-                                                                Desbloqueado 🔓
-                                                            @endif
-                                                        </button>
-                                                    </form>
-                                                @else
-                                                    <span class="text-xs text-gray-400 font-medium">Não disponível</span>
-                                                @endif
-                                            </td>
+
                                             <td>
                                                 <span class="text-sm font-semibold text-slate-800">
                                                     {{ $row->total_dispensations }}
@@ -357,27 +331,7 @@
                                                     <span class="sa-badge sa-badge-gray mt-1">Cidadão Não Sincronizado</span>
                                                 @endif
                                             </td>
-                                            <td>
-                                                @if($row->citizen)
-                                                    <form method="POST" action="{{ route('admin.border-control.toggle-lock', $row->citizen->id) }}">
-                                                        @csrf
-                                                        <button type="submit" class="sa-btn px-3 py-1 text-xs font-semibold rounded-lg shadow-sm border transition-all duration-200
-                                                            @if($row->citizen->pharmacy_lock_flag)
-                                                                bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100
-                                                            @else
-                                                                bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100
-                                                            @endif">
-                                                            @if($row->citizen->pharmacy_lock_flag)
-                                                                Bloqueado 🔒
-                                                            @else
-                                                                Desbloqueado 🔓
-                                                            @endif
-                                                        </button>
-                                                    </form>
-                                                @else
-                                                    <span class="text-xs text-gray-400 font-medium">Não disponível</span>
-                                                @endif
-                                            </td>
+
                                             <td>
                                                 <div class="text-sm font-semibold text-slate-800 leading-tight">
                                                     {{ $row->medication_name_raw }}
@@ -403,7 +357,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="{{ ($view_type ?? 'item') === 'citizen' ? 6 : 5 }}" class="text-center text-gray-500 py-12">
+                                        <td colspan="{{ ($view_type ?? 'item') === 'citizen' ? 5 : 4 }}" class="text-center text-gray-500 py-12">
                                             Nenhum registro de dispensação externa auditado para os filtros selecionados.
                                         </td>
                                     </tr>
@@ -472,7 +426,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-gray-500 py-12">
+                                        <td colspan="4" class="text-center text-gray-500 py-12">
                                             Nenhum registro para gerar o relatório de medicamentos.
                                         </td>
                                     </tr>
@@ -806,7 +760,6 @@
                             <thead>
                                 <tr id="modal-table-headers">
                                     <th>Cidadão / Status</th>
-                                    <th>Bloqueio</th>
                                     <th>Data/Hora</th>
                                     <th>Medicamento</th>
                                     <th>Situação</th>
@@ -828,11 +781,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Hidden Form for Toggle Lock -->
-    <form id="modal-toggle-lock-form" method="POST" action="" style="display: none;">
-        @csrf
-    </form>
 
     <script>
         function switchTab(tab) {
@@ -871,8 +819,6 @@
             let subtitle = 'Visualização de registros filtrados';
             if (type === 'day') {
                 subtitle = `Registros de dispensação externa importados para a data de ${param}`;
-            } else if (type === 'blocked') {
-                subtitle = 'Todos os cidadãos atualmente bloqueados no período analisado';
             } else if (type === 'bypass') {
                 subtitle = 'Lista de dispensações onde o fluxo de verificação foi burlado (Bypass)';
             } else if (type === 'regular') {
@@ -920,17 +866,6 @@
             
             if (currentModalFilterType === 'day') {
                 filtered = allPeriodRows.filter(row => row.date_only === currentModalFilterParam);
-            } else if (currentModalFilterType === 'blocked') {
-                const seenCitizens = new Set();
-                filtered = allPeriodRows.filter(row => {
-                    if (row.pharmacy_lock_flag && row.citizen_id) {
-                        if (!seenCitizens.has(row.citizen_id)) {
-                            seenCitizens.add(row.citizen_id);
-                            return true;
-                        }
-                    }
-                    return false;
-                });
             } else if (currentModalFilterType === 'bypass') {
                 filtered = allPeriodRows.filter(row => row.bypass_detected);
             } else if (currentModalFilterType === 'regular') {
@@ -939,7 +874,7 @@
                 filtered = [...allPeriodRows];
             }
 
-            if (viewType === 'citizen' && currentModalFilterType !== 'blocked') {
+            if (viewType === 'citizen') {
                 const seenCitizens = new Set();
                 modalFilteredData = filtered.filter(row => {
                     if (row.citizen_id) {
@@ -979,25 +914,15 @@
 
             // Adjust headers based on type
             const headersTr = document.getElementById('modal-table-headers');
-            if (currentModalFilterType === 'blocked') {
-                headersTr.innerHTML = `
-                    <th>Cidadão / Status</th>
-                    <th>Residência</th>
-                    <th>Nível Gov</th>
-                    <th>Ação</th>
-                `;
-            } else {
-                headersTr.innerHTML = `
-                    <th>Cidadão / Status</th>
-                    <th>Bloqueio</th>
-                    <th>Data/Hora</th>
-                    <th>Medicamento</th>
-                    <th>Situação</th>
-                `;
-            }
+            headersTr.innerHTML = `
+                <th>Cidadão / Status</th>
+                <th>Data/Hora</th>
+                <th>Medicamento</th>
+                <th>Situação</th>
+            `;
 
             if (modalFilteredData.length === 0) {
-                const colCount = currentModalFilterType === 'blocked' ? 4 : 5;
+                const colCount = 4;
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="${colCount}" class="text-center text-gray-500 py-12">
@@ -1011,81 +936,40 @@
             modalFilteredData.forEach(row => {
                 const tr = document.createElement('tr');
                 
-                if (currentModalFilterType === 'blocked') {
-                    const badgeClass = row.is_resident_assai === 'Assaí' ? 'sa-modal-badge-residence-assai' : 'sa-modal-badge-residence-pending';
-                    tr.innerHTML = `
-                        <td>
-                            <div class="font-bold text-gray-900 leading-tight">${row.customer_name}</div>
-                            <div class="text-xs text-gray-500 font-mono mt-0.5">${row.cpf}</div>
-                        </td>
-                        <td>
-                            <span class="${badgeClass}">${row.is_resident_assai}</span>
-                        </td>
-                        <td>
+                const badgeClass = row.bypass_detected 
+                    ? 'sa-modal-badge-bypass' 
+                    : 'sa-modal-badge-regulado';
+                
+                const situationText = row.bypass_detected 
+                    ? '<span style="display:inline-block;width:6px;height:6px;border-radius:9999px;background-color:#dc2626;margin-right:4px;"></span>BYPASS' 
+                    : '<span style="display:inline-block;width:6px;height:6px;border-radius:9999px;background-color:#16a34a;margin-right:4px;"></span>REGULADO';
+
+                tr.innerHTML = `
+                    <td>
+                        <div class="font-bold text-gray-900 leading-tight">${row.customer_name}</div>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-xs text-gray-500 font-mono">${row.cpf}</span>
                             <span class="sa-modal-badge-gov">Gov N${row.gov_level}</span>
-                        </td>
-                        <td>
-                            <button onclick="toggleLockFromModal(${row.citizen_id})" class="sa-modal-btn-unlock">
-                                Desbloquear 🔓
-                            </button>
-                        </td>
-                    `;
-                } else {
-                    const badgeClass = row.bypass_detected 
-                        ? 'sa-modal-badge-bypass' 
-                        : 'sa-modal-badge-regulado';
-                    
-                    const situationText = row.bypass_detected 
-                        ? '<span style="display:inline-block;width:6px;height:6px;border-radius:9999px;background-color:#dc2626;margin-right:4px;"></span>BYPASS' 
-                        : '<span style="display:inline-block;width:6px;height:6px;border-radius:9999px;background-color:#16a34a;margin-right:4px;"></span>REGULADO';
-
-                    let lockButton = '<span class="text-xs text-gray-400 font-medium">Não disponível</span>';
-                    if (row.citizen_id) {
-                        const lockClass = row.pharmacy_lock_flag ? 'sa-modal-btn-lock' : 'sa-modal-btn-unlock';
-                        const lockText = row.pharmacy_lock_flag ? 'Bloqueado 🔒' : 'Desbloqueado 🔓';
-                        lockButton = `
-                            <button onclick="toggleLockFromModal(${row.citizen_id})" class="${lockClass}">
-                                ${lockText}
-                            </button>
-                        `;
-                    }
-
-                    tr.innerHTML = `
-                        <td>
-                            <div class="font-bold text-gray-900 leading-tight">${row.customer_name}</div>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-xs text-gray-500 font-mono">${row.cpf}</span>
-                                <span class="sa-modal-badge-gov">Gov N${row.gov_level}</span>
-                            </div>
-                        </td>
-                        <td>
-                            ${lockButton}
-                        </td>
-                        <td>
-                            <div class="text-xs text-gray-500 font-semibold">${row.dispensed_at_formatted}</div>
-                            <div class="text-xs text-slate-700 font-mono mt-0.5">#${row.external_dispense_number}</div>
-                        </td>
-                        <td>
-                            <div class="text-sm font-semibold text-slate-800 leading-tight">${row.medication_name}</div>
-                            <div class="text-xs text-gray-500 mt-0.5">Qtd: <strong>${row.quantity}</strong></div>
-                        </td>
-                        <td>
-                            <span class="${badgeClass}">
-                                ${situationText}
-                            </span>
-                        </td>
-                    `;
-                }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="text-xs text-gray-500 font-semibold">${row.dispensed_at_formatted}</div>
+                        <div class="text-xs text-slate-700 font-mono mt-0.5">#${row.external_dispense_number}</div>
+                    </td>
+                    <td>
+                        <div class="text-sm font-semibold text-slate-800 leading-tight">${row.medication_name}</div>
+                        <div class="text-xs text-gray-500 mt-0.5">Qtd: <strong>${row.quantity}</strong></div>
+                    </td>
+                    <td>
+                        <span class="${badgeClass}">
+                            ${situationText}
+                        </span>
+                    </td>
+                `;
                 tbody.appendChild(tr);
             });
         }
 
-        function toggleLockFromModal(citizenId) {
-            if (!citizenId) return;
-            const form = document.getElementById('modal-toggle-lock-form');
-            form.action = `/admin/controle-borda/alternar-bloqueio/${citizenId}`;
-            form.submit();
-        }
 
         // Close on escape key
         document.addEventListener('keydown', function(e) {

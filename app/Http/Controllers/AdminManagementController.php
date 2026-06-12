@@ -366,10 +366,7 @@ class AdminManagementController extends Controller
             $complianceRate = $totalDispensations > 0 ? round(($totalRegular / $totalDispensations) * 100, 1) : 100.0;
         }
 
-        $uniqueLockedCitizens = (clone $statsQuery)
-            ->where('bypass_detected', true)
-            ->distinct('citizen_id')
-            ->count('citizen_id');
+
 
         // New stats:
         // 1. Most dispensed medication
@@ -423,14 +420,19 @@ class AdminManagementController extends Controller
             ->count('citizen_id');
 
         // 6. Citizens validated by ACS in period
-        $citizensValidatedAcs = (clone $statsQuery)
-            ->where('bypass_detected', false)
-            ->whereHas('centralPharmacyRequest', function ($q) {
-                $q->whereIn('gov_assai_level', ['0', '1'])
-                  ->orWhereNull('gov_assai_level');
-            })
-            ->distinct('citizen_id')
-            ->count('citizen_id');
+        if ($viewType === 'citizen') {
+            // For citizen view, ensure the sum perfectly matches totalRegular by making them mutually exclusive
+            $citizensValidatedAcs = max(0, $totalRegular - $citizensLevel2);
+        } else {
+            $citizensValidatedAcs = (clone $statsQuery)
+                ->where('bypass_detected', false)
+                ->whereHas('centralPharmacyRequest', function ($q) {
+                    $q->whereIn('gov_assai_level', ['0', '1'])
+                      ->orWhereNull('gov_assai_level');
+                })
+                ->distinct('citizen_id')
+                ->count('citizen_id');
+        }
 
         // 7. Women Clinic appointments scheduled in period
         $appointmentsQuery = \App\Models\WomenClinicAppointment::query()
@@ -537,7 +539,6 @@ class AdminManagementController extends Controller
                 'regular' => $totalRegular,
                 'bypass' => $totalBypasses,
                 'compliance_rate' => $complianceRate,
-                'unique_locked' => $uniqueLockedCitizens,
                 'most_dispensed_med' => $mostDispensedMed ? ($mostDispensedMed->medication_name_raw . ' (' . $mostDispensedMed->total . ')') : 'Nenhum',
                 'most_dispensed_high_cost_med' => $mostDispensedHighCostMed ? ($mostDispensedHighCostMed->medication_name_raw . ' (' . $mostDispensedHighCostMed->total . ')') : 'Nenhum',
                 'dispensations_gov_assai' => $dispensationsGovAssai,
