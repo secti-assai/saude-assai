@@ -619,14 +619,28 @@ class PharmacyExternalImportService
         }
 
         $existingRequest = $this->findExistingRequest($citizen, $event);
-        $bypassDetected = $existingRequest === null;
+        $isExternalDispense = $existingRequest === null;
 
         $centralRequest = $existingRequest;
+        $bypassDetected = false;
 
-        if ($bypassDetected) {
+        if ($isExternalDispense) {
+            $bestLevel = \App\Models\CentralPharmacyRequest::query()
+                ->where('citizen_id', $citizen->id)
+                ->whereNotNull('gov_assai_level')
+                ->orderByDesc('gov_assai_level')
+                ->value('gov_assai_level');
+
+            $resolvedLevel = ($bestLevel !== null && (int) $bestLevel >= 2) ? $bestLevel : '0';
+            $bypassDetected = (int) $resolvedLevel < 2;
+
+            $event['resolved_gov_level'] = $resolvedLevel;
             $centralRequest = $this->createSyntheticDispensationRequest($citizen, $pharmacistUser, $actor, $event);
+            
             $result['synthetic_created']++;
-            $result['bypass_detected']++;
+            if ($bypassDetected) {
+                $result['bypass_detected']++;
+            }
 
             $this->audit->log(
                 $request,
@@ -641,10 +655,11 @@ class PharmacyExternalImportService
                     'citizen_id' => $citizen->id,
                     'external_dispense_number' => $event['dispense_number'],
                     'pharmacist_name_raw' => $event['pharmacist_name_raw'] ?? null,
+                    'local_resolved_level' => $resolvedLevel,
                 ]
             );
 
-            if (! (bool) $citizen->pharmacy_lock_flag) {
+            if ($bypassDetected && ! (bool) $citizen->pharmacy_lock_flag) {
                 $citizen->update(['pharmacy_lock_flag' => true]);
                 $result['citizens_locked']++;
 
@@ -898,7 +913,7 @@ class PharmacyExternalImportService
             'concentration' => '-',
             'quantity' => $quantity,
             'dosage' => 'IMPORTADO EXTERNAMENTE',
-            'gov_assai_level' => '0',
+            'gov_assai_level' => $event['resolved_gov_level'] ?? '0',
             'residence_status' => $citizen->is_resident_assai ? 'RESIDENTE' : 'PENDENTE',
             'status' => 'DISPENSADO',
             'notes' => implode(' | ', $notes),
