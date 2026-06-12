@@ -21,7 +21,15 @@ class SyncCitizenFromGovAssaiJob implements ShouldQueue
 
     public function backoff(): array
     {
-        return [5, 15, 30, 60, 120];
+        return [60, 120, 300, 600, 1800];
+    }
+
+    public function middleware(): array
+    {
+        return [
+            (new \Illuminate\Queue\Middleware\WithoutOverlapping('gov_assai_sync_citizen_'.$this->citizenId))->releaseAfter(60),
+            (new \Illuminate\Queue\Middleware\RateLimited('gov_assai_sync'))
+        ];
     }
 
     public function handle(GovAssaiService $govAssai): void

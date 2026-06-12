@@ -89,16 +89,10 @@ class CentralPharmacyReportController extends Controller
             'date_start' => ['nullable', 'date'],
             'date_end' => ['nullable', 'date'],
             'status' => ['nullable', 'string', Rule::in([
-                'DISPENSADOS',
                 'TODOS',
-                'RECEPCAO_VALIDADA',
-                'DISPENSADO',
-                'DISPENSADO_EQUIVALENTE',
-                'NAO_DISPENSADO',
+                'REGULARIZADO',
+                'NAO_REGULARIZADO',
             ])],
-            'dispense_category' => ['nullable', 'string', Rule::in(['ALL', 'MEDICACAO', 'LEITE', 'SUPLEMENTO'])],
-            'gov_level' => ['nullable', 'string', 'max:10'],
-            'needs_validation' => ['nullable', 'string', Rule::in(['all', 'yes', 'no'])],
             'citizen_name' => ['nullable', 'string', 'max:255'],
         ]);
     }

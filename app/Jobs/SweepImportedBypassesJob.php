@@ -23,8 +23,15 @@ class SweepImportedBypassesJob implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public readonly ?int $importBatchId = null
+        public readonly ?string $importBatchId = null
     ) {}
+
+    public function middleware(): array
+    {
+        return [
+            (new \Illuminate\Queue\Middleware\WithoutOverlapping('gov_assai_sweep'))->releaseAfter(60)
+        ];
+    }
 
     /**
      * Execute the job.
@@ -70,13 +77,13 @@ class SweepImportedBypassesJob implements ShouldQueue
                     $govResponse = $govAssai->fetchCitizenByCpf($citizen->cpf);
 
                     if ($govResponse && ($govResponse['status'] ?? 200) === 429) {
-                        Log::warning("SweepImportedBypassesJob: Rate limit hit (429). Delaying next batch by 60 seconds.");
-                        self::dispatch($this->importBatchId)->delay(now()->addSeconds(60));
+                        Log::warning("SweepImportedBypassesJob: Rate limit hit (429). Releasing job for 60 seconds.");
+                        $this->release(60);
                         return; // Stop processing this batch
                     }
 
                     $citizensCache[$citizen->cpf] = $govResponse;
-                    usleep(1500000); // 1.5s sleep per UNIQUE citizen to avoid rate limits
+                    usleep(2000000); // 2s sleep per UNIQUE citizen to avoid rate limits
                 } catch (\Throwable $e) {
                     Log::error("SweepImportedBypassesJob: Failed to sync citizen {$citizen->id} ({$citizen->cpf}): {$e->getMessage()}");
                     $citizensCache[$citizen->cpf] = null;
@@ -105,9 +112,6 @@ class SweepImportedBypassesJob implements ShouldQueue
                     $request->update(['gov_assai_level' => (string) $resolvedLevel]);
                 }
             } else {
-                 // Even if GovAssai fails or returns not found, we should mark the request so it's not '0' and infinitely retried?
-                 // No, if the API is down, we want to retry later. But if it's genuinely 0, the next time it will retry unless we set it to '1' or '-1'.
-                 // Let's set it to '1' if it's found but level is 0, so it stops retrying.
                  if ($govResponse && ($govResponse['status'] ?? 0) === 404) {
                      $request->update(['gov_assai_level' => '1']); // Mark as processed (1 means not authorized but checked)
                  }

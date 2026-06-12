@@ -25,29 +25,25 @@
     <table>
         <thead>
             <tr>
-                <th>Data</th>
                 <th>Cidadão</th>
-                <th>Nível</th>
-                <th>Validação</th>
-                <th>Status</th>
-                <th>Categoria</th>
-                <th>Qtd.</th>
-                <th>Atendente</th>
-                <th>Recepção</th>
+                <th>Situação</th>
+                <th>Quantidade</th>
+                <th>Horário da Dispensação</th>
+                <th>Medicamento Dispensado</th>
             </tr>
         </thead>
         <tbody>
             @foreach($rows as $row)
+            @php
+                $statusLabel = $row->bypass_detected ? 'NÃO REGULARIZADO' : 'REGULARIZADO';
+                $citizenName = $row->citizen ? $row->citizen->full_name : $row->customer_name_raw;
+            @endphp
             <tr>
-                <td>{{ $row->created_at?->format('d/m/Y H:i') }}</td>
-                <td>{{ $row->citizen->full_name ?? '' }}</td>
-                <td>{{ $row->gov_assai_level ?? 'N/A' }}</td>
-                <td>{{ ($row->citizen->pharmacy_lock_flag ?? false) ? 'PENDENTE' : 'REGULARIZADO' }}</td>
-                <td>{{ $row->status }}</td>
-                <td>{{ $row->medication_name }}</td>
-                <td>{{ $row->quantity }}</td>
-                <td>{{ $row->attendant_display_name ?? '' }}</td>
-                <td>{{ $row->reception->name ?? '' }}</td>
+                <td>{{ $citizenName }}</td>
+                <td>{{ $statusLabel }}</td>
+                <td>{{ $row->quantity ?? '-' }}</td>
+                <td>{{ $row->dispensed_at?->format('d/m/Y H:i') ?? 'N/A' }}</td>
+                <td>{{ $row->medication_name_raw ?? 'N/A' }}</td>
             </tr>
             @endforeach
         </tbody>

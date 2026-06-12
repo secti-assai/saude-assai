@@ -87,24 +87,24 @@
             <div class="sa-kpi">
                 <p class="sa-kpi-label">Total Analisado</p>
                 <p class="sa-kpi-value">{{ $stats['total'] }}</p>
-                <div class="text-[10px] text-gray-400 mt-1">Dispensações importadas no período</div>
+                <div class="text-[10px] text-gray-400 mt-1">{{ ($view_type ?? 'item') === 'citizen' ? 'Cidadãos únicos analisados' : 'Dispensações importadas no período' }}</div>
             </div>
 
-            <div class="sa-kpi">
-                <p class="sa-kpi-label text-emerald-600">Fluxo Regular</p>
+            <div class="sa-kpi cursor-pointer hover:shadow-md hover:border-emerald-200 transition-all duration-200" onclick="openDetailsModal('regular', '{{ ($view_type ?? 'item') === 'citizen' ? 'Cidadãos Regulares' : 'Fluxo Regular (Cadastro em Dia)' }}')">
+                <p class="sa-kpi-label text-emerald-600">{{ ($view_type ?? 'item') === 'citizen' ? 'Cidadãos Regularizados' : 'Fluxo Regular' }}</p>
                 <p class="sa-kpi-value text-emerald-700">{{ $stats['regular'] }}</p>
                 <div class="text-[10px] text-emerald-500 mt-1">
                     Gov.Assaí: <strong>{{ $stats['dispensations_gov_assai'] }}</strong> · ACS: <strong>{{ $stats['dispensations_acs'] }}</strong>
                 </div>
             </div>
 
-            <div class="sa-kpi">
-                <p class="sa-kpi-label text-red-600">Dispensações Irregulares</p>
+            <div class="sa-kpi cursor-pointer hover:shadow-md hover:border-red-200 transition-all duration-200" onclick="openDetailsModal('bypass', '{{ ($view_type ?? 'item') === 'citizen' ? 'Cidadãos com Desvios' : 'Dispensações Irregulares (Bypass)' }}')">
+                <p class="sa-kpi-label text-red-600">{{ ($view_type ?? 'item') === 'citizen' ? 'Cidadãos Não Regularizados' : 'Dispensações Irregulares' }}</p>
                 <p class="sa-kpi-value text-red-700">{{ $stats['bypass'] }}</p>
-                <div class="text-[10px] text-red-500 mt-1">Retiradas sem cadastro regular (Bypass)</div>
+                <div class="text-[10px] text-red-500 mt-1">{{ ($view_type ?? 'item') === 'citizen' ? 'Cidadãos com retiradas sem cadastro regular' : 'Retiradas sem cadastro regular (Bypass)' }}</div>
             </div>
 
-            <div class="sa-kpi">
+            <div class="sa-kpi cursor-pointer hover:shadow-md hover:border-blue-200 transition-all duration-200" onclick="openDetailsModal('blocked', 'Cidadãos Bloqueados (Bloqueio Ativo)')">
                 <p class="sa-kpi-label text-blue-600">Cidadãos Bloqueados</p>
                 <p class="sa-kpi-value text-blue-700">{{ $stats['unique_locked'] }}</p>
                 <div class="text-[10px] text-blue-500 mt-1">Bloqueios de cidadãos ativados no período</div>
@@ -180,7 +180,7 @@
 
                 <div class="flex-1 overflow-y-auto max-h-[500px] pr-2 space-y-3">
                     @forelse($dailyData as $day)
-                        <div class="p-3.5 rounded-xl border border-gray-100 bg-slate-50/70 hover:bg-slate-50 transition flex items-center justify-between gap-4">
+                        <div class="p-3.5 rounded-xl border border-gray-100 bg-slate-50/70 hover:bg-slate-50 transition flex items-center justify-between gap-4 cursor-pointer hover:border-emerald-300 hover:shadow-sm" onclick="openDetailsModal('day', 'Auditoria do dia {{ $day['date'] }}', '{{ $day['date_raw'] }}')">
                             <div>
                                 <span class="text-sm font-bold text-gray-800">{{ $day['date'] }}</span>
                                 <div class="flex gap-2 text-xs text-gray-500 mt-1">
@@ -485,6 +485,355 @@
         </div>
     </div>
 
+    <!-- Estilos Customizados para o Modal de Detalhes -->
+    <style>
+        .sa-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(7, 27, 42, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
+        }
+        
+        .sa-modal-backdrop.is-active {
+            opacity: 1;
+        }
+        
+        .sa-modal-wrapper {
+            position: fixed;
+            inset: 0;
+            z-index: 55;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 2.5rem 1rem;
+            pointer-events: none;
+        }
+        
+        .sa-modal-box {
+            pointer-events: auto;
+            width: 100%;
+            max-width: 64rem;
+            background-color: #ffffff;
+            border-radius: 1.25rem;
+            box-shadow: 0 25px 50px -12px rgba(7, 27, 42, 0.25);
+            border: 1px solid rgba(7, 27, 42, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 80vh;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(-20px) scale(0.97);
+            opacity: 0;
+        }
+        
+        .sa-modal-box.is-active {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        
+        .sa-modal-header {
+            background: linear-gradient(135deg, #0a8f7b 0%, #056e60 100%);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #ffffff;
+        }
+        
+        .sa-modal-title {
+            font-size: 1.125rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin: 0;
+            line-height: 1.2;
+        }
+        
+        .sa-modal-subtitle {
+            font-size: 0.75rem;
+            color: #e8f5f1;
+            margin: 0.25rem 0 0 0;
+            font-weight: 500;
+        }
+        
+        .sa-modal-close {
+            color: rgba(255, 255, 255, 0.85);
+            background: transparent;
+            border: none;
+            font-size: 2rem;
+            font-weight: 300;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            transition: color 0.15s ease;
+        }
+        
+        .sa-modal-close:hover {
+            color: #ffffff;
+        }
+        
+        .sa-modal-toolbar {
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 1.5rem;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        
+        .sa-modal-search-wrapper {
+            position: relative;
+            flex: 1;
+            max-width: 24rem;
+        }
+        
+        .sa-modal-search-icon {
+            position: absolute;
+            inset-y: 0;
+            left: 0;
+            padding-left: 0.75rem;
+            display: flex;
+            align-items: center;
+            pointer-events: none;
+            color: #94a3b8;
+        }
+        
+        .sa-modal-search-input {
+            width: 100%;
+            padding: 0.625rem 1rem 0.625rem 2.25rem;
+            font-size: 0.875rem;
+            color: #1e293b;
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        
+        .sa-modal-search-input:focus {
+            outline: none;
+            border-color: #0a8f7b;
+            box-shadow: 0 0 0 3px rgba(10, 143, 123, 0.15);
+        }
+        
+        .sa-modal-count {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+        
+        .sa-modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .sa-modal-footer {
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .sa-modal-btn-close {
+            padding: 0.5rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #475569;
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .sa-modal-btn-close:hover {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            border-color: #94a3b8;
+        }
+
+        /* Semantics / Badges */
+        .sa-modal-btn-lock {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            border: 1px solid #fecaca;
+            background-color: #fef2f2;
+            color: #dc2626;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            line-height: 1;
+        }
+        .sa-modal-btn-lock:hover {
+            background-color: #fee2e2;
+            border-color: #fca5a5;
+        }
+        
+        .sa-modal-btn-unlock {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            border: 1px solid #a7f3d0;
+            background-color: #ecfdf5;
+            color: #059669;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            line-height: 1;
+        }
+        .sa-modal-btn-unlock:hover {
+            background-color: #d1fae5;
+            border-color: #6ee7b7;
+        }
+        
+        .sa-modal-badge-bypass {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.625rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 9999px;
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        
+        .sa-modal-badge-regulado {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.625rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 9999px;
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+        
+        .sa-modal-badge-gov {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.125rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 0.375rem;
+            background-color: #e8f5f1;
+            color: #0a8f7b;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .sa-modal-badge-residence-assai {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.125rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 0.375rem;
+            background-color: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+        .sa-modal-badge-residence-pending {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.125rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 0.375rem;
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+    </style>
+
+    <!-- ══════════ Modal de Detalhes da Auditoria ══════════ -->
+    <div id="details-modal" class="fixed inset-0 z-50 hidden">
+        <!-- Backdrop -->
+        <div class="sa-modal-backdrop" id="details-modal-backdrop" onclick="closeDetailsModal()"></div>
+        
+        <div class="sa-modal-wrapper">
+            <!-- Modal Content Container -->
+            <div class="sa-modal-box" id="details-modal-box">
+                <!-- Modal Header -->
+                <div class="sa-modal-header">
+                    <div>
+                        <h3 class="sa-modal-title" id="details-modal-title">Detalhes da Auditoria</h3>
+                        <p class="sa-modal-subtitle" id="details-modal-subtitle">Visualização de registros filtrados</p>
+                    </div>
+                    <button onclick="closeDetailsModal()" class="sa-modal-close">&times;</button>
+                </div>
+
+                <!-- Modal Search & Toolbar -->
+                <div class="sa-modal-toolbar">
+                    <div class="sa-modal-search-wrapper">
+                        <span class="sa-modal-search-icon">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </span>
+                        <input type="text" id="modal-search-input" placeholder="Buscar por cidadão ou CPF..." class="sa-modal-search-input" oninput="filterModalData()">
+                    </div>
+                    <div class="sa-modal-count" id="modal-count-display">
+                        Mostrando 0 registros
+                    </div>
+                </div>
+
+                <!-- Modal Body (Table) -->
+                <div class="sa-modal-body">
+                    <div class="overflow-x-auto">
+                        <table class="sa-table w-full">
+                            <thead>
+                                <tr id="modal-table-headers">
+                                    <th>Cidadão / Status</th>
+                                    <th>Bloqueio</th>
+                                    <th>Data/Hora</th>
+                                    <th>Medicamento</th>
+                                    <th>Situação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="details-modal-tbody">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="sa-modal-footer">
+                    <button onclick="closeDetailsModal()" class="sa-modal-btn-close">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Form for Toggle Lock -->
+    <form id="modal-toggle-lock-form" method="POST" action="" style="display: none;">
+        @csrf
+    </form>
+
     <script>
         function switchTab(tab) {
             const auditBtn = document.getElementById('tab-btn-audit');
@@ -504,5 +853,245 @@
                 auditContent.classList.add('hidden');
             }
         }
+
+        // Details Modal Variables & Logic
+        const allPeriodRows = @json($allPeriodRows);
+        let currentModalFilterType = ''; 
+        let currentModalFilterParam = '';
+        let modalFilteredData = [];
+
+        function openDetailsModal(type, title, param = '') {
+            currentModalFilterType = type;
+            currentModalFilterParam = param;
+            
+            document.getElementById('details-modal-title').textContent = title;
+            document.getElementById('modal-search-input').value = '';
+            
+            // Build the subtitle dynamically
+            let subtitle = 'Visualização de registros filtrados';
+            if (type === 'day') {
+                subtitle = `Registros de dispensação externa importados para a data de ${param}`;
+            } else if (type === 'blocked') {
+                subtitle = 'Todos os cidadãos atualmente bloqueados no período analisado';
+            } else if (type === 'bypass') {
+                subtitle = 'Lista de dispensações onde o fluxo de verificação foi burlado (Bypass)';
+            } else if (type === 'regular') {
+                subtitle = 'Lista de dispensações que seguiram as regras obrigatórias de validação';
+            }
+            document.getElementById('details-modal-subtitle').textContent = subtitle;
+
+            // Apply base filter
+            applyModalBaseFilter();
+            
+            // Render Table
+            renderModalTable();
+
+            // Display Modal
+            const modal = document.getElementById('details-modal');
+            const modalBox = document.getElementById('details-modal-box');
+            const backdrop = document.getElementById('details-modal-backdrop');
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                backdrop.classList.add('is-active');
+                modalBox.classList.add('is-active');
+            }, 10);
+            
+            // Focus Search Input
+            setTimeout(() => document.getElementById('modal-search-input').focus(), 150);
+        }
+
+        function closeDetailsModal() {
+            const modal = document.getElementById('details-modal');
+            const modalBox = document.getElementById('details-modal-box');
+            const backdrop = document.getElementById('details-modal-backdrop');
+            
+            backdrop.classList.remove('is-active');
+            modalBox.classList.remove('is-active');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        const viewType = '{{ $view_type ?? "item" }}';
+
+        function applyModalBaseFilter() {
+            let filtered = [];
+            
+            if (currentModalFilterType === 'day') {
+                filtered = allPeriodRows.filter(row => row.date_only === currentModalFilterParam);
+            } else if (currentModalFilterType === 'blocked') {
+                const seenCitizens = new Set();
+                filtered = allPeriodRows.filter(row => {
+                    if (row.pharmacy_lock_flag && row.citizen_id) {
+                        if (!seenCitizens.has(row.citizen_id)) {
+                            seenCitizens.add(row.citizen_id);
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+            } else if (currentModalFilterType === 'bypass') {
+                filtered = allPeriodRows.filter(row => row.bypass_detected);
+            } else if (currentModalFilterType === 'regular') {
+                filtered = allPeriodRows.filter(row => !row.bypass_detected);
+            } else {
+                filtered = [...allPeriodRows];
+            }
+
+            if (viewType === 'citizen' && currentModalFilterType !== 'blocked') {
+                const seenCitizens = new Set();
+                modalFilteredData = filtered.filter(row => {
+                    if (row.citizen_id) {
+                        if (!seenCitizens.has(row.citizen_id)) {
+                            seenCitizens.add(row.citizen_id);
+                            return true;
+                        }
+                        return false;
+                    }
+                    return true;
+                });
+            } else {
+                modalFilteredData = filtered;
+            }
+        }
+
+        function filterModalData() {
+            const searchQuery = document.getElementById('modal-search-input').value.toLowerCase().trim();
+            applyModalBaseFilter();
+
+            if (searchQuery !== '') {
+                modalFilteredData = modalFilteredData.filter(row => {
+                    const nameMatch = row.customer_name && row.customer_name.toLowerCase().includes(searchQuery);
+                    const cpfMatch = row.cpf && row.cpf.replace(/\D/g, '').includes(searchQuery.replace(/\D/g, ''));
+                    return nameMatch || cpfMatch;
+                });
+            }
+
+            renderModalTable();
+        }
+
+        function renderModalTable() {
+            const tbody = document.getElementById('details-modal-tbody');
+            tbody.innerHTML = '';
+
+            document.getElementById('modal-count-display').textContent = `Mostrando ${modalFilteredData.length} registros`;
+
+            // Adjust headers based on type
+            const headersTr = document.getElementById('modal-table-headers');
+            if (currentModalFilterType === 'blocked') {
+                headersTr.innerHTML = `
+                    <th>Cidadão / Status</th>
+                    <th>Residência</th>
+                    <th>Nível Gov</th>
+                    <th>Ação</th>
+                `;
+            } else {
+                headersTr.innerHTML = `
+                    <th>Cidadão / Status</th>
+                    <th>Bloqueio</th>
+                    <th>Data/Hora</th>
+                    <th>Medicamento</th>
+                    <th>Situação</th>
+                `;
+            }
+
+            if (modalFilteredData.length === 0) {
+                const colCount = currentModalFilterType === 'blocked' ? 4 : 5;
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="${colCount}" class="text-center text-gray-500 py-12">
+                            Nenhum registro correspondente encontrado.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            modalFilteredData.forEach(row => {
+                const tr = document.createElement('tr');
+                
+                if (currentModalFilterType === 'blocked') {
+                    const badgeClass = row.is_resident_assai === 'Assaí' ? 'sa-modal-badge-residence-assai' : 'sa-modal-badge-residence-pending';
+                    tr.innerHTML = `
+                        <td>
+                            <div class="font-bold text-gray-900 leading-tight">${row.customer_name}</div>
+                            <div class="text-xs text-gray-500 font-mono mt-0.5">${row.cpf}</div>
+                        </td>
+                        <td>
+                            <span class="${badgeClass}">${row.is_resident_assai}</span>
+                        </td>
+                        <td>
+                            <span class="sa-modal-badge-gov">Gov N${row.gov_level}</span>
+                        </td>
+                        <td>
+                            <button onclick="toggleLockFromModal(${row.citizen_id})" class="sa-modal-btn-unlock">
+                                Desbloquear 🔓
+                            </button>
+                        </td>
+                    `;
+                } else {
+                    const badgeClass = row.bypass_detected 
+                        ? 'sa-modal-badge-bypass' 
+                        : 'sa-modal-badge-regulado';
+                    
+                    const situationText = row.bypass_detected 
+                        ? '<span style="display:inline-block;width:6px;height:6px;border-radius:9999px;background-color:#dc2626;margin-right:4px;"></span>BYPASS' 
+                        : '<span style="display:inline-block;width:6px;height:6px;border-radius:9999px;background-color:#16a34a;margin-right:4px;"></span>REGULADO';
+
+                    let lockButton = '<span class="text-xs text-gray-400 font-medium">Não disponível</span>';
+                    if (row.citizen_id) {
+                        const lockClass = row.pharmacy_lock_flag ? 'sa-modal-btn-lock' : 'sa-modal-btn-unlock';
+                        const lockText = row.pharmacy_lock_flag ? 'Bloqueado 🔒' : 'Desbloqueado 🔓';
+                        lockButton = `
+                            <button onclick="toggleLockFromModal(${row.citizen_id})" class="${lockClass}">
+                                ${lockText}
+                            </button>
+                        `;
+                    }
+
+                    tr.innerHTML = `
+                        <td>
+                            <div class="font-bold text-gray-900 leading-tight">${row.customer_name}</div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-xs text-gray-500 font-mono">${row.cpf}</span>
+                                <span class="sa-modal-badge-gov">Gov N${row.gov_level}</span>
+                            </div>
+                        </td>
+                        <td>
+                            ${lockButton}
+                        </td>
+                        <td>
+                            <div class="text-xs text-gray-500 font-semibold">${row.dispensed_at_formatted}</div>
+                            <div class="text-xs text-slate-700 font-mono mt-0.5">#${row.external_dispense_number}</div>
+                        </td>
+                        <td>
+                            <div class="text-sm font-semibold text-slate-800 leading-tight">${row.medication_name}</div>
+                            <div class="text-xs text-gray-500 mt-0.5">Qtd: <strong>${row.quantity}</strong></div>
+                        </td>
+                        <td>
+                            <span class="${badgeClass}">
+                                ${situationText}
+                            </span>
+                        </td>
+                    `;
+                }
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleLockFromModal(citizenId) {
+            if (!citizenId) return;
+            const form = document.getElementById('modal-toggle-lock-form');
+            form.action = `/admin/controle-borda/alternar-bloqueio/${citizenId}`;
+            form.submit();
+        }
+
+        // Close on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDetailsModal();
+            }
+        });
     </script>
 </x-app-layout>

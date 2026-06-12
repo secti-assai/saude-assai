@@ -354,10 +354,17 @@ class AdminManagementController extends Controller
             $statsQuery->whereRaw('LOWER(medication_name_raw) LIKE ?', [$needle]);
         }
 
-        $totalDispensations = (clone $statsQuery)->count();
-        $totalBypasses = (clone $statsQuery)->where('bypass_detected', true)->count();
-        $totalRegular = $totalDispensations - $totalBypasses;
-        $complianceRate = $totalDispensations > 0 ? round(($totalRegular / $totalDispensations) * 100, 1) : 100.0;
+        if ($viewType === 'citizen') {
+            $totalDispensations = (clone $statsQuery)->distinct('citizen_id')->count('citizen_id');
+            $totalBypasses = (clone $statsQuery)->where('bypass_detected', true)->distinct('citizen_id')->count('citizen_id');
+            $totalRegular = (clone $statsQuery)->where('bypass_detected', false)->distinct('citizen_id')->count('citizen_id');
+            $complianceRate = $totalDispensations > 0 ? round(($totalRegular / $totalDispensations) * 100, 1) : 100.0;
+        } else {
+            $totalDispensations = (clone $statsQuery)->count();
+            $totalBypasses = (clone $statsQuery)->where('bypass_detected', true)->count();
+            $totalRegular = $totalDispensations - $totalBypasses;
+            $complianceRate = $totalDispensations > 0 ? round(($totalRegular / $totalDispensations) * 100, 1) : 100.0;
+        }
 
         $uniqueLockedCitizens = (clone $statsQuery)
             ->where('bypass_detected', true)
@@ -492,6 +499,30 @@ class AdminManagementController extends Controller
                 ];
             });
 
+        $allPeriodRows = (clone $statsQuery)
+            ->with(['citizen'])
+            ->orderByDesc('dispensed_at')
+            ->limit(2000)
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'id' => (int) $row->id,
+                    'dispensed_at' => $row->dispensed_at ? $row->dispensed_at->format('Y-m-d H:i:s') : 'N/A',
+                    'dispensed_at_formatted' => $row->dispensed_at ? $row->dispensed_at->format('d/m/Y H:i') : 'N/A',
+                    'date_only' => $row->dispensed_at ? $row->dispensed_at->toDateString() : null,
+                    'external_dispense_number' => $row->external_dispense_number ?? 'N/A',
+                    'customer_name' => $row->citizen ? $row->citizen->full_name : $row->customer_name_raw,
+                    'cpf' => $row->citizen && $row->citizen->cpf ? preg_replace("/(\d{3})(\d{3})(\d{3})(\d{2})/", "$1.$2.$3-$4", $row->citizen->cpf) : 'N/A',
+                    'gov_level' => $row->citizen ? ($row->citizen->gov_assai_level ?? '0') : '0',
+                    'is_resident_assai' => $row->citizen ? ($row->citizen->is_resident_assai ? 'Assaí' : 'Pendente') : 'Pendente',
+                    'pharmacy_lock_flag' => $row->citizen ? (bool) $row->citizen->pharmacy_lock_flag : false,
+                    'citizen_id' => $row->citizen ? (int) $row->citizen->id : null,
+                    'medication_name' => $row->medication_name_raw,
+                    'quantity' => $row->quantity,
+                    'bypass_detected' => (bool) $row->bypass_detected,
+                ];
+            });
+
         return view('admin.border-control', [
             'date_start' => $dateStart,
             'date_end' => $dateEnd,
@@ -518,6 +549,7 @@ class AdminManagementController extends Controller
             ],
             'dailyData' => $dailyData,
             'medicationsReport' => $medicationsReport,
+            'allPeriodRows' => $allPeriodRows,
         ]);
     }
 
