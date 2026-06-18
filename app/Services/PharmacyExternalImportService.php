@@ -1555,12 +1555,9 @@ class PharmacyExternalImportService
 
         do {
             $hash = hash('sha256', $seed.'|'.$counter);
-            $digits = preg_replace('/[^0-9]/', '', $hash) ?? '';
-            if (strlen($digits) < 11) {
-                $digits = str_pad($digits, 11, (string) ($counter % 10));
-            }
-
-            $candidate = substr($digits, 0, 11);
+            $digits = preg_replace('/[^0-9A-Z]/', '', strtoupper($hash)) ?? '';
+            
+            $candidate = 'SYNC-' . substr($digits, 0, 6);
             $exists = Citizen::query()->where('cpf_hash', hash('sha256', $candidate))->exists();
             $counter++;
         } while ($exists && $counter < 1000);

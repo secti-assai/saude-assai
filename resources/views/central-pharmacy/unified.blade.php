@@ -33,7 +33,7 @@
                     <label class="sa-label">Buscar por CPF</label>
                     <input name="cpf" class="sa-input" placeholder="000.000.000-00" required>
                 </div>
-                <button type="submit" class="sa-btn-primary">Consultar Gov.Assaí</button>
+                <button type="submit" class="sa-btn-primary">Consulta à População à descrita de Assaí</button>
             </form>
         </div>
 
@@ -51,7 +51,7 @@
                 @if($govStatus !== 'FOUND' && $govStatus !== 'NOT_FOUND' && $govStatus !== 'AWAITING_ACS_VALIDATION')
                     <div class="mb-6 p-4 rounded-lg bg-amber-50 text-amber-800 border border-amber-300 flex items-center">
                         <div>
-                            <p class="font-bold text-lg">Nao foi possivel validar o Gov.Assai agora</p>
+                            <p class="font-bold text-lg">Nao foi possivel validar a Consulta à População à descrita de Assaí agora</p>
                             <p class="text-sm">{{ $info['gov_lookup_message'] ?? 'Tente novamente em instantes.' }}</p>
                         </div>
                     </div>
@@ -64,7 +64,7 @@
                                     está liberada para retirada.</p>
                             @else
                                 <p class="font-bold text-lg">Cidadão Regularizado (Nível {{ $info['level'] }})</p>
-                                <p class="text-sm border-l-4 border-emerald-500">A pessoa está regularizada com o Gov.Assaí e
+                                <p class="text-sm border-l-4 border-emerald-500">A pessoa está regularizada com a Consulta à População à descrita de Assaí e
                                     pode retirar a medicação.</p>
                             @endif
                         </div>
@@ -74,12 +74,12 @@
                     <div>
                         @if($govStatus === 'AWAITING_ACS_VALIDATION')
                             <p class="font-bold text-lg">Dispensação Bloqueada</p>
-                            <p class="text-sm">O cidadão não possui nível suficiente no Gov.Assaí. Contate a Central de
-                                Atendimento do Gov.Assaí.</p>
+                            <p class="text-sm">O cidadão não possui nível suficiente na Consulta à População à descrita de Assaí. Contate a Central de
+                                Atendimento da Consulta à População à descrita de Assaí.</p>
                         @else
                             <p class="font-bold text-lg">Dispensação Bloqueada</p>
-                            <p class="text-sm">O cidadão possui Nível {{ $info['level'] }} no Gov.Assaí. Contate a Central
-                                de Atendimento do Gov.Assaí para regularizar a situação.</p>
+                            <p class="text-sm">O cidadão possui Nível {{ $info['level'] }} na Consulta à População à descrita de Assaí. Contate a Central
+                                de Atendimento da Consulta à População à descrita de Assaí para regularizar a situação.</p>
                         @endif
                     </div>
                 </div>
@@ -122,12 +122,12 @@
                                 maxlength="255" required style="text-transform: uppercase;"
                                 oninput="this.value = this.value.toUpperCase();">
                             @if($govStatus === 'NOT_FOUND')
-                                <span class="text-xs text-amber-600">Não encontrado no Gov.Assaí. Insira os dados.</span>
+                                <span class="text-xs text-amber-600">Não encontrado na Consulta à População à descrita de Assaí. Insira os dados.</span>
                             @elseif($govStatus === 'AWAITING_ACS_VALIDATION')
                                 <span class="text-xs text-amber-600">Cadastro pendente de validação ACS. Confirme os
                                     dados.</span>
                             @elseif($govStatus !== 'FOUND')
-                                <span class="text-xs text-amber-600">Não foi possível confirmar os dados no Gov.Assaí
+                                <span class="text-xs text-amber-600">Não foi possível confirmar os dados na Consulta à População à descrita de Assaí
                                     agora.</span>
                             @endif
                         </div>

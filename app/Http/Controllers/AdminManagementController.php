@@ -7,8 +7,11 @@ use App\Models\User;
 use App\Models\WomenClinicAppointment;
 use App\Models\Citizen;
 use App\Models\PharmacyExternalImportRow;
+use App\Models\SystemLog;
+use App\Models\CentralPharmacyRequest;
 use App\Services\AuditService;
 use App\Services\PharmacyExternalImportService;
+use App\Services\GovAssaiService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -635,7 +638,7 @@ class AdminManagementController extends Controller
                 'Data Dispensacao',
                 'CPF Cidadao',
                 'Nome Cidadao',
-                'Nivel Gov.Assai',
+                'Nivel Consulta à População à descrita de Assaí',
                 'Status Residencia',
                 'Bloqueado Farmacia',
                 'Medicamento',
@@ -739,5 +742,75 @@ class AdminManagementController extends Controller
     private function isDoctorRole(string $role): bool
     {
         return in_array($role, [User::ROLE_MEDICO_CLINICA, User::ROLE_MEDICO_POLICLINICA], true);
+    }
+
+    public function fixSyntheticCitizen(Request $request, Citizen $citizen, GovAssaiService $govAssai)
+    {
+        $request->validate([
+            'cpf' => 'required|string',
+            'validation_date' => 'required|date'
+        ]);
+
+        $cpf = preg_replace('/\D+/', '', $request->input('cpf'));
+        if (strlen($cpf) !== 11) {
+            return response()->json(['success' => false, 'message' => 'CPF inválido.']);
+        }
+
+        $result = $govAssai->fetchCitizenByCpf($cpf);
+
+        if (!$result['success']) {
+            return response()->json(['success' => false, 'message' => 'Cidadão não encontrado no Gov.Assaí.']);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $mapped = $govAssai->mapCitizenDataForLocalCreate($result['data']);
+            $cpfHash = hash('sha256', $cpf);
+
+            $realCitizen = Citizen::updateOrCreate(
+                ['cpf_hash' => $cpfHash],
+                [
+                    'cpf' => $cpf,
+                    'full_name' => $mapped['name'] ?? 'NOME NAO INFORMADO',
+                    'social_name' => $mapped['social_name'],
+                    'birth_date' => $mapped['birth_date'] ?? '1900-01-01',
+                    'sexo' => $mapped['sexo'],
+                    'email' => $mapped['email'],
+                    'phone' => $mapped['phone'],
+                    'cns' => $mapped['cns'],
+                    'is_resident_assai' => $mapped['is_resident_assai'] ?? false,
+                ]
+            );
+
+            $dateLimit = Carbon::parse($request->input('validation_date'))->format('Y-m-d 00:00:00');
+
+            // Move CentralPharmacyRequest
+            CentralPharmacyRequest::where('citizen_id', $citizen->id)
+                ->update(['citizen_id' => $realCitizen->id]);
+
+            // Move PharmacyExternalImportRow
+            PharmacyExternalImportRow::where('citizen_id', $citizen->id)
+                ->update(['citizen_id' => $realCitizen->id]);
+
+            // Recalculate bypass based on the date Limit
+            PharmacyExternalImportRow::where('citizen_id', $realCitizen->id)
+                ->where('dispensed_at', '<', $dateLimit)
+                ->update(['bypass_detected' => true]);
+
+            PharmacyExternalImportRow::where('citizen_id', $realCitizen->id)
+                ->where('dispensed_at', '>=', $dateLimit)
+                ->update(['bypass_detected' => false]);
+
+            $citizen->delete();
+
+            DB::commit();
+
+            return response()->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Erro interno ao vincular: ' . $e->getMessage()]);
+        }
     }
 }

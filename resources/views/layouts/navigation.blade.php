@@ -7,6 +7,8 @@
         ['route' => 'admin.reports', 'match' => 'admin.reports', 'label' => 'Admin - Relatórios', 'icon' => 'chart-bar', 'roles' => 'admin'],
         ['route' => 'admin.border-control', 'match' => 'admin.border-control*', 'label' => 'Admin - Controle de Borda', 'icon' => 'globe-alt', 'roles' => 'admin'],
         ['route' => 'admin.users', 'match' => 'admin.users', 'label' => 'Admin - Usuários', 'icon' => 'users', 'roles' => 'admin'],
+        ['route' => 'import.stock', 'match' => 'import.stock*', 'label' => 'Admin - Imp. Estoque', 'icon' => 'document-text', 'roles' => 'admin'],
+        ['route' => 'admin.stock.analysis', 'match' => 'admin.stock.analysis*', 'label' => 'Admin - Anál. Estoque', 'icon' => 'chart-bar', 'roles' => 'admin'],
         ['route' => 'clinic-scheduler.index', 'match' => 'clinic-scheduler.*', 'label' => 'Agendador - Clínicas', 'icon' => 'document-text', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_SCHEDULE],
         ['route' => 'women-clinic.recepcao', 'match' => 'women-clinic.recepcao', 'label' => 'Clínica da Mulher - Recepção', 'icon' => 'clipboard-list', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_CHECKIN],
         ['route' => 'women-clinic.medico', 'match' => 'women-clinic.medico', 'label' => 'Clínica da Mulher - Médico', 'icon' => 'heart', 'permission' => \App\Models\User::PERMISSION_WOMEN_CLINIC_CHECKOUT],

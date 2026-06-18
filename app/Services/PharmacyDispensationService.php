@@ -45,7 +45,7 @@ class PharmacyDispensationService
 
             if ($level === null) {
                 $lookupStatus = 'ERROR';
-                $lookupMessage = 'Gov.Assai retornou dados sem nivel de acesso valido.';
+                $lookupMessage = 'Consulta à População à descrita de Assaí retornou dados sem nivel de acesso valido.';
             }
         }
 
@@ -80,7 +80,7 @@ class PharmacyDispensationService
             return [
                 'success' => false,
                 'action' => 'RETRY_GOV_LOOKUP',
-                'message' => (string) ($info['gov_lookup_message'] ?? 'Nao foi possivel consultar o Gov.Assai. Tente novamente.'),
+                'message' => (string) ($info['gov_lookup_message'] ?? 'Nao foi possivel consultar a Consulta à População à descrita de Assaí. Tente novamente.'),
             ];
         }
 
@@ -166,7 +166,7 @@ class PharmacyDispensationService
             return [
                 'success' => false,
                 'action' => 'BLOCKED',
-                'message' => 'BLOQUEADO: O cidadao nao possui Nivel 2 no Gov.Assai nem aprovacao do ACS. Dispensacao nao autorizada.',
+                'message' => 'BLOQUEADO: O cidadao nao possui Nivel 2 na Consulta à População à descrita de Assaí nem aprovacao do ACS. Dispensacao nao autorizada.',
             ];
         }
     }
@@ -183,7 +183,7 @@ class PharmacyDispensationService
             return [
                 'success' => false,
                 'action' => 'RETRY_GOV_LOOKUP',
-                'message' => (string) ($info['gov_lookup_message'] ?? 'Nao foi possivel consultar o Gov.Assai. Tente novamente.'),
+                'message' => (string) ($info['gov_lookup_message'] ?? 'Nao foi possivel consultar a Consulta à População à descrita de Assaí. Tente novamente.'),
             ];
         }
 
@@ -208,7 +208,7 @@ class PharmacyDispensationService
         }
 
         $category = $this->normalizeDispenseCategory($data['dispense_category'] ?? null);
-        $refusalReason = 'Dispensacao bloqueada por nivel insuficiente no Gov.Assai (cidadao ja notificado).';
+        $refusalReason = 'Dispensacao bloqueada por nivel insuficiente na Consulta à População à descrita de Assaí (cidadao ja notificado).';
 
         $pharmacyRequest = CentralPharmacyRequest::create([
             'citizen_id' => $citizen->id,

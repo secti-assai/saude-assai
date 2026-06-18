@@ -37,7 +37,7 @@
             <div class="flex justify-between items-center mt-4">
                 <form method="POST" action="{{ route('admin.pharmacy-import.sweep') }}" class="inline-block">
                     @csrf
-                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-slate-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500" title="Verifica os registros de bypass no Gov.Assaí para atualizar o nível do cidadão.">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-slate-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500" title="Verifica os registros de bypass na Consulta à População à descrita de Assaí para atualizar o nível do cidadão.">
                         Sincronizar Níveis de Bypass
                     </button>
                 </form>

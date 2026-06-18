@@ -96,7 +96,7 @@ class CitizenEligibilityService
         if ($level === null || (int) $level < 2) {
             return [
                 'eligible' => false,
-                'message' => 'Cidadao sem nivel 2 no Gov.Assai. Atendimento nao autorizado. Solicitar ao cidadão para que entre em contato com a Secretaria de Ciência, Tecnologia e Inovação para regularizar sua situação.',
+                'message' => 'Cidadao sem nivel 2 na Consulta à População à descrita de Assaí. Atendimento nao autorizado. Solicitar ao cidadão para que entre em contato com a Secretaria de Ciência, Tecnologia e Inovação para regularizar sua situação.',
                 'residence_status' => 'RESIDENTE',
                 'gov_assai_level' => $level,
                 'citizen' => null,
@@ -111,7 +111,7 @@ class CitizenEligibilityService
         if (! $citizen) {
             return [
                 'eligible' => false,
-                'message' => 'Gov.Assai retornou dados incompletos do cidadao.',
+                'message' => 'Consulta à População à descrita de Assaí retornou dados incompletos do cidadao.',
                 'residence_status' => 'PENDENTE',
                 'gov_assai_level' => $level,
                 'citizen' => null,
@@ -123,7 +123,7 @@ class CitizenEligibilityService
 
         return [
             'eligible' => true,
-            'message' => 'Cidadao elegivel com Gov.Assai nivel 2.',
+            'message' => 'Cidadao elegivel com Consulta à População à descrita de Assaí nivel 2.',
             'residence_status' => 'RESIDENTE',
             'gov_assai_level' => $level,
             'citizen' => $citizen,

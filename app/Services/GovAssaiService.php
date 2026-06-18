@@ -43,7 +43,7 @@ class GovAssaiService
             return [
                 'status' => 503,
                 'success' => false,
-                'message' => 'Integracao Gov.Assai nao configurada.',
+                'message' => 'Integracao Consulta à População à descrita de Assaí nao configurada.',
                 'error_code' => 'GOV_ASSAI_NOT_CONFIGURED',
                 'data' => null,
             ];
@@ -62,7 +62,7 @@ class GovAssaiService
             return [
                 'status' => 503,
                 'success' => false,
-                'message' => 'Gov.Assai indisponivel no momento.',
+                'message' => 'Consulta à População à descrita de Assaí indisponivel no momento.',
                 'error_code' => 'GOV_ASSAI_UNAVAILABLE',
                 'data' => null,
             ];
@@ -75,7 +75,7 @@ class GovAssaiService
                 return [
                     'status' => $response->status(),
                     'success' => false,
-                    'message' => 'Gov.Assai retornou resposta invalida (nao JSON). Verifique autenticacao/endpoint da API.',
+                    'message' => 'Consulta à População à descrita de Assaí retornou resposta invalida (nao JSON). Verifique autenticacao/endpoint da API.',
                     'error_code' => 'GOV_ASSAI_INVALID_RESPONSE',
                     'data' => null,
                 ];
@@ -97,7 +97,7 @@ class GovAssaiService
             return [
                 'status' => $response->status(),
                 'success' => false,
-                'message' => 'Falha ao consultar Gov.Assai (resposta nao JSON).',
+                'message' => 'Falha ao consultar Consulta à População à descrita de Assaí (resposta nao JSON).',
                 'error_code' => Str::upper('HTTP_'.$response->status()),
                 'data' => null,
             ];
@@ -106,7 +106,7 @@ class GovAssaiService
         return [
             'status' => $response->status(),
             'success' => false,
-            'message' => (string) Arr::get($payload, 'message', 'Falha ao consultar Gov.Assai'),
+            'message' => (string) Arr::get($payload, 'message', 'Falha ao consultar Consulta à População à descrita de Assaí'),
             'error_code' => Arr::get($payload, 'error_code', Str::upper('HTTP_'.$response->status())),
             'data' => null,
         ];

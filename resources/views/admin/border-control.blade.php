@@ -3,7 +3,7 @@
         <div class="sa-page-header flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <h2 class="sa-page-title">Administração - Controle de Borda</h2>
-                <p class="sa-page-subtitle">Auditoria e cruzamento de dispensações da Betha vs. validações internas (Gov.Assaí Nível 2 / ACS)</p>
+                <p class="sa-page-subtitle">Auditoria e cruzamento de dispensações da Betha vs. validações internas (Consulta à População à descrita de Assaí Nível 2 / ACS)</p>
             </div>
             <div>
                 <a href="{{ route('admin.border-control.export', request()->query()) }}" class="sa-btn sa-btn-secondary inline-flex items-center gap-2">
@@ -94,7 +94,7 @@
                 <p class="sa-kpi-label text-emerald-600">{{ ($view_type ?? 'item') === 'citizen' ? 'Cidadãos Regularizados' : 'Fluxo Regular' }}</p>
                 <p class="sa-kpi-value text-emerald-700">{{ $stats['regular'] }}</p>
                 <div class="text-[10px] text-emerald-500 mt-1">
-                    Gov.Assaí: <strong>{{ ($view_type ?? 'item') === 'citizen' ? $stats['citizens_level_2'] : $stats['dispensations_gov_assai'] }}</strong> · ACS: <strong>{{ ($view_type ?? 'item') === 'citizen' ? $stats['citizens_validated_acs'] : $stats['dispensations_acs'] }}</strong>
+                    Consulta à População à descrita de Assaí: <strong>{{ ($view_type ?? 'item') === 'citizen' ? $stats['citizens_level_2'] : $stats['dispensations_gov_assai'] }}</strong> · ACS: <strong>{{ ($view_type ?? 'item') === 'citizen' ? $stats['citizens_validated_acs'] : $stats['dispensations_acs'] }}</strong>
                 </div>
             </div>
 
@@ -262,6 +262,11 @@
                                                         <span class="sa-badge @if($row->citizen->is_resident_assai) sa-badge-info @else sa-badge-gray @endif">
                                                             {{ $row->citizen->is_resident_assai ? 'Assaí' : 'Pendente' }}
                                                         </span>
+                                                        @if($row->citizen->birth_date && $row->citizen->birth_date->format('Y-m-d') === '1900-01-01')
+                                                            <button type="button" class="text-[10px] ml-1 bg-blue-50 text-blue-600 hover:bg-blue-100 px-2 py-0.5 rounded border border-blue-200 font-semibold uppercase tracking-wider" onclick="openManualSyncModal({{ $row->citizen->id }}, '{{ addslashes($row->citizen->full_name) }}')">
+                                                                Vincular CPF
+                                                            </button>
+                                                        @endif
                                                     </div>
                                                 @else
                                                     <div class="font-bold text-gray-900 leading-tight">
@@ -323,6 +328,11 @@
                                                         <span class="sa-badge @if($row->citizen->is_resident_assai) sa-badge-info @else sa-badge-gray @endif">
                                                             {{ $row->citizen->is_resident_assai ? 'Assaí' : 'Pendente' }}
                                                         </span>
+                                                        @if($row->citizen->birth_date && $row->citizen->birth_date->format('Y-m-d') === '1900-01-01')
+                                                            <button type="button" class="text-[10px] ml-1 bg-blue-50 text-blue-600 hover:bg-blue-100 px-2 py-0.5 rounded border border-blue-200 font-semibold uppercase tracking-wider" onclick="openManualSyncModal({{ $row->citizen->id }}, '{{ addslashes($row->citizen->full_name) }}')">
+                                                                Vincular CPF
+                                                            </button>
+                                                        @endif
                                                     </div>
                                                 @else
                                                     <div class="font-bold text-gray-900 leading-tight">
@@ -975,7 +985,128 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeDetailsModal();
+                closeManualSyncModal();
             }
         });
+
+        // --- Manual Sync Modal Logic ---
+        let currentSyntheticCitizenId = null;
+
+        function openManualSyncModal(citizenId, citizenName) {
+            currentSyntheticCitizenId = citizenId;
+            document.getElementById('sync-citizen-name').textContent = citizenName;
+            document.getElementById('sync-cpf').value = '';
+            
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('sync-date').value = today;
+            
+            document.getElementById('manual-sync-modal').classList.remove('hidden');
+            document.getElementById('manual-sync-backdrop').classList.add('is-active');
+            
+            setTimeout(() => {
+                document.getElementById('manual-sync-box').classList.add('is-active');
+                document.getElementById('sync-cpf').focus();
+            }, 50);
+        }
+
+        function closeManualSyncModal() {
+            document.getElementById('manual-sync-box').classList.remove('is-active');
+            document.getElementById('manual-sync-backdrop').classList.remove('is-active');
+            setTimeout(() => {
+                document.getElementById('manual-sync-modal').classList.add('hidden');
+                currentSyntheticCitizenId = null;
+            }, 300);
+        }
+
+        function submitManualSync() {
+            if (!currentSyntheticCitizenId) return;
+            
+            const cpf = document.getElementById('sync-cpf').value.replace(/\D/g, '');
+            const validationDate = document.getElementById('sync-date').value;
+            
+            if (cpf.length !== 11) {
+                alert("Por favor, digite um CPF válido com 11 dígitos.");
+                return;
+            }
+            if (!validationDate) {
+                alert("Por favor, informe a data de validação.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-sync');
+            btn.disabled = true;
+            btn.innerHTML = 'Vinculando... <svg class="animate-spin ml-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+            fetch(`/admin/border-control/fix-synthetic/${currentSyntheticCitizenId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    cpf: cpf,
+                    validation_date: validationDate
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Cidadão vinculado e histórico recalculado com sucesso!');
+                    window.location.reload();
+                } else {
+                    alert('Erro: ' + (data.message || 'Falha ao processar vinculação.'));
+                    btn.disabled = false;
+                    btn.innerHTML = 'Confirmar Vinculação';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Erro de comunicação com o servidor.');
+                btn.disabled = false;
+                btn.innerHTML = 'Confirmar Vinculação';
+            });
+        }
     </script>
+
+    <!-- Modal HTML for Manual Sync -->
+    <div id="manual-sync-modal" class="fixed inset-0 z-50 hidden">
+        <div class="sa-modal-backdrop" id="manual-sync-backdrop" onclick="closeManualSyncModal()"></div>
+        <div class="sa-modal-wrapper">
+            <div class="sa-modal-box" id="manual-sync-box" style="max-width: 28rem;">
+                <div class="sa-modal-header" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                    <div>
+                        <h3 class="sa-modal-title">Vincular CPF</h3>
+                        <p class="sa-modal-subtitle">Corrigir bypass sintético</p>
+                    </div>
+                    <button onclick="closeManualSyncModal()" class="sa-modal-close">&times;</button>
+                </div>
+                
+                <div class="sa-modal-body space-y-4">
+                    <p class="text-sm text-gray-600">
+                        Você está vinculando as dispensações de:<br>
+                        <strong id="sync-citizen-name" class="text-gray-900 text-lg"></strong>
+                    </p>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">CPF Oficial do Cidadão</label>
+                        <input type="text" id="sync-cpf" class="sa-input w-full" placeholder="000.000.000-00">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Data de Validação Oficial (ACS/Nível 2)</label>
+                        <input type="date" id="sync-date" class="sa-input w-full">
+                        <p class="text-[10px] text-gray-500 mt-1">Dispensações após essa data terão o bypass perdoado.</p>
+                    </div>
+                </div>
+                
+                <div class="sa-modal-footer flex justify-between items-center">
+                    <button onclick="closeManualSyncModal()" class="text-gray-500 hover:text-gray-700 text-sm font-semibold">Cancelar</button>
+                    <button id="btn-submit-sync" onclick="submitManualSync()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition">
+                        Confirmar Vinculação
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </x-app-layout>

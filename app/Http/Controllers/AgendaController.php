@@ -12,10 +12,26 @@ class AgendaController extends Controller
     {
         if ($clinicType === WomenClinicAppointment::CLINIC_WOMEN) {
             if ($specialty === WomenClinicAppointment::SPECIALTY_ORTOPEDIA) {
-                // 25 pessoas das 07h30 as 09h00 (qualquer dia que tenha agenda aberta)
-                return [
-                    ['time' => '07:30', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '07:30')],
-                ];
+                $weekOfMonth = (int) ceil($date->day / 7);
+
+                // MARCIO ORTOPEDISTA - TODA SEGUNDA-FEIRA, max 4 segundas (max 100 pacientes/mes)
+                if ($date->dayOfWeek === Carbon::MONDAY && $weekOfMonth <= 4) {
+                    return [
+                        ['time' => '07:30', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '07:30')],
+                    ];
+                }
+
+                // BRUNO ORTOPEDISTA - 2 primeiras QUARTAs do mes (max 100 pacientes/mes) A partir de Julho/2026
+                if ($date->format('Y-m') >= '2026-07') {
+                    if ($date->dayOfWeek === Carbon::WEDNESDAY && $weekOfMonth <= 2) {
+                        return [
+                            ['time' => '07:30', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '07:30')],
+                            ['time' => '13:00', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '13:00')],
+                        ];
+                    }
+                }
+
+                return []; // Bloqueia nos outros dias ou alem do limite de semanas
             }
             if ($specialty === WomenClinicAppointment::SPECIALTY_PSIQUIATRIA) {
                 // 25 pessoas das 08h00 as 13h00

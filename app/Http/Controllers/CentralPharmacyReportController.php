@@ -77,6 +77,21 @@ class CentralPharmacyReportController extends Controller
             ['filters' => $export['filters']]
         );
 
+        // Aumenta os limites temporariamente para suportar milhares de linhas no DomPDF
+        ini_set('max_execution_time', '600');
+        ini_set('memory_limit', '2048M');
+
+        // Limite máximo de registros no PDF para evitar estouro de RAM do DomPDF (Fatal Error 2GB)
+        $maxPdfRows = 1000;
+        $totalRows = count($export['data']['rows']);
+        if ($totalRows > $maxPdfRows) {
+            $export['data']['rows'] = array_slice($export['data']['rows'], 0, $maxPdfRows);
+            $export['data']['limit_reached'] = true;
+            $export['data']['total_rows_omitted'] = $totalRows - $maxPdfRows;
+        } else {
+            $export['data']['limit_reached'] = false;
+        }
+
         $pdf = Pdf::loadView('reports.pdf.pharmacy', $export['data'])
             ->setPaper('a4', 'landscape');
 

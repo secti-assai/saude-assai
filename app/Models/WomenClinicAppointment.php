@@ -189,8 +189,9 @@ class WomenClinicAppointment extends Model
     public static function getSlotCapacity(string $clinicType, string $specialty, \Carbon\Carbon $date, string $timeStr): int
     {
         if ($clinicType === self::CLINIC_WOMEN) {
-            if ($specialty === self::SPECIALTY_ORTOPEDIA && $timeStr === '07:30') {
-                return 25;
+            if ($specialty === self::SPECIALTY_ORTOPEDIA) {
+                if ($timeStr === '07:30') return 25;
+                if ($timeStr === '13:00') return 25;
             }
             if ($specialty === self::SPECIALTY_PSIQUIATRIA && $timeStr === '08:00') {
                 return 25;

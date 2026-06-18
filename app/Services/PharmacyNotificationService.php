@@ -17,15 +17,15 @@ class PharmacyNotificationService
     {
         $phone = (string) ($citizen->phone ?? '');
 
-        $message = "Seu nivel atual no Gov.Assai e {$level}. Para continuar retirando medicamentos nas proximas vezes, regularize para nivel 2. "
-            ."\n\n1) Cadastro Gov.Assai - Nivel 1: acesse https://gov.assai.pr.gov.br e clique em Cadastrar conta Gov.Assai. "
+        $message = "Seu nivel atual na Consulta à População à descrita de Assaí e {$level}. Para continuar retirando medicamentos nas proximas vezes, regularize para nivel 2. "
+            ."\n\n1) Cadastro Consulta à População à descrita de Assaí - Nivel 1: acesse https://gov.assai.pr.gov.br e clique em Cadastrar conta Consulta à População à descrita de Assaí. "
             ."\n\n2) Elevacao para nivel 2: compareca na Secretaria de Ciencia, Tecnologia e Inovacao - Agencia de Inovacao do Vale do Sol (Rua Edgar Bardal, s/n, anexo ao CEEP, Assai/PR). "
             ."\n\nDocumentos maiores de 18: CPF, CNH (se houver), comprovante de residencia ate 90 dias, certidao de casamento/uniao estavel (quando aplicavel), comprovante CadUnico/NIS (se houver), CNS. "
             ."\n\nDocumentos menores: responsavel legal nivel 2, CPF do menor, certidao de nascimento ou guarda/tutela/curatela, cartao de vacinacao (obrigatorio ate 12 anos), comprovante de escolaridade e NIS (se houver).";
 
         $this->notifications->enqueueWhatsapp(
             $phone,
-            'Farmacia Central - Regularizacao Gov.Assai',
+            'Farmacia Central - Regularizacao Consulta à População à descrita de Assaí',
             $message,
             now(),
             'pharmacy-regularization-'.$eventKey

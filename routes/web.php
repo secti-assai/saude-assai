@@ -9,6 +9,8 @@ use App\Http\Controllers\CentralPharmacyUnifiedController;
 use App\Http\Controllers\PoliclinicaController;
 use App\Http\Controllers\PoliclinicaReportController;
 use App\Http\Controllers\PrescriptionMedicationController;
+use App\Http\Controllers\StockAnalysisController;
+use App\Http\Controllers\StockImportController;
 use App\Http\Controllers\WomenClinicController;
 use App\Http\Controllers\WomenClinicPublicController;
 use App\Http\Controllers\WomenClinicReportController;
@@ -311,6 +313,10 @@ Route::middleware(['auth', 'module.context'])->group(function () {
         ->middleware('role:admin')
         ->name('admin.border-control.toggle-lock');
 
+    Route::post('/admin/border-control/fix-synthetic/{citizen}', [AdminManagementController::class, 'fixSyntheticCitizen'])
+        ->middleware('role:admin')
+        ->name('admin.border-control.fix-synthetic');
+
     Route::post('/admin/farmacia-central/importar-dispensacoes', [AdminManagementController::class, 'importPharmacyExternalDispensations'])
         ->middleware('role:admin')
         ->name('admin.pharmacy-import.store');
@@ -318,6 +324,18 @@ Route::middleware(['auth', 'module.context'])->group(function () {
     Route::post('/admin/farmacia-central/varredura-bypasses', [AdminManagementController::class, 'triggerBypassSweep'])
         ->middleware('role:admin')
         ->name('admin.pharmacy-import.sweep');
+
+    Route::get('/admin/farmacia-central/importar-estoque', [StockImportController::class, 'index'])
+        ->middleware('role:admin')
+        ->name('import.stock');
+
+    Route::post('/admin/farmacia-central/importar-estoque', [StockImportController::class, 'store'])
+        ->middleware('role:admin')
+        ->name('import.stock.store');
+
+    Route::get('/admin/farmacia-central/analise-estoque', [StockAnalysisController::class, 'index'])
+        ->middleware('role:admin')
+        ->name('admin.stock.analysis');
 
     Route::fallback(function () {
         return redirect()->route('dashboard');
