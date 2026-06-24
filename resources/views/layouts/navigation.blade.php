@@ -18,6 +18,9 @@
         ['route' => 'policlinica.reports', 'match' => 'policlinica.reports', 'label' => 'Policlínica - Relatórios', 'icon' => 'chart-bar', 'permission' => \App\Models\User::PERMISSION_POLICLINICA_REPORTS],
         ['route' => 'central-pharmacy.unified', 'match' => 'central-pharmacy.unified*', 'label' => 'Farmácia Central', 'icon' => 'beaker', 'permission' => \App\Models\User::PERMISSION_CENTRAL_PHARMACY],
         ['route' => 'central-pharmacy.reports', 'match' => 'central-pharmacy.reports', 'label' => 'Farmácia - Relatórios', 'icon' => 'chart-bar', 'permission' => \App\Models\User::PERMISSION_CENTRAL_PHARMACY_REPORTS],
+        ['route' => 'triagem.fila', 'match' => 'triagem.fila', 'label' => 'Atendimento - Fila', 'icon' => 'clipboard-list', 'permission' => \App\Models\User::PERMISSION_TRIAGEM_UBS],
+        ['route' => 'triagem.cidadao', 'match' => 'triagem.cidadao', 'label' => 'Atendimento - Buscar Cidadão', 'icon' => 'users', 'permission' => \App\Models\User::PERMISSION_TRIAGEM_UBS],
+        ['route' => 'triagem.cidadao.cadastro', 'match' => 'triagem.cidadao.cadastro', 'label' => 'Atendimento - Cadastrar Cidadão', 'icon' => 'document-text', 'permission' => \App\Models\User::PERMISSION_TRIAGEM_UBS],
     ];
 @endphp
 

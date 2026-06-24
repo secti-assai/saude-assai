@@ -14,6 +14,7 @@ use App\Http\Controllers\StockImportController;
 use App\Http\Controllers\WomenClinicController;
 use App\Http\Controllers\WomenClinicPublicController;
 use App\Http\Controllers\WomenClinicReportController;
+use App\Http\Controllers\TriagemController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -78,6 +79,10 @@ Route::middleware(['auth', 'module.context'])->group(function () {
 
         if ($user->hasPermission(User::PERMISSION_CENTRAL_PHARMACY_REPORTS)) {
             return redirect()->route('central-pharmacy.reports');
+        }
+
+        if ($user->hasPermission(User::PERMISSION_TRIAGEM_UBS)) {
+            return redirect()->route('triagem.fila');
         }
 
         abort(403, 'Perfil sem area operacional configurada.');
@@ -210,6 +215,31 @@ Route::middleware(['auth', 'module.context'])->group(function () {
     Route::get('/clinica-mulher/relatorios/exportar-pdf', [WomenClinicReportController::class, 'exportPdf'])
         ->middleware('permission:women_clinic.reports')
         ->name('women-clinic.reports.export-pdf');
+
+    // ─── TRIAGEM UBS ────────────────────────────────────────────────────────────
+    Route::get('/triagem/fila', [TriagemController::class, 'filaArea'])
+        ->middleware('permission:triagem.ubs')
+        ->name('triagem.fila');
+
+    Route::get('/triagem/cidadao', [TriagemController::class, 'cidadaoArea'])
+        ->middleware('permission:triagem.ubs')
+        ->name('triagem.cidadao');
+
+    Route::get('/triagem/cidadao/cadastrar', [TriagemController::class, 'cadastrarArea'])
+        ->middleware('permission:triagem.ubs')
+        ->name('triagem.cidadao.cadastro');
+
+    Route::post('/triagem/cidadao/cadastrar', [TriagemController::class, 'cadastrarCidadao'])
+        ->middleware('permission:triagem.ubs')
+        ->name('triagem.cidadao.cadastrar');
+
+    Route::post('/triagem/atendimento/{triagem}/iniciar', [TriagemController::class, 'iniciarAtendimento'])
+        ->middleware('permission:triagem.ubs')
+        ->name('triagem.atendimento.iniciar');
+
+    Route::post('/triagem/atendimento/{triagem}/finalizar', [TriagemController::class, 'finalizarAtendimento'])
+        ->middleware('permission:triagem.ubs')
+        ->name('triagem.atendimento.finalizar');
 
     // Legacy central pharmacy routes kept for backward compatibility with
     // existing flows/tests and profile redirects (recepcao_farmacia/atendimento_farmacia).
@@ -354,3 +384,11 @@ Route::get('/painel/{unit}', [CallController::class, 'panel'])
 Route::post('/calls/{attendance}', [CallController::class, 'call'])
     ->middleware(['auth', 'module.context']);
 
+Route::get('/triagem/cidadao/{triagemPaciente}/historico',
+    [TriagemController::class, 'historico']
+)->name('triagem.cidadao.historico');
+
+Route::get('/triagem/historico/{triagem}', [TriagemController::class, 'historico'])->name('triagem.historico');
+
+Route::post('/triagem/novo-atendimento/{triagem}', [TriagemController::class, 'novoAtendimentoExistente'])
+    ->name('triagem.atendimento.novo');

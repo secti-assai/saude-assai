@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\HealthUnit;
 use App\Models\User;
 use App\Models\WomenClinicAppointment;
@@ -29,6 +28,18 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Administrador de Teste',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_ADMIN,
+                'health_unit_id' => $clinicaUnitId,
+                'email_verified_at' => now(),
+            ]
+        );
+
+        // Triagem (para testes operacionais de triagem)
+        User::updateOrCreate(
+            ['email' => 'atendimento.teste@saudeassai.local'],
+            [
+                'name' => 'Triador de Teste',
+                'password' => Hash::make('password'),
+                'role' => User::ROLE_TRIAGEM,
                 'health_unit_id' => $clinicaUnitId,
                 'email_verified_at' => now(),
             ]
