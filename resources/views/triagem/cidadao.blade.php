@@ -175,7 +175,7 @@
                             </svg>
                             Cadastrar cidadão
                         </a>
-                    </div>
+                    </div>\
                 </div>
             @else
                 <div class="border-t border-gray-100 p-5 text-sm text-gray-500 italic">

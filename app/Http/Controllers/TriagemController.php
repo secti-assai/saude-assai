@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\TriagemPaciente;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TriagemController extends Controller
 {
@@ -164,11 +165,105 @@ class TriagemController extends Controller
 
     public function cadastrarArea(Request $request)
     {
-        return view('triagem.cidadao.cadastro', [
+        $sexoOptions = [
+            'M' => 'Masculino',
+            'F' => 'Feminino',
+            'O' => 'Outro',
+        ];
+
+        $racaCorOptions = [
+            'BRANCA' => 'Branca',
+            'PRETA' => 'Preta',
+            'PARDA' => 'Parda',
+            'AMARELA' => 'Amarela',
+            'INDIGENA' => 'Indígena',
+            'SEM_INFORMACAO' => 'Sem Informação',
+        ];
+
+        return view('triagem.cadastro', [
             'busca' => $request->busca ?? '',
             'dataNasc' => $request->data_nascimento ?? '',
             'nomeMae' => $request->nome_mae ?? '',
             'municipioNasc' => $request->municipio_nascimento ?? '',
+            'sexoOptions' => $sexoOptions,
+            'racaCorOptions' => $racaCorOptions,
         ]);
+    }
+
+    /**
+     * Processa o formulário de cadastro de novo cidadão
+     */
+     public function cadastrarCidadao(Request $request)
+    {
+        // Validação dos campos
+        $validated = $request->validate([
+            'full_name' => 'required|string|max:255',
+            'cpf' => 'nullable|string|max:14',
+            'cns' => 'nullable|string|max:18',
+            'birth_date' => 'required|date',
+            'sexo' => 'required|in:M,F,O',
+            'raca_cor' => 'required|in:BRANCA,PRETA,PARDA,AMARELA,INDIGENA,SEM_INFORMACAO',
+            'nome_mae' => 'required|string|max:255',
+            'municipio_nascimento' => 'required|string|max:255',
+        ]);
+
+        // Validação personalizada: CPF ou CNS obrigatório
+        if (empty($validated['cpf']) && empty($validated['cns'])) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['cpf' => 'É necessário informar pelo menos o CPF ou o CNS.']);
+        }
+
+        // Log dos dados recebidos (ANTES de processar) ← MOVER PARA ANTES DO TRY
+        Log::info('Tentativa de cadastro de cidadão', [
+            'dados' => $validated,
+            'usuario' => auth()->user()->name ?? 'desconhecido',
+            'ip' => $request->ip()
+        ]);
+
+        try {
+            // Limpar formatação
+            $cpf = !empty($validated['cpf']) ? preg_replace('/\D/', '', $validated['cpf']) : null;
+            $cns = !empty($validated['cns']) ? preg_replace('/\D/', '', $validated['cns']) : null;
+
+            // Criar o novo paciente
+            $paciente = TriagemPaciente::create([
+                'full_name' => strtoupper($validated['full_name']),
+                'cpf' => $cpf,
+                'cns' => $cns,
+                'birth_date' => $validated['birth_date'],
+                'sexo' => $validated['sexo'],
+                'raca_cor' => $validated['raca_cor'],
+                'nome_mae' => strtoupper($validated['nome_mae']),
+                'municipio_nascimento' => strtoupper($validated['municipio_nascimento']),
+                'status' => 'AGUARDANDO',
+                'arrived_at' => now(),
+            ]);
+
+            // Log de sucesso
+            Log::info('Cidadão cadastrado com sucesso', [
+                'paciente_id' => $paciente->id,
+                'nome' => $paciente->full_name
+            ]);
+
+            return redirect()
+                ->route('triagem.fila')
+                ->with('success', 'Cidadão cadastrado e adicionado à fila com sucesso!');
+
+        } catch (\Exception $e) {
+            // Log do erro ← AGORA VAI FUNCIONAR
+            Log::error('Erro ao cadastrar cidadão', [
+                'erro' => $e->getMessage(),
+                'linha' => $e->getLine(),
+                'arquivo' => $e->getFile(),
+                'dados' => $validated
+            ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Erro ao cadastrar cidadão: ' . $e->getMessage());
+        }
     }
 }
