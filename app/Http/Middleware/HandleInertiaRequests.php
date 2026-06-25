@@ -50,6 +50,7 @@ class HandleInertiaRequests extends Middleware
                         'medico_policlinica' => 'policlinic_doctor',
                         'recepcao_farmacia' => 'pharmacy_reception',
                         'atendimento_farmacia' => 'pharmacy_attendant',
+                        'triagem' => 'triage_nurse',
                         default => 'citizen',
                     }
                 ] : null,
