@@ -1,0 +1,220 @@
+Tags relacionadas a pacientes/clientes:
+
+=== Agendas - Configurações de Usuários ===
+  GET /agendaConfiguracaoUsuarios - Obtem uma lista de registros de configurações paginados
+  PUT /agendaConfiguracaoUsuarios - Atualiza um registo de configuração
+  POST /agendaConfiguracaoUsuarios - Cria um registo de configuração
+  DELETE /agendaConfiguracaoUsuarios - Remove um registro de configuração
+  PATCH /agendaConfiguracaoUsuarios - Atualiza um registro de configuração parcialmente
+  GET /agendaConfiguracaoUsuarios/{id} - Obtem um registro de configuração pelo id
+
+=== Agendas - Usuários x Unidades (permissões para agenda) ===
+  GET /usuarioAgendarUnidades - Obtem uma lista de registros de vínculos paginados
+  PUT /usuarioAgendarUnidades - Atualiza um registo de vínculo
+  POST /usuarioAgendarUnidades - Cria um registo de vínculo
+  DELETE /usuarioAgendarUnidades - Remove um registro de vínculo
+  PATCH /usuarioAgendarUnidades - Atualiza um registro de vínculo parcialmente
+  GET /usuarioAgendarUnidades/{id} - Obtem um registro de vínculo pelo id
+
+=== Beneficios - Beneficios Usuarios Dispensa ===
+  GET /beneficioUsuarioDispensa - Obtem uma lista de registros de benefício usuários dispensas paginados
+  PUT /beneficioUsuarioDispensa - Atualiza um registo de benefício usuário dispensa
+  POST /beneficioUsuarioDispensa - Cria um registo de benefício usuário dispensa
+  DELETE /beneficioUsuarioDispensa - Remove um registro de benefício usuário dispensa
+  PATCH /beneficioUsuarioDispensa - Atualiza um registro de benefício usuário dispensa parcialmente
+  GET /beneficioUsuarioDispensa/{id} - Obtem um registro de benefício usuário dispensa pelo id
+
+=== Cadatros - Pessoas ===
+  PUT /pessoas - Atualiza um registo de pessoa
+  POST /pessoas - Cria um registo de pessoa
+  DELETE /pessoas - Remove um registro de pessoa
+  PATCH /pessoas - Atualiza um registro de pessoa parcialmente
+  GET /pessoas/{id} - Obtem um registro de pessoa pelo id
+
+=== Cadastros - Clientes x Alergias Principios Ativos ===
+  GET /clienteAlergiasPrincipiosAtivos - Obtem uma lista de registros de alergiasPrincipiosAtivos paginados
+  PUT /clienteAlergiasPrincipiosAtivos - Atualiza um registo de alergiaPrincipioAtivo
+  POST /clienteAlergiasPrincipiosAtivos - Cria um registo de alergiaPrincipioAtivo
+  DELETE /clienteAlergiasPrincipiosAtivos - Remove um registro de alergiaPrincipioAtivo
+  PATCH /clienteAlergiasPrincipiosAtivos - Atualiza um registro de alergiaPrincipioAtivo parcialmente
+  GET /clienteAlergiasPrincipiosAtivos/{id} - Obtem um registro de alergiaPrincipioAtivo pelo id
+
+=== Cadastros - Clientes x Alergias ===
+  GET /clienteAlergias - Obtem uma lista de registros de alergias paginados
+  PUT /clienteAlergias - Atualiza um registo de alergia
+  POST /clienteAlergias - Cria um registo de alergia
+  DELETE /clienteAlergias - Remove um registro de alergia
+  PATCH /clienteAlergias - Atualiza um registro de alergia parcialmente
+  GET /clienteAlergias/{id} - Obtem um registro de alergia pelo id
+
+=== Cadastros - Clientes x Anexos ===
+  GET /clienteAnexos - Obtem uma lista de registros de clientesAnexos paginados
+  PUT /clienteAnexos - Atualiza um registo de clienteAnexo
+  POST /clienteAnexos - Cria um registo de clienteAnexo
+  DELETE /clienteAnexos - Remove um registro de clienteAnexo
+  PATCH /clienteAnexos - Atualiza um registro de clienteAnexo parcialmente
+  GET /clienteAnexos/{id} - Obtem um registro de clienteAnexo pelo id
+
+=== Cadastros - Clientes - Antecedentes clínicos x Itens ===
+  GET /clienteAntecedenteClinicoItens - Obtem uma lista de registros de itens paginados
+  PUT /clienteAntecedenteClinicoItens - Atualiza um registo de item
+  POST /clienteAntecedenteClinicoItens - Cria um registo de item
+  DELETE /clienteAntecedenteClinicoItens - Remove um registro de item
+  PATCH /clienteAntecedenteClinicoItens - Atualiza um registro de item parcialmente
+  GET /clienteAntecedenteClinicoItens/{id} - Obtem um registro de item pelo id
+
+=== Cadastros - Clientes - Antecedentes clínicos ===
+  GET /clienteAntecedenteClinicos - Obtem uma lista de registros de antecedentes paginados
+  PUT /clienteAntecedenteClinicos - Atualiza um registo de antecedente
+  POST /clienteAntecedenteClinicos - Cria um registo de antecedente
+  DELETE /clienteAntecedenteClinicos - Remove um registro de antecedente
+  PATCH /clienteAntecedenteClinicos - Atualiza um registro de antecedente parcialmente
+  GET /clienteAntecedenteClinicos/{id} - Obtem um registro de antecedente pelo id
+
+=== Cadastros - Clientes - Contatos telefônicos ===
+  GET /clienteContatoTelefonicos - Obtem uma lista de registros de contatos paginados
+  PUT /clienteContatoTelefonicos - Atualiza um registo de contato
+  POST /clienteContatoTelefonicos - Cria um registo de contato
+  DELETE /clienteContatoTelefonicos - Remove um registro de contato
+  PATCH /clienteContatoTelefonicos - Atualiza um registro de contato parcialmente
+  GET /clienteContatoTelefonicos/{id} - Obtem um registro de contato pelo id
+
+=== Cadastros - Clientes - Deficiências x Itens ===
+  GET /clienteDeficienciaItens - Obtem uma lista de registros de itens paginados
+  PUT /clienteDeficienciaItens - Atualiza um registo de item
+  POST /clienteDeficienciaItens - Cria um registo de item
+  DELETE /clienteDeficienciaItens - Remove um registro de item
+  PATCH /clienteDeficienciaItens - Atualiza um registro de item parcialmente
+  GET /clienteDeficienciaItens/{id} - Obtem um registro de item pelo id
+
+=== Cadastros - Clientes - Deficiências ===
+  GET /clienteDeficiencias - Obtem uma lista de registros de deficiências paginados
+  PUT /clienteDeficiencias - Atualiza um registo de deficiência
+  POST /clienteDeficiencias - Cria um registo de deficiência
+  DELETE /clienteDeficiencias - Remove um registro de deficiência
+  PATCH /clienteDeficiencias - Atualiza um registro de deficiência parcialmente
+  GET /clienteDeficiencias/{id} - Obtem um registro de deficiência pelo id
+
+=== Cadastros - Clientes - Estratificação de risco ===
+  GET /clienteEstratificacaoRiscos - Obtem uma lista de registros de estratificações paginados
+  PUT /clienteEstratificacaoRiscos - Atualiza um registo de estratificação
+  POST /clienteEstratificacaoRiscos - Cria um registo de estratificação
+  DELETE /clienteEstratificacaoRiscos - Remove um registro de estratificação
+  PATCH /clienteEstratificacaoRiscos - Atualiza um registro de estratificação parcialmente
+  GET /clienteEstratificacaoRiscos/{id} - Obtem um registro de estratificação pelo id
+
+=== Cadastros - Clientes - Medicamentos Contínuos ===
+  GET /clienteMedicamentosContinuos - Obtem uma lista de registros de medicamentos paginados
+  PUT /clienteMedicamentosContinuos - Atualiza um registo de medicamento
+  POST /clienteMedicamentosContinuos - Cria um registo de medicamento
+  DELETE /clienteMedicamentosContinuos - Remove um registro de medicamento
+  PATCH /clienteMedicamentosContinuos - Atualiza um registro de medicamento parcialmente
+  GET /clienteMedicamentosContinuos/{id} - Obtem um registro de medicamento pelo id
+
+=== Cadastros - Clientes - Medicamentos Contínuos x Retiradas ===
+  GET /clienteMedicamentoContinuoRetiradas - Obtem uma lista de registros de retiradas paginados
+  PUT /clienteMedicamentoContinuoRetiradas - Atualiza um registo de retirada
+  POST /clienteMedicamentoContinuoRetiradas - Cria um registo de retirada
+  DELETE /clienteMedicamentoContinuoRetiradas - Remove um registro de retirada
+  PATCH /clienteMedicamentoContinuoRetiradas - Atualiza um registro de retirada parcialmente
+  GET /clienteMedicamentoContinuoRetiradas/{id} - Obtem um registro de retirada pelo id
+
+=== Clientes Problemas Evoluções ===
+  GET /clientesProblemasEvolucoes - Obtem uma lista de registros de clientes problemas evoluções paginados
+  PUT /clientesProblemasEvolucoes - Atualiza um registo de cliente problema evolução
+  POST /clientesProblemasEvolucoes - Cria um registo de cliente problema evolução
+  DELETE /clientesProblemasEvolucoes - Remove um registro de cliente problema evolução
+  PATCH /clientesProblemasEvolucoes - Atualiza um registro de cliente problema evolução parcialmente
+  GET /clientesProblemasEvolucoes/{id} - Obtem um registro de cliente problema evolução pelo id
+
+=== Clientes Problemas ===
+  GET /clientesProblemas - Obtem uma lista de registros de clientes problemas paginados
+  PUT /clientesProblemas - Atualiza um registo de cliente problema
+  POST /clientesProblemas - Cria um registo de cliente problema
+  DELETE /clientesProblemas - Remove um registro de cliente problema
+  PATCH /clientesProblemas - Atualiza um registro de cliente problema parcialmente
+  GET /clientesProblemas/{id} - Obtem um registro de cliente problema pelo id
+
+=== Clientes Programas ===
+  GET /clientesProgramas - Obtem uma lista de registros de clientesProgramas paginados
+  PUT /clientesProgramas - Atualiza um registo de clientePrograma
+  POST /clientesProgramas - Cria um registo de clientePrograma
+  DELETE /clientesProgramas - Remove um registro de clientePrograma
+  PATCH /clientesProgramas - Atualiza um registro de clientePrograma parcialmente
+  GET /clientesProgramas/{id} - Obtem um registro de clientePrograma pelo id
+
+=== Cadastros - Clientes - Condições avaliadas ===
+  GET /clienteRecomendacaoCondicaoAvaliada - Obtem uma lista de registros de condições paginados
+  PUT /clienteRecomendacaoCondicaoAvaliada - Atualiza um registo de condição
+  POST /clienteRecomendacaoCondicaoAvaliada - Cria um registo de condição
+  DELETE /clienteRecomendacaoCondicaoAvaliada - Remove um registro de condição
+  PATCH /clienteRecomendacaoCondicaoAvaliada - Atualiza um registro de condição parcialmente
+  GET /clienteRecomendacaoCondicaoAvaliada/{id} - Obtem um registro de condição pelo id
+
+=== Cadastros - Clientes ===
+  GET /clientes - Obtem uma lista de registros de clientes paginados
+  PUT /clientes - Atualiza um registo de cliente
+  POST /clientes - Cria um registo de cliente
+  DELETE /clientes - Remove um registro de cliente
+  PATCH /clientes - Atualiza um registro de cliente parcialmente
+  GET /clientes/{id} - Obtem um registro de cliente pelo id
+
+=== Cadastros - Clientes - Gestações avaliações realizadas ===
+  GET /clienteGestacoesAvaliacoesRealizadas - Obtem uma lista de registros de gestacoesAvaliacoesRealizadas paginados
+  PUT /clienteGestacoesAvaliacoesRealizadas - Atualiza um registo de gestacaoAvaliacaoRealizada
+  POST /clienteGestacoesAvaliacoesRealizadas - Cria um registo de gestacaoAvaliacaoRealizada
+  DELETE /clienteGestacoesAvaliacoesRealizadas - Remove um registro de gestacaoAvaliacaoRealizada
+  PATCH /clienteGestacoesAvaliacoesRealizadas - Atualiza um registro de gestacaoAvaliacaoRealizada parcialmente
+  GET /clienteGestacoesAvaliacoesRealizadas/{id} - Obtem um registro de gestacaoAvaliacaoRealizada pelo id
+
+=== Cadastros - Clientes - Gestações Medicamentos ===
+  GET /clienteGestacoesMedicamentos - Obtem uma lista de registros de gestacoesMedicamentos paginados
+  PUT /clienteGestacoesMedicamentos - Atualiza um registo de gestacaoMedicamento
+  POST /clienteGestacoesMedicamentos - Cria um registo de gestacaoMedicamento
+  DELETE /clienteGestacoesMedicamentos - Remove um registro de gestacaoMedicamento
+  PATCH /clienteGestacoesMedicamentos - Atualiza um registro de gestacaoMedicamento parcialmente
+  GET /clienteGestacoesMedicamentos/{id} - Obtem um registro de gestacaoMedicamento pelo id
+
+=== Cadastros - Clientes - Gestações Recém-Nascidos ===
+  GET /clienteGestacoesRecemNascidos - Obtem uma lista de registros de gestacoesRecemNascidos paginados
+  PUT /clienteGestacoesRecemNascidos - Atualiza um registo de gestacaoRecemNascido
+  POST /clienteGestacoesRecemNascidos - Cria um registo de gestacaoRecemNascido
+  DELETE /clienteGestacoesRecemNascidos - Remove um registro de gestacaoRecemNascido
+  PATCH /clienteGestacoesRecemNascidos - Atualiza um registro de gestacaoRecemNascido parcialmente
+  GET /clienteGestacoesRecemNascidos/{id} - Obtem um registro de gestacaoRecemNascido pelo id
+
+=== Cadastros - Clientes - Gestações ===
+  GET /clienteGestacoes - Obtem uma lista de registros de gestacoes paginados
+  PUT /clienteGestacoes - Atualiza um registo de gestacao
+  POST /clienteGestacoes - Cria um registo de gestacao
+  DELETE /clienteGestacoes - Remove um registro de gestacao
+  PATCH /clienteGestacoes - Atualiza um registro de gestacao parcialmente
+  GET /clienteGestacoes/{id} - Obtem um registro de gestacao pelo id
+
+=== Clientes - Cadastro Simplificado ===
+  POST /clientesBarramentoCNS - Cria um cliente de forma simplificada
+
+=== Procedimentos - Clientes ===
+  GET /procedimentoCliente - Obtem uma lista de registros de procedimentos paginados
+  PUT /procedimentoCliente - Atualiza um registo de procedimento
+  POST /procedimentoCliente - Cria um registo de procedimento
+  DELETE /procedimentoCliente - Remove um registro de procedimento
+  PATCH /procedimentoCliente - Atualiza um registro de procedimento parcialmente
+  GET /procedimentoCliente/{id} - Obtem um registro de procedimento pelo id
+
+=== Fichas - Turmas x Clientes ===
+  GET /turmaClientes - Obtem uma lista de registros de clientes paginados
+  PUT /turmaClientes - Atualiza um registo de cliente
+  POST /turmaClientes - Cria um registo de cliente
+  DELETE /turmaClientes - Remove um registro de cliente
+  PATCH /turmaClientes - Atualiza um registro de cliente parcialmente
+  GET /turmaClientes/{id} - Obtem um registro de cliente pelo id
+
+=== Vigilância epidemiológica - Fichas de notificações (Usuários) ===
+  GET /epidemiologiaFichasDeNotificacoesUsuarios - Obtem uma lista de registros de Usuários das fichas de notificações paginados
+  PUT /epidemiologiaFichasDeNotificacoesUsuarios - Atualiza um registo de Usuário da ficha de notificação
+  POST /epidemiologiaFichasDeNotificacoesUsuarios - Cria um registo de Usuário da ficha de notificação
+  DELETE /epidemiologiaFichasDeNotificacoesUsuarios - Remove um registro de Usuário da ficha de notificação
+  PATCH /epidemiologiaFichasDeNotificacoesUsuarios - Atualiza um registro de Usuário da ficha de notificação parcialmente
+  GET /epidemiologiaFichasDeNotificacoesUsuarios/{id} - Obtem um registro de Usuário da ficha de notificação pelo id
+

@@ -190,8 +190,19 @@ class WomenClinicAppointment extends Model
     {
         if ($clinicType === self::CLINIC_WOMEN) {
             if ($specialty === self::SPECIALTY_ORTOPEDIA) {
-                if ($timeStr === '07:30') return 25;
-                if ($timeStr === '13:00') return 25;
+                $weekOfMonth = (int) ceil($date->day / 7);
+                if ($date->dayOfWeek === \Carbon\Carbon::MONDAY) {
+                    if ($timeStr === '07:30') return 25;
+                }
+                if ($date->dayOfWeek === \Carbon\Carbon::WEDNESDAY) {
+                    if ($weekOfMonth <= 2) {
+                        if ($timeStr === '07:30') return 17;
+                        if ($timeStr === '13:00') return 17;
+                    } elseif ($weekOfMonth === 3) {
+                        if ($timeStr === '07:30') return 16;
+                        if ($timeStr === '13:00') return 16;
+                    }
+                }
             }
             if ($specialty === self::SPECIALTY_PSIQUIATRIA && $timeStr === '08:00') {
                 return 25;

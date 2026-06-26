@@ -33,12 +33,12 @@
         <div class="sa-card">
             <div class="sa-card-header flex items-center justify-between">
                 <h3 class="sa-card-title">Cidadão</h3>
-                <a href="{{ route('triagem.cidadao.cadastro') }}" class="sa-btn-primary inline-flex items-center gap-2 !py-2 !px-4 !text-sm">
+                <button type="button" onclick="abrirModalCadastro()" class="sa-btn-primary inline-flex items-center gap-2 !py-2 !px-4 !text-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
                     Novo Cadastro
-                </a>
+                </button>
             </div>
 
             <div class="p-5">
@@ -134,29 +134,12 @@
 
                                         {{-- Ações baseadas no estado unificado --}}
                                         <div class="flex items-center gap-3 shrink-0">
-                                            @if ($p->status === 'AGUARDANDO')
-                                                <button type="button" onclick="abrirModalAtendimento('{{ route('triagem.atendimento.iniciar', $p) }}', '{{ $p->full_name }}')" class="sa-btn-primary !py-2 !px-4 !text-sm whitespace-nowrap">
-                                                    Iniciar Triagem
-                                                </button>
-                                            @elseif ($p->status === 'EM_TRIAGEM')
-                                                <a href="{{ route('triagem.fila') }}" class="text-sm text-blue-600 hover:underline whitespace-nowrap font-medium">
-                                                    Ver na fila →
-                                                </a>
-                                            @else
-                                                <button type="button" onclick="abrirModalAtendimento('{{ route('triagem.atendimento.novo', $p) }}', '{{ $p->full_name }}')" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg text-sm whitespace-nowrap transition shadow-sm">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                                    </svg>
-                                                    Nova Triagem
-                                                </button>
-                                            @endif
-
-                                            <a href="{{ route('triagem.cidadao.historico', $p) }}" class="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100 transition" title="Ver histórico">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12C3.75 7.5 7.5 4.5 12 4.5s8.25 3 9.75 7.5c-1.5 4.5-5.25 7.5-9.75 7.5S3.75 16.5 2.25 12z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
-                                                </svg>
+                                            <a href="{{ route('triagem.cidadao.historico', $p) }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm whitespace-nowrap transition shadow-sm" title="Ver histórico">
+                                                Visualizar
                                             </a>
+                                            <button type="button" onclick="abrirModalAtendimento('{{ $p->status === 'AGUARDANDO' ? route('triagem.atendimento.iniciar', $p) : route('triagem.atendimento.novo', $p) }}', '{{ $p->full_name }}')" class="sa-btn-primary !py-2 !px-4 !text-sm whitespace-nowrap shadow-sm">
+                                                Atender
+                                            </button>
                                         </div>
                                     </div>
                                 @endforeach
@@ -168,13 +151,13 @@
 
                     <div>
                         <h4 class="text-base font-bold text-gray-800 mb-1">Cidadão não encontrado?</h4>
-                        <p class="text-sm text-gray-500 mb-3">Se o paciente não está cadastrado na base local de triagem, utilize o link abaixo para efetuar o cadastro.</p>
-                        <a href="{{ route('triagem.cidadao.cadastro', ['busca' => $busca, 'data_nascimento' => $dataNasc, 'nome_mae' => $nomeMae, 'municipio_nascimento' => $municipioNasc]) }}" class="sa-btn-primary inline-flex items-center gap-2">
+                        <p class="text-sm text-gray-500 mb-3">Se o paciente não está cadastrado na base local de triagem, utilize o botão abaixo para efetuar o cadastro.</p>
+                        <button type="button" onclick="abrirModalCadastro()" class="sa-btn-primary inline-flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
                             Cadastrar cidadão
-                        </a>
+                        </button>
                     </div>\
                 </div>
             @else
@@ -208,39 +191,11 @@
                                     <label for="tipo_atendimento" class="sa-label">Serviço/Tipo de Atendimento</label>
                                     <select id="tipo_atendimento" name="tipo_atendimento" required class="sa-input w-full mt-1">
                                         <option value="" disabled selected>Escolha uma opção...</option>
-                                        
-                                        <optgroup label="Saúde da Mulher e Criança">
-                                            <option value="Acompanhamento de crescimento e desenvolvimento infantil (puericultura)">Acompanhamento de crescimento e desenvolvimento infantil (puericultura)</option>
-                                            <option value="Coleta de preventivo (Papanicolau)">Coleta de preventivo (Papanicolau)</option>
-                                            <option value="Exame clínico das mamas e solicitação de mamografia">Exame clínico das mamas e solicitação de mamografia</option>
-                                            <option value="Pré-natal de risco habitual">Pré-natal de risco habitual</option>
-                                            <option value="Teste rápido de gravidez">Teste rápido de gravidez</option>
-                                            <option value="Planejamento familiar (inserção de DIU, anticoncepcionais)">Planejamento familiar (inserção de DIU, anticoncepcionais)</option>
-                                            <option value="Teste do pezinho">Teste do pezinho</option>
-                                        </optgroup>
-
-                                        <optgroup label="Consultas e Acompanhamentos Crônicos">
-                                            <option value="Consultas de hipertensão e diabetes (HIPERDIA)">Consultas de hipertensão e diabetes (HIPERDIA)</option>
-                                            <option value="Verificação de pressão arterial e glicemia capilar">Verificação de pressão arterial e glicemia capilar</option>
-                                            <option value="Avaliação e acompanhamento de saúde do idoso">Avaliação e acompanhamento de saúde do idoso</option>
-                                        </optgroup>
-
-                                        <optgroup label="Procedimentos e Enfermagem">
-                                            <option value="Curativos">Curativos</option>
-                                            <option value="Retirada de pontos">Retirada de pontos</option>
-                                            <option value="Lavagem de ouvido (remoção de cerume)">Lavagem de ouvido (remoção de cerume)</option>
-                                            <option value="Drenagem de abscesso simples">Drenagem de abscesso simples</option>
-                                            <option value="Coleta de exames laboratoriais">Coleta de exames laboratoriais</option>
-                                            <option value="Eletrocardiograma (em unidades com suporte)">Eletrocardiograma (em unidades com suporte)</option>
-                                        </optgroup>
-
-                                        <optgroup label="Saúde Mental e Cuidados Gerais">
-                                            <option value="Consulta com psicólogo">Consulta com psicólogo</option>
-                                            <option value="Acompanhamento de saúde mental (transtornos leves/moderados)">Acompanhamento de saúde mental (transtornos leves/moderados)</option>
-                                            <option value="Vacinação">Vacinação</option>
-                                            <option value="Dispensação de medicamentos básicos">Dispensação de medicamentos básicos</option>
-                                            <option value="Visita domiciliar (agentes comunitários e equipe)">Visita domiciliar (agentes comunitários e equipe)</option>
-                                        </optgroup>
+                                        <option value="Urgências e Emergências de Baixa Complexidade">Urgências e Emergências de Baixa Complexidade</option>
+                                        <option value="Vacinação">Vacinação</option>
+                                        <option value="Profilaxias de Urgência">Profilaxias de Urgência</option>
+                                        <option value="Notificações Compulsórias">Notificações Compulsórias</option>
+                                        <option value="Acolhimento e Classificação de Risco">Acolhimento e Classificação de Risco</option>
                                     </select>
                                 </div>
                             </div>
@@ -251,6 +206,129 @@
                             Confirmar e Enviar para Fila
                         </button>
                         <button type="button" onclick="fecharModalAtendimento()" class="mt-3 w-full sm:mt-0 sm:w-auto bg-white border border-gray-300 rounded-lg shadow-sm px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- MODAL CADASTRO CIDADÃO --}}
+    <div id="modal-cadastro" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-cadastro-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="fecharModalCadastro()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-100">
+                    <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-cadastro-title">
+                        Cadastrar Novo Cidadão
+                    </h3>
+                    <p class="text-sm text-gray-500 mt-1">Insira os dados pessoais do cidadão para incluí-lo na base de atendimento.</p>
+                </div>
+                <form method="POST" action="{{ route('triagem.cidadao.cadastrar') }}" class="px-4 py-5 sm:p-6 bg-gray-50">
+                    @csrf
+                    
+                    {{-- CPF / CNS --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="cpf" class="sa-label">CPF</label>
+                            <input id="cpf" name="cpf" type="text" class="sa-input" placeholder="000.000.000-00" maxlength="14" value="{{ old('cpf', preg_match('/^\d+$/', $busca ?? '') && strlen($busca ?? '') <= 11 ? $busca : '') }}">
+                        </div>
+                        <div>
+                            <label for="cns" class="sa-label">CNS</label>
+                            <input id="cns" name="cns" type="text" class="sa-input" placeholder="000 0000 0000 0000" maxlength="18" value="{{ old('cns', preg_match('/^\d+$/', $busca ?? '') && strlen($busca ?? '') > 11 ? $busca : '') }}">
+                        </div>
+                    </div>
+
+                    {{-- Nome completo / Nome social --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="full_name" class="sa-label">Nome completo <span class="text-red-500">*</span></label>
+                            <input id="full_name" name="full_name" type="text" class="sa-input" required value="{{ old('full_name', !preg_match('/^\d/', $busca ?? '') && ($busca ?? '') !== '' ? strtoupper($busca) : '') }}">
+                        </div>
+                        <div>
+                            <label for="social_name" class="sa-label">Nome social</label>
+                            <input id="social_name" name="social_name" type="text" class="sa-input" value="{{ old('social_name') }}">
+                        </div>
+                    </div>
+
+                    {{-- Data de nascimento / Sexo --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="birth_date" class="sa-label">Data de nascimento <span class="text-red-500">*</span></label>
+                            <input id="birth_date" name="birth_date" type="date" class="sa-input" required value="{{ old('birth_date', $dataNasc ?? '') }}">
+                        </div>
+                        <div>
+                            <label for="sexo" class="sa-label">Sexo <span class="text-red-500">*</span></label>
+                            <select id="sexo" name="sexo" class="sa-input" required>
+                                <option value="">Selecione...</option>
+                                @foreach($sexoOptions ?? [] as $val => $label)
+                                    <option value="{{ $val }}" @selected(old('sexo') === $val)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Raça/Cor / Etnia --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="raca_cor" class="sa-label">Raça/Cor <span class="text-red-500">*</span></label>
+                            <select id="raca_cor" name="raca_cor" class="sa-input" required>
+                                <option value="">Selecione...</option>
+                                @foreach($racaCorOptions ?? [] as $val => $label)
+                                    <option value="{{ $val }}" @selected(old('raca_cor') === $val)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="etnia" class="sa-label">Etnia</label>
+                            <input id="etnia" name="etnia" type="text" class="sa-input" placeholder="Etnia (opcional)" value="{{ old('etnia') }}">
+                        </div>
+                    </div>
+
+                    {{-- Nome da mãe --}}
+                    <div class="mb-4">
+                        <label for="nome_mae_cad" class="sa-label">Nome da mãe <span class="text-red-500">*</span></label>
+                        <div class="flex gap-3 items-center">
+                            <input id="nome_mae_cad" name="nome_mae" type="text" class="sa-input flex-1" required value="{{ old('nome_mae', $nomeMae ?? '') }}">
+                            <label class="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap cursor-pointer">
+                                <input type="checkbox" onchange="document.getElementById('nome_mae_cad').readOnly = this.checked; document.getElementById('nome_mae_cad').value = this.checked ? 'Desconhecido' : '';" class="rounded border-gray-300 text-blue-600">
+                                Desconhece essa informação
+                            </label>
+                        </div>
+                    </div>
+
+                    {{-- Nome do pai --}}
+                    <div class="mb-4">
+                        <label for="nome_pai" class="sa-label">Nome do pai</label>
+                        <div class="flex gap-3 items-center">
+                            <input id="nome_pai" name="nome_pai" type="text" class="sa-input flex-1" value="{{ old('nome_pai') }}">
+                            <label class="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap cursor-pointer">
+                                <input type="checkbox" onchange="document.getElementById('nome_pai').readOnly = this.checked; document.getElementById('nome_pai').value = this.checked ? 'Desconhecido' : '';" class="rounded border-gray-300 text-blue-600">
+                                Desconhece essa informação
+                            </label>
+                        </div>
+                    </div>
+
+                    {{-- Município de nascimento / Telefone --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
+                        <div>
+                            <label for="municipio_nascimento_cad" class="sa-label">Município de nascimento <span class="text-red-500">*</span></label>
+                            <input id="municipio_nascimento_cad" name="municipio_nascimento" type="text" class="sa-input" required placeholder="Cidade - UF" value="{{ old('municipio_nascimento', $municipioNasc ?? '') }}">
+                        </div>
+                        <div>
+                            <label for="phone" class="sa-label">Telefone / WhatsApp</label>
+                            <input id="phone" name="phone" type="text" class="sa-input" placeholder="(00) 00000-0000" value="{{ old('phone') }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex flex-row-reverse gap-3">
+                        <button type="submit" class="sa-btn-primary">
+                            Cadastrar Cidadão
+                        </button>
+                        <button type="button" onclick="fecharModalCadastro()" class="bg-white border border-gray-300 rounded-lg shadow-sm px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                             Cancelar
                         </button>
                     </div>
@@ -277,8 +355,19 @@
             document.getElementById('modal-atendimento').classList.add('hidden');
         }
 
+        function abrirModalCadastro() {
+            document.getElementById('modal-cadastro').classList.remove('hidden');
+        }
+
+        function fecharModalCadastro() {
+            document.getElementById('modal-cadastro').classList.add('hidden');
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const buscaInput = document.getElementById('busca');
+            const cpfInput = document.getElementById('cpf');
+            const cnsInput = document.getElementById('cns');
+            const phoneInput = document.getElementById('phone');
 
             function formatSearch(value) {
                 if (/[a-zA-Z]/.test(value)) return value;
@@ -304,11 +393,39 @@
                 return v;
             }
 
+            function formatPhone(value) {
+                let v = value.replace(/\D/g, '');
+                if (v.length > 11) v = v.substring(0, 11);
+                
+                if (v.length > 6) {
+                    if (v.length > 10) return `(${v.substring(0, 2)}) ${v.substring(2, 7)}-${v.substring(7)}`;
+                    return `(${v.substring(0, 2)}) ${v.substring(2, 6)}-${v.substring(6)}`;
+                } else if (v.length > 2) {
+                    return `(${v.substring(0, 2)}) ${v.substring(2)}`;
+                }
+                return v;
+            }
+
             if (buscaInput) {
                 buscaInput.value = formatSearch(buscaInput.value);
                 buscaInput.addEventListener('input', function(e) {
                     e.target.value = formatSearch(e.target.value);
                 });
+            }
+
+            if (cpfInput) {
+                cpfInput.value = formatSearch(cpfInput.value);
+                cpfInput.addEventListener('input', function(e) { e.target.value = formatSearch(e.target.value); });
+            }
+
+            if (cnsInput) {
+                cnsInput.value = formatSearch(cnsInput.value);
+                cnsInput.addEventListener('input', function(e) { e.target.value = formatSearch(e.target.value); });
+            }
+
+            if (phoneInput) {
+                phoneInput.value = formatPhone(phoneInput.value);
+                phoneInput.addEventListener('input', function(e) { e.target.value = formatPhone(e.target.value); });
             }
         });
     </script>

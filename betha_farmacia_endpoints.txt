@@ -1,0 +1,479 @@
+Tags relacionadas à farmácia, estoque, medicamentos, etc:
+
+=== Lote ===
+  GET /consultalote/{id} - Obtem o lote
+  GET /consultalote/{id}/full - 
+  PUT /reprocessalote/{id} - Obtem o lote, e reprocessa se possível
+
+=== Atendimentos - Atendimentos x Prescrições x Medicamentos ===
+  GET /atendimentoPrescricaoMedicamentos - Obtem uma lista de registros de medicamentos paginados
+  PUT /atendimentoPrescricaoMedicamentos - Atualiza um registo de medicamento
+  POST /atendimentoPrescricaoMedicamentos - Cria um registo de medicamento
+  DELETE /atendimentoPrescricaoMedicamentos - Remove um registro de medicamento
+  PATCH /atendimentoPrescricaoMedicamentos - Atualiza um registro de medicamento parcialmente
+  GET /atendimentoPrescricaoMedicamentos/{id} - Obtem um registro de medicamento pelo id
+
+=== Atendimentos - Prescrições padrão x Itens x Medicamentos ===
+  GET /prescricaoPadraoItemMedicamentos - Obtem uma lista de registros de medicamentos paginados
+  PUT /prescricaoPadraoItemMedicamentos - Atualiza um registo de medicamento
+  POST /prescricaoPadraoItemMedicamentos - Cria um registo de medicamento
+  DELETE /prescricaoPadraoItemMedicamentos - Remove um registro de medicamento
+  PATCH /prescricaoPadraoItemMedicamentos - Atualiza um registro de medicamento parcialmente
+  GET /prescricaoPadraoItemMedicamentos/{id} - Obtem um registro de medicamento pelo id
+
+=== Beneficios - Beneficios Dispensa ===
+  GET /beneficioDispensa - Obtem uma lista de registros de benefícios dispensas paginados
+  PUT /beneficioDispensa - Atualiza um registo de benefício dispensa
+  POST /beneficioDispensa - Cria um registo de benefício dispensa
+  DELETE /beneficioDispensa - Remove um registro de benefício dispensa
+  PATCH /beneficioDispensa - Atualiza um registro de benefício dispensa parcialmente
+  GET /beneficioDispensa/{id} - Obtem um registro de benefício dispensa pelo id
+
+=== Beneficios - Beneficios Usuarios Dispensa ===
+  GET /beneficioUsuarioDispensa - Obtem uma lista de registros de benefício usuários dispensas paginados
+  PUT /beneficioUsuarioDispensa - Atualiza um registo de benefício usuário dispensa
+  POST /beneficioUsuarioDispensa - Cria um registo de benefício usuário dispensa
+  DELETE /beneficioUsuarioDispensa - Remove um registro de benefício usuário dispensa
+  PATCH /beneficioUsuarioDispensa - Atualiza um registro de benefício usuário dispensa parcialmente
+  GET /beneficioUsuarioDispensa/{id} - Obtem um registro de benefício usuário dispensa pelo id
+
+=== Produtors - Produtors ===
+  GET /Produtores - Obtem uma lista de registros de Produtores paginados
+  PUT /Produtores - Atualiza um registo de Produtor
+  POST /Produtores - Cria um registo de Produtor
+  DELETE /Produtores - Remove um registro de Produtor
+  PATCH /Produtores - Atualiza um registro de Produtor parcialmente
+  GET /Produtores/{id} - Obtem um registro de Produtor pelo id
+
+=== Cadastros - Clientes - Medicamentos Contínuos ===
+  GET /clienteMedicamentosContinuos - Obtem uma lista de registros de medicamentos paginados
+  PUT /clienteMedicamentosContinuos - Atualiza um registo de medicamento
+  POST /clienteMedicamentosContinuos - Cria um registo de medicamento
+  DELETE /clienteMedicamentosContinuos - Remove um registro de medicamento
+  PATCH /clienteMedicamentosContinuos - Atualiza um registro de medicamento parcialmente
+  GET /clienteMedicamentosContinuos/{id} - Obtem um registro de medicamento pelo id
+
+=== Cadastros - Clientes - Medicamentos Contínuos x Retiradas ===
+  GET /clienteMedicamentoContinuoRetiradas - Obtem uma lista de registros de retiradas paginados
+  PUT /clienteMedicamentoContinuoRetiradas - Atualiza um registo de retirada
+  POST /clienteMedicamentoContinuoRetiradas - Cria um registo de retirada
+  DELETE /clienteMedicamentoContinuoRetiradas - Remove um registro de retirada
+  PATCH /clienteMedicamentoContinuoRetiradas - Atualiza um registro de retirada parcialmente
+  GET /clienteMedicamentoContinuoRetiradas/{id} - Obtem um registro de retirada pelo id
+
+=== Cadastros - Clientes - Gestações Medicamentos ===
+  GET /clienteGestacoesMedicamentos - Obtem uma lista de registros de gestacoesMedicamentos paginados
+  PUT /clienteGestacoesMedicamentos - Atualiza um registo de gestacaoMedicamento
+  POST /clienteGestacoesMedicamentos - Cria um registo de gestacaoMedicamento
+  DELETE /clienteGestacoesMedicamentos - Remove um registro de gestacaoMedicamento
+  PATCH /clienteGestacoesMedicamentos - Atualiza um registro de gestacaoMedicamento parcialmente
+  GET /clienteGestacoesMedicamentos/{id} - Obtem um registro de gestacaoMedicamento pelo id
+
+=== Endereços - Loteamentos ===
+  GET /loteamentos - Obtem uma lista de registros de loteamentos paginados
+  PUT /loteamentos - Atualiza um registo de loteamento
+  POST /loteamentos - Cria um registo de loteamento
+  DELETE /loteamentos - Remove um registro de loteamento
+  PATCH /loteamentos - Atualiza um registro de loteamento parcialmente
+  GET /loteamentos/{id} - Obtem um registro de loteamento pelo id
+
+=== Estoque - Acões terapêuticas ===
+  GET /acaoTerapeuticas - Obtem uma lista de registros de ações paginados
+  PUT /acaoTerapeuticas - Atualiza um registo de ação
+  POST /acaoTerapeuticas - Cria um registo de ação
+  DELETE /acaoTerapeuticas - Remove um registro de ação
+  PATCH /acaoTerapeuticas - Atualiza um registro de ação parcialmente
+  GET /acaoTerapeuticas/{id} - Obtem um registro de ação pelo id
+
+=== Estoque - Apresentações ===
+  GET /apresentacoes - Obtem uma lista de registros de apresentações paginados
+  PUT /apresentacoes - Atualiza um registo de apresentação
+  POST /apresentacoes - Cria um registo de apresentação
+  DELETE /apresentacoes - Remove um registro de apresentação
+  PATCH /apresentacoes - Atualiza um registro de apresentação parcialmente
+  GET /apresentacoes/{id} - Obtem um registro de apresentação pelo id
+
+=== Estoque - Centros de Custo ===
+  GET /centroCustos - Obtem uma lista de registros de centros de custos paginados
+  PUT /centroCustos - Atualiza um registo de centro de custo
+  POST /centroCustos - Cria um registo de centro de custo
+  DELETE /centroCustos - Remove um registro de centro de custo
+  PATCH /centroCustos - Atualiza um registro de centro de custo parcialmente
+  GET /centroCustos/{id} - Obtem um registro de centro de custo pelo id
+
+=== Estoque - DCB (Denominacão Comum Brasileira) ===
+  GET /denominacaoComumBrasileiras - Obtem uma lista de registros de denominalões paginados
+  PUT /denominacaoComumBrasileiras - Atualiza um registo de denominação
+  POST /denominacaoComumBrasileiras - Cria um registo de denominação
+  DELETE /denominacaoComumBrasileiras - Remove um registro de denominação
+  PATCH /denominacaoComumBrasileiras - Atualiza um registro de denominação parcialmente
+  GET /denominacaoComumBrasileiras/{id} - Obtem um registro de denominação pelo id
+
+=== Estoque - Fornecedores / Fabricantes ===
+  GET /fornecedores - Obtem uma lista de registros de fornecedores paginados
+  PUT /fornecedores - Atualiza um registo de fornecedor
+  POST /fornecedores - Cria um registo de fornecedor
+  DELETE /fornecedores - Remove um registro de fornecedor
+  PATCH /fornecedores - Atualiza um registro de fornecedor parcialmente
+  GET /fornecedores/{id} - Obtem um registro de fornecedor pelo id
+
+=== Estoque - Princípios ativos ===
+  GET /principiosAtivos/{id} - Obtem um registro de princípio ativo pelo id
+  GET /principiosAtivos - Obtem uma lista de registros de princípios ativos paginados
+
+=== Estoque - Baixas x Produtos ===
+  GET /produtoBaixaItens - Obtem uma lista de registros de itens paginados
+  PUT /produtoBaixaItens - Atualiza um registo de item
+  POST /produtoBaixaItens - Cria um registo de item
+  DELETE /produtoBaixaItens - Remove um registro de item
+  PATCH /produtoBaixaItens - Atualiza um registro de item parcialmente
+  GET /produtoBaixaItens/{id} - Obtem um registro de item pelo id
+
+=== Estoque - Baixas ===
+  GET /produtoBaixas - Obtem uma lista de registros de baixas paginados
+  PUT /produtoBaixas - Atualiza um registo de baixa
+  POST /produtoBaixas - Cria um registo de baixa
+  DELETE /produtoBaixas - Remove um registro de baixa
+  PATCH /produtoBaixas - Atualiza um registro de baixa parcialmente
+  GET /produtoBaixas/{id} - Obtem um registro de baixa pelo id
+
+=== Estoque - Produtos x Códigos de barra ===
+  GET /produtoCodigoBarras - Obtem uma lista de registros de códigos de barras paginados
+  PUT /produtoCodigoBarras - Atualiza um registo de código de barras
+  POST /produtoCodigoBarras - Cria um registo de código de barras
+  DELETE /produtoCodigoBarras - Remove um registro de código de barras
+  PATCH /produtoCodigoBarras - Atualiza um registro de código de barras parcialmente
+  GET /produtoCodigoBarras/{id} - Obtem um registro de código de barras pelo id
+
+=== Estoque - Consumos internos x Produtos ===
+  GET /produtoConsumoInternoItens - Obtem uma lista de registros de itens paginados
+  PUT /produtoConsumoInternoItens - Atualiza um registo de item
+  POST /produtoConsumoInternoItens - Cria um registo de item
+  DELETE /produtoConsumoInternoItens - Remove um registro de item
+  PATCH /produtoConsumoInternoItens - Atualiza um registro de item parcialmente
+  GET /produtoConsumoInternoItens/{id} - Obtem um registro de item pelo id
+
+=== Estoque - Consumos internos ===
+  GET /produtoConsumoInternos - Obtem uma lista de registros de consumos internos paginados
+  PUT /produtoConsumoInternos - Atualiza um registo de consumo interno
+  POST /produtoConsumoInternos - Cria um registo de consumo interno
+  DELETE /produtoConsumoInternos - Remove um registro de consumo interno
+  PATCH /produtoConsumoInternos - Atualiza um registro de consumo interno parcialmente
+  GET /produtoConsumoInternos/{id} - Obtem um registro de consumo interno pelo id
+
+=== Estoque - Dispensas x Produtos ===
+  GET /produtoDispensaItens - Obtem uma lista de registros de itens paginados
+  PUT /produtoDispensaItens - Atualiza um registo de item
+  POST /produtoDispensaItens - Cria um registo de item
+  DELETE /produtoDispensaItens - Remove um registro de item
+  PATCH /produtoDispensaItens - Atualiza um registro de item parcialmente
+  GET /produtoDispensaItens/{id} - Obtem um registro de item pelo id
+
+=== Estoque - Dispensas ===
+  GET /produtoDispensas - Obtem uma lista de registros de dispensas paginados
+  PUT /produtoDispensas - Atualiza um registo de dispensa
+  POST /produtoDispensas - Cria um registo de dispensa
+  DELETE /produtoDispensas - Remove um registro de dispensa
+  PATCH /produtoDispensas - Atualiza um registro de dispensa parcialmente
+  GET /produtoDispensas/{id} - Obtem um registro de dispensa pelo id
+
+=== Estoque - Entradas x Produtos ===
+  GET /produtoEntradaItens - Obtem uma lista de registros de itens paginados
+  PUT /produtoEntradaItens - Atualiza um registo de item
+  POST /produtoEntradaItens - Cria um registo de item
+  DELETE /produtoEntradaItens - Remove um registro de item
+  PATCH /produtoEntradaItens - Atualiza um registro de item parcialmente
+  GET /produtoEntradaItens/{id} - Obtem um registro de item pelo id
+
+=== Estoque - Entradas ===
+  GET /produtoEntradas - Obtem uma lista de registros de entradas paginados
+  PUT /produtoEntradas - Atualiza um registo de entrada
+  POST /produtoEntradas - Cria um registo de entrada
+  DELETE /produtoEntradas - Remove um registro de entrada
+  PATCH /produtoEntradas - Atualiza um registro de entrada parcialmente
+  GET /produtoEntradas/{id} - Obtem um registro de entrada pelo id
+
+=== Estoque - Grupos ===
+  GET /produtoGrupos - Obtem uma lista de registros de grupos de produto paginados
+  PUT /produtoGrupos - Atualiza um registo de grupo de produto
+  POST /produtoGrupos - Cria um registo de grupo de produto
+  DELETE /produtoGrupos - Remove um registro de grupo de produto
+  PATCH /produtoGrupos - Atualiza um registro de grupo de produto parcialmente
+  GET /produtoGrupos/{id} - Obtem um registro de grupo de produto pelo id
+
+=== Estoque - Inventário - Item ===
+  GET /produtoInventarioItens - Obtem uma lista de registros de itens paginados
+  PUT /produtoInventarioItens - Atualiza um registo de item
+  POST /produtoInventarioItens - Cria um registo de item
+  DELETE /produtoInventarioItens - Remove um registro de item
+  PATCH /produtoInventarioItens - Atualiza um registro de item parcialmente
+  GET /produtoInventarioItens/{id} - Obtem um registro de item pelo id
+
+=== Estoque - Inventário ===
+  GET /produtoInventarios - Obtem uma lista de registros de inventários paginados
+  PUT /produtoInventarios - Atualiza um registo de inventário
+  POST /produtoInventarios - Cria um registo de inventário
+  DELETE /produtoInventarios - Remove um registro de inventário
+  PATCH /produtoInventarios - Atualiza um registro de inventário parcialmente
+  GET /produtoInventarios/{id} - Obtem um registro de inventário pelo id
+
+=== Estoque - Equivalências - Produtos x Fornecedores x Apresentações ===
+  GET /ProdutoLoteEquivalenciaItens - Obtem uma lista de registros de equivalẽncias - itens paginados
+  PUT /ProdutoLoteEquivalenciaItens - Atualiza um registo de equivalência - item
+  POST /ProdutoLoteEquivalenciaItens - Cria um registo de equivalência - item
+  DELETE /ProdutoLoteEquivalenciaItens - Remove um registro de equivalência - item
+  PATCH /ProdutoLoteEquivalenciaItens - Atualiza um registro de equivalência - item parcialmente
+  GET /ProdutoLoteEquivalenciaItens/{id} - Obtem um registro de equivalência - item pelo id
+
+=== Estoque - Equivalências - Produtos x Fornecedores ===
+  GET /produtoLoteEquivalencias - Obtem uma lista de registros de equivalências paginados
+  PUT /produtoLoteEquivalencias - Atualiza um registo de equivalência
+  POST /produtoLoteEquivalencias - Cria um registo de equivalência
+  DELETE /produtoLoteEquivalencias - Remove um registro de equivalência
+  PATCH /produtoLoteEquivalencias - Atualiza um registro de equivalência parcialmente
+  GET /produtoLoteEquivalencias/{id} - Obtem um registro de equivalência pelo id
+
+=== Estoque - Produtos x Lotes ===
+  GET /produtoLotes - Obtem uma lista de registros de lotes paginados
+  PUT /produtoLotes - Atualiza um registo de lote
+  POST /produtoLotes - Cria um registo de lote
+  DELETE /produtoLotes - Remove um registro de lote
+  PATCH /produtoLotes - Atualiza um registro de lote parcialmente
+  GET /produtoLotes/{id} - Obtem um registro de lote pelo id
+
+=== Estoque - Movimentos ===
+  GET /produtoMovimentos - Obtem uma lista de registros de movimentos paginados
+  PUT /produtoMovimentos - Atualiza um registo de movimento
+  POST /produtoMovimentos - Cria um registo de movimento
+  DELETE /produtoMovimentos - Remove um registro de movimento
+  PATCH /produtoMovimentos - Atualiza um registro de movimento parcialmente
+  GET /produtoMovimentos/{id} - Obtem um registro de movimento pelo id
+
+=== Estoque - Produtos x Posologias ===
+  GET /produtoPosologias - Obtem uma lista de registros de posologias paginados
+  PUT /produtoPosologias - Atualiza um registo de posologia
+  POST /produtoPosologias - Cria um registo de posologia
+  DELETE /produtoPosologias - Remove um registro de posologia
+  PATCH /produtoPosologias - Atualiza um registro de posologia parcialmente
+  GET /produtoPosologias/{id} - Obtem um registro de posologia pelo id
+
+=== Estoque - Requisições x Produtos ===
+  GET /produtoRequisicaoItens - Obtem uma lista de registros de itens paginados
+  PUT /produtoRequisicaoItens - Atualiza um registo de item
+  POST /produtoRequisicaoItens - Cria um registo de item
+  DELETE /produtoRequisicaoItens - Remove um registro de item
+  PATCH /produtoRequisicaoItens - Atualiza um registro de item parcialmente
+  GET /produtoRequisicaoItens/{id} - Obtem um registro de item pelo id
+
+=== Estoque - Requisições ===
+  GET /produtoRequisicoes - Obtem uma lista de registros de requisições paginados
+  PUT /produtoRequisicoes - Atualiza um registo de requisição
+  POST /produtoRequisicoes - Cria um registo de requisição
+  DELETE /produtoRequisicoes - Remove um registro de requisição
+  PATCH /produtoRequisicoes - Atualiza um registro de requisição parcialmente
+  GET /produtoRequisicoes/{id} - Obtem um registro de requisição pelo id
+
+=== Estoque - Produtos x Saldos ===
+  GET /produtoSaldos - Obtem uma lista de registros de saldos paginados
+  PUT /produtoSaldos - Atualiza um registo de saldo
+  POST /produtoSaldos - Cria um registo de saldo
+  DELETE /produtoSaldos - Remove um registro de saldo
+  PATCH /produtoSaldos - Atualiza um registro de saldo parcialmente
+  GET /produtoSaldos/{id} - Obtem um registro de saldo pelo id
+
+=== Estoque - Grupos x Subgrupos ===
+  GET /produtoSubgrupos - Obtem uma lista de registros de grupos de produto paginados
+  PUT /produtoSubgrupos - Atualiza um registo de grupo de produto
+  POST /produtoSubgrupos - Cria um registo de grupo de produto
+  DELETE /produtoSubgrupos - Remove um registro de grupo de produto
+  PATCH /produtoSubgrupos - Atualiza um registro de grupo de produto parcialmente
+  GET /produtoSubgrupos/{id} - Obtem um registro de grupo de produto pelo id
+
+=== Estoque - Transferências x Produtos ===
+  GET /produtoTransferenciaItenns - Obtem uma lista de registros de itens paginados
+  PUT /produtoTransferenciaItenns - Atualiza um registo de item
+  POST /produtoTransferenciaItenns - Cria um registo de item
+  DELETE /produtoTransferenciaItenns - Remove um registro de item
+  PATCH /produtoTransferenciaItenns - Atualiza um registro de item parcialmente
+  GET /produtoTransferenciaItenns/{id} - Obtem um registro de item pelo id
+
+=== Estoque - Transferências ===
+  GET /produtoTransferencias - Obtem uma lista de registros de transferências paginados
+  PUT /produtoTransferencias - Atualiza um registo de transferência
+  POST /produtoTransferencias - Cria um registo de transferência
+  DELETE /produtoTransferencias - Remove um registro de transferência
+  PATCH /produtoTransferencias - Atualiza um registro de transferência parcialmente
+  GET /produtoTransferencias/{id} - Obtem um registro de transferência pelo id
+
+=== Estoque - Produtores ===
+  GET /produtores - Obtem uma lista de registros de produtores paginados
+  PUT /produtores - Atualiza um registo de produtor
+  POST /produtores - Cria um registo de produtor
+  DELETE /produtores - Remove um registro de produtor
+  PATCH /produtores - Atualiza um registro de produtor parcialmente
+  GET /produtores/{id} - Obtem um registro de produtor pelo id
+
+=== Estoque - Tipos de receitas ===
+  GET /tipoReceitas - Obtem uma lista de registros de tipos paginados
+  PUT /tipoReceitas - Atualiza um registo de tipo
+  POST /tipoReceitas - Cria um registo de tipo
+  DELETE /tipoReceitas - Remove um registro de tipo
+  PATCH /tipoReceitas - Atualiza um registro de tipo parcialmente
+  GET /tipoReceitas/{id} - Obtem um registro de tipo pelo id
+
+=== Estoque - Unidades de Fornecimento ===
+  GET /unidadeFornecimentos - Obtem uma lista de registros de unidades de fornecimento paginados
+  PUT /unidadeFornecimentos - Atualiza um registo de unidade de fornecimento
+  POST /unidadeFornecimentos - Cria um registo de unidade de fornecimento
+  DELETE /unidadeFornecimentos - Remove um registro de unidade de fornecimento
+  PATCH /unidadeFornecimentos - Atualiza um registro de unidade de fornecimento parcialmente
+  GET /unidadeFornecimentos/{id} - Obtem um registro de unidade de fornecimento pelo id
+
+=== Estoque - Imunizações - Aplicações ===
+  GET /imunizacaoAplicacoes - Obtem uma lista de registros de aplicações paginados
+  PUT /imunizacaoAplicacoes - Atualiza um registo de aplicação
+  POST /imunizacaoAplicacoes - Cria um registo de aplicação
+  DELETE /imunizacaoAplicacoes - Remove um registro de aplicação
+  PATCH /imunizacaoAplicacoes - Atualiza um registro de aplicação parcialmente
+  GET /imunizacaoAplicacoes/{id} - Obtem um registro de aplicação pelo id
+
+=== Estoque - Imunizações - Aplicações - Vacinas ===
+  GET /imunizacaoAplicacaoVacina - Obtem uma lista de registros de vacinas paginados
+  PUT /imunizacaoAplicacaoVacina - Atualiza um registo de vacina
+  POST /imunizacaoAplicacaoVacina - Cria um registo de vacina
+  DELETE /imunizacaoAplicacaoVacina - Remove um registro de vacina
+  PATCH /imunizacaoAplicacaoVacina - Atualiza um registro de vacina parcialmente
+  GET /imunizacaoAplicacaoVacina/{id} - Obtem um registro de vacina pelo id
+
+=== Estoque - Imunizações - Imunobiológicos x Estratégias x Doses ===
+  GET /imunizacaoProdutoEstrategiaDoses/{id} - Obtem um registro de dose pelo id
+  GET /imunizacaoProdutoEstrategiaDoses - Obtem uma lista de registros de doses paginados
+
+=== Estoque - Imunizações - Imunobiológicos x Estratégias ===
+  GET /imunizacaoProdutoEstrategias/{id} - Obtem um registro de estratégia pelo id
+  GET /imunizacaoProdutoEstrategias - Obtem uma lista de registros de estratégias paginados
+
+=== Estoque - Imunizações - Imunobiológicos ===
+  GET /imunizacaoProdutos/{id} - Obtem um registro de imunização pelo id
+  GET /imunizacaoProdutos - Obtem uma lista de registros de imunizações paginados
+
+=== Estoque - Imunizações - Quadro de coberturas ===
+  GET /quadroCoberturas - Obtem uma lista de registros de quadros paginados
+  PUT /quadroCoberturas - Atualiza um registo de quadro
+  POST /quadroCoberturas - Cria um registo de quadro
+  DELETE /quadroCoberturas - Remove um registro de quadro
+  PATCH /quadroCoberturas - Atualiza um registro de quadro parcialmente
+  GET /quadroCoberturas/{id} - Obtem um registro de quadro pelo id
+
+=== Estoque - Produtos x Apresentações de Prescrição ===
+  GET /produtosApresentacoesPrescricoes - Obtem uma lista de registros de apresentações de prescrição paginados
+  PUT /produtosApresentacoesPrescricoes - Atualiza um registro de apresentação de prescrição
+  POST /produtosApresentacoesPrescricoes - Cria um registro de apresentação de prescrição
+  DELETE /produtosApresentacoesPrescricoes - Exclui logicamente um registro de apresentação de prescrição
+  PATCH /produtosApresentacoesPrescricoes - Atualiza um registro de apresentação de prescrição parcialmente
+  GET /produtosApresentacoesPrescricoes/{id} - Obtem um registro de apresentação de prescrição pelo id
+
+=== Estoque - Produtos x Apresentações ===
+  GET /produtoApresentacoes - Obtem uma lista de registros de apresentações paginados
+  PUT /produtoApresentacoes - Atualiza um registo de apresentação
+  POST /produtoApresentacoes - Cria um registo de apresentação
+  DELETE /produtoApresentacoes - Remove um registro de apresentação
+  PATCH /produtoApresentacoes - Atualiza um registro de apresentação parcialmente
+  GET /produtoApresentacoes/{id} - Obtem um registro de apresentação pelo id
+
+=== Estoque - Produtos x Configurações x Apresentações ===
+  GET /produtoConfiguracaoApresentacoes - Obtem uma lista de registros de apresentações paginados
+  PUT /produtoConfiguracaoApresentacoes - Atualiza um registo de apresentação
+  POST /produtoConfiguracaoApresentacoes - Cria um registo de apresentação
+  DELETE /produtoConfiguracaoApresentacoes - Remove um registro de apresentação
+  PATCH /produtoConfiguracaoApresentacoes - Atualiza um registro de apresentação parcialmente
+  GET /produtoConfiguracaoApresentacoes/{id} - Obtem um registro de apresentação pelo id
+
+=== Estoque - Produtos x Configurações ===
+  GET /produtoConfiguracoes - Obtem uma lista de registros de configurações paginados
+  PUT /produtoConfiguracoes - Atualiza um registo de configuração
+  POST /produtoConfiguracoes - Cria um registo de configuração
+  DELETE /produtoConfiguracoes - Remove um registro de configuração
+  PATCH /produtoConfiguracoes - Atualiza um registro de configuração parcialmente
+  GET /produtoConfiguracoes/{id} - Obtem um registro de configuração pelo id
+
+=== Estoque - Produtos x Princípios ativos ===
+  GET /produtoPrincipiosAtivos - Obtem uma lista de registros de princípios ativos / DCB paginados
+  PUT /produtoPrincipiosAtivos - Atualiza um registo de princípio ativo / DCB
+  POST /produtoPrincipiosAtivos - Cria um registo de princípio ativo / DCB
+  DELETE /produtoPrincipiosAtivos - Remove um registro de princípio ativo / DCB
+  PATCH /produtoPrincipiosAtivos - Atualiza um registro de princípio ativo / DCB parcialmente
+  GET /produtoPrincipiosAtivos/{id} - Obtem um registro de princípio ativo / DCB pelo id
+
+=== Estoque - Produtos ===
+  GET /produtos - Obtem uma lista de registros de produtos paginados
+  PUT /produtos - Atualiza um registo de produto
+  POST /produtos - Cria um registo de produto
+  DELETE /produtos - Remove um registro de produto
+  PATCH /produtos - Atualiza um registro de produto parcialmente
+  GET /produtos/{id} - Obtem um registro de produto pelo id
+
+=== Farmácia - Dispensa Alto Custo ===
+  GET /dispensasAltoCusto - Obtem uma lista de registros de dispensas de alto custo paginados
+  PUT /dispensasAltoCusto - Atualiza um registro de dispensa de alto custo
+  POST /dispensasAltoCusto - Cria um registro de dispensa de alto custo
+  DELETE /dispensasAltoCusto - Remove um registro de dispensa de alto custo
+  PATCH /dispensasAltoCusto - Atualiza um registro de dispensa de alto custo parcialmente
+  GET /dispensasAltoCusto/{id} - Obtem um registro de dispensa de alto custo pelo id
+
+=== Farmácia - Faixas de numeração ===
+  GET /faixasNumeracao - Obtem uma lista de registros de faixas de numeração paginados
+  PUT /faixasNumeracao - Atualiza um registo de faixa de numeração
+  POST /faixasNumeracao - Cria um registo de faixa de numeração
+  DELETE /faixasNumeracao - Remove um registro de faixa de numeração
+  PATCH /faixasNumeracao - Atualiza um registro de faixa de numeração parcialmente
+  GET /faixasNumeracao/{id} - Obtem um registro de faixa de numeração pelo id
+
+=== Farmácia - Laudos LME x Medicamentos x Anexos ===
+  GET /laudoLmeMedicamentoAnexos - Obtem uma lista de registros de anexos de medicamento de laudo LME paginados
+  PUT /laudoLmeMedicamentoAnexos - Atualiza um registo de anexo de medicamento de laudo LME
+  POST /laudoLmeMedicamentoAnexos - Cria um registo de anexo de medicamento de laudo LME
+  DELETE /laudoLmeMedicamentoAnexos - Remove um registro de anexo de medicamento de laudo LME
+  PATCH /laudoLmeMedicamentoAnexos - Atualiza um registro de anexo de medicamento de laudo LME parcialmente
+  GET /laudoLmeMedicamentoAnexos/{id} - Obtem um registro de anexo de medicamento de laudo LME pelo id
+
+=== Farmácia - Laudos LME x Medicamentos x Documentos ===
+  GET /laudoLmeMedicamentoDocumentos - Obtem uma lista de registros de documentos de medicamento de laudo LME paginados
+  PUT /laudoLmeMedicamentoDocumentos - Atualiza um registo de documento de medicamento de laudo LME
+  POST /laudoLmeMedicamentoDocumentos - Cria um registo de documento de medicamento de laudo LME
+  DELETE /laudoLmeMedicamentoDocumentos - Remove um registro de documento de medicamento de laudo LME
+  PATCH /laudoLmeMedicamentoDocumentos - Atualiza um registro de documento de medicamento de laudo LME parcialmente
+  GET /laudoLmeMedicamentoDocumentos/{id} - Obtem um registro de documento de medicamento de laudo LME pelo id
+
+=== Farmácia - Laudos LME x Medicamentos x Grupos de Exames ===
+  GET /laudoLmeMedicamentoExameGrupos - Obtem uma lista de registros de grupos de exame de medicamento de laudo LME paginados
+  PUT /laudoLmeMedicamentoExameGrupos - Atualiza um registo de grupo de exame de medicamento de laudo LME
+  POST /laudoLmeMedicamentoExameGrupos - Cria um registo de grupo de exame de medicamento de laudo LME
+  DELETE /laudoLmeMedicamentoExameGrupos - Remove um registro de grupo de exame de medicamento de laudo LME
+  PATCH /laudoLmeMedicamentoExameGrupos - Atualiza um registro de grupo de exame de medicamento de laudo LME parcialmente
+  GET /laudoLmeMedicamentoExameGrupos/{id} - Obtem um registro de grupo de exame de medicamento de laudo LME pelo id
+
+=== Farmácia - Laudos LME x Medicamentos ===
+  GET /laudoLmeMedicamentos - Obtem uma lista de registros de medicamentos de laudo LME paginados
+  PUT /laudoLmeMedicamentos - Atualiza um registo de medicamento de laudo LME
+  POST /laudoLmeMedicamentos - Cria um registo de medicamento de laudo LME
+  DELETE /laudoLmeMedicamentos - Remove um registro de medicamento de laudo LME
+  PATCH /laudoLmeMedicamentos - Atualiza um registro de medicamento de laudo LME parcialmente
+  GET /laudoLmeMedicamentos/{id} - Obtem um registro de medicamento de laudo LME pelo id
+
+=== Farmácia - Laudos LME ===
+  GET /laudoLmes - Obtem uma lista de registros de laudos LME paginados
+  PUT /laudoLmes - Atualiza um registro de laudo LME
+  POST /laudoLmes - Cria um registro de laudo LME
+  DELETE /laudoLmes - Remove um registro de laudo LME
+  PATCH /laudoLmes - Atualiza um registro de laudo LME parcialmente
+  GET /laudoLmes/{id} - Obtem um registro de laudo LME pelo id
+
+=== Farmácia - Laudos LME x Situação ===
+  GET /laudoLmeSituacoes - Obtem uma lista de registros de situações de laudo LME paginados
+  PUT /laudoLmeSituacoes - Atualiza um registo de situação de laudo LME
+  POST /laudoLmeSituacoes - Cria um registo de situação de laudo LME
+  DELETE /laudoLmeSituacoes - Remove um registro de situação de laudo LME
+  PATCH /laudoLmeSituacoes - Atualiza um registro de situação de laudo LME parcialmente
+  GET /laudoLmeSituacoes/{id} - Obtem um registro de situação de laudo LME pelo id
+

@@ -64,35 +64,54 @@ class TriagemController extends Controller
         return view('triagem.cidadao', compact('resultados', 'busca', 'dataNasc', 'nomeMae', 'municipioNasc'));
     }
 
-    /**
-     * Altera o status de um paciente que já estava AGUARDANDO na fila
-     */
-    public function iniciarAtendimento(Request $request, TriagemPaciente $paciente)
+    public function iniciarAtendimento(Request $request, TriagemPaciente $triagemPaciente)
+    {
+        $request->validate([
+            'tipo_atendimento' => 'nullable|string',
+        ]);
+
+        $updateData = [
+            'status' => 'EM_TRIAGEM',
+            'arrived_at' => now(),
+        ];
+
+        if ($request->has('tipo_atendimento')) {
+            $updateData['tipo_atendimento'] = $request->tipo_atendimento;
+        }
+
+        $triagemPaciente->update($updateData);
+
+        return redirect()->route('triagem.fila')->with('status', 'Triagem iniciada com sucesso!');
+    }
+
+    public function finalizarAtendimento(Request $request, TriagemPaciente $triagemPaciente)
     {
         $request->validate([
             'tipo_atendimento' => 'required|string',
+            'priority_color' => 'required|in:VERMELHO,LARANJA,AMARELO,VERDE,AZUL',
         ]);
 
-        $paciente->update([
-            'status' => 'EM_TRIAGEM',
+        $triagemPaciente->update([
+            'status' => 'FINALIZADO',
             'tipo_atendimento' => $request->tipo_atendimento,
-            'arrived_at' => now(),
+            'priority_color' => $request->priority_color,
+            'triagem_finished_at' => now(),
         ]);
 
-        return redirect()->route('triagem.fila')->with('status', 'Triagem iniciada com sucesso!');
+        return redirect()->route('triagem.fila')->with('status', 'Atendimento finalizado com sucesso!');
     }
 
     /**
      * Cria um NOVO registro de triagem para um paciente antigo/finalizado
      */
-    public function novoAtendimento(Request $request, TriagemPaciente $paciente)
+    public function novoAtendimento(Request $request, TriagemPaciente $triagemPaciente)
     {
         $request->validate([
-            'tipo_atendimento' => 'required|string',
+            'tipo_atendimento' => 'nullable|string',
         ]);
 
         // Reclona os dados cadastrais do cidadão, gerando uma nova linha de atendimento
-        $novaTriagem = $paciente->replicate([
+        $novaTriagem = $triagemPaciente->replicate([
             'status',
             'tipo_atendimento',
             'arrived_at',
@@ -101,7 +120,11 @@ class TriagemController extends Controller
         ]);
 
         $novaTriagem->status = 'EM_TRIAGEM';
-        $novaTriagem->tipo_atendimento = $request->tipo_atendimento;
+        if ($request->has('tipo_atendimento')) {
+            $novaTriagem->tipo_atendimento = $request->tipo_atendimento;
+        } else {
+            $novaTriagem->tipo_atendimento = null;
+        }
         $novaTriagem->arrived_at = now();
         $novaTriagem->save();
 
@@ -154,12 +177,29 @@ class TriagemController extends Controller
         }
 
 
+        $sexoOptions = [
+            'M' => 'Masculino',
+            'F' => 'Feminino',
+            'O' => 'Outro',
+        ];
+
+        $racaCorOptions = [
+            'BRANCA' => 'Branca',
+            'PRETA' => 'Preta',
+            'PARDA' => 'Parda',
+            'AMARELA' => 'Amarela',
+            'INDIGENA' => 'Indígena',
+            'SEM_INFORMACAO' => 'Sem Informação',
+        ];
+
         return view('triagem.cidadao', compact(
             'busca',
             'dataNasc',
             'nomeMae',
             'municipioNasc',
-            'resultados'
+            'resultados',
+            'sexoOptions',
+            'racaCorOptions'
         ));
     }
 
@@ -248,8 +288,8 @@ class TriagemController extends Controller
             ]);
 
             return redirect()
-                ->route('triagem.fila')
-                ->with('success', 'Cidadão cadastrado e adicionado à fila com sucesso!');
+                ->route('triagem.cidadao', ['busca' => $cpf ?? $cns])
+                ->with('status', 'Cidadão cadastrado com sucesso!');
 
         } catch (\Exception $e) {
             // Log do erro ← AGORA VAI FUNCIONAR
@@ -265,5 +305,24 @@ class TriagemController extends Controller
                 ->withInput()
                 ->with('error', 'Erro ao cadastrar cidadão: ' . $e->getMessage());
         }
+    }
+
+    public function historico($id)
+    {
+        $paciente = TriagemPaciente::findOrFail($id);
+
+        $atendimentos = TriagemPaciente::where(function ($query) use ($paciente) {
+            if (!empty($paciente->cpf)) {
+                $query->where('cpf', $paciente->cpf);
+            } elseif (!empty($paciente->cns)) {
+                $query->where('cns', $paciente->cns);
+            } else {
+                $query->where('full_name', $paciente->full_name);
+            }
+        })
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+        return view('triagem.historico', compact('paciente', 'atendimentos'));
     }
 }

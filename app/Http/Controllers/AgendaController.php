@@ -21,9 +21,9 @@ class AgendaController extends Controller
                     ];
                 }
 
-                // BRUNO ORTOPEDISTA - 2 primeiras QUARTAs do mes (max 100 pacientes/mes) A partir de Julho/2026
+                // BRUNO ORTOPEDISTA - 3 primeiras QUARTAs do mes a partir de Julho/2026
                 if ($date->format('Y-m') >= '2026-07') {
-                    if ($date->dayOfWeek === Carbon::WEDNESDAY && $weekOfMonth <= 2) {
+                    if ($date->dayOfWeek === Carbon::WEDNESDAY && $weekOfMonth <= 3) {
                         return [
                             ['time' => '07:30', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '07:30')],
                             ['time' => '13:00', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '13:00')],

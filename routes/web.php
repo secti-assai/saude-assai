@@ -225,19 +225,17 @@ Route::middleware(['auth', 'module.context'])->group(function () {
         ->middleware('permission:triagem.ubs')
         ->name('triagem.cidadao');
 
-    Route::get('/triagem/cidadao/cadastrar', [TriagemController::class, 'cadastrarArea'])
-        ->middleware('permission:triagem.ubs')
-        ->name('triagem.cidadao.cadastro');
+
 
     Route::post('/triagem/cidadao/cadastrar', [TriagemController::class, 'cadastrarCidadao'])
         ->middleware('permission:triagem.ubs')
         ->name('triagem.cidadao.cadastrar');
 
-    Route::post('/triagem/atendimento/{triagem}/iniciar', [TriagemController::class, 'iniciarAtendimento'])
+    Route::post('/triagem/atendimento/{triagemPaciente}/iniciar', [TriagemController::class, 'iniciarAtendimento'])
         ->middleware('permission:triagem.ubs')
         ->name('triagem.atendimento.iniciar');
 
-    Route::post('/triagem/atendimento/{triagem}/finalizar', [TriagemController::class, 'finalizarAtendimento'])
+    Route::post('/triagem/atendimento/{triagemPaciente}/finalizar', [TriagemController::class, 'finalizarAtendimento'])
         ->middleware('permission:triagem.ubs')
         ->name('triagem.atendimento.finalizar');
 
@@ -388,7 +386,7 @@ Route::get('/triagem/cidadao/{triagemPaciente}/historico',
     [TriagemController::class, 'historico']
 )->name('triagem.cidadao.historico');
 
-Route::get('/triagem/historico/{triagem}', [TriagemController::class, 'historico'])->name('triagem.historico');
+Route::get('/triagem/historico/{triagemPaciente}', [TriagemController::class, 'historico'])->name('triagem.historico');
 
-Route::post('/triagem/novo-atendimento/{triagem}', [TriagemController::class, 'novoAtendimentoExistente'])
+Route::post('/triagem/novo-atendimento/{triagemPaciente}', [TriagemController::class, 'novoAtendimento'])
     ->name('triagem.atendimento.novo');

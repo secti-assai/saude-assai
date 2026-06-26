@@ -26,6 +26,7 @@ class TriagemPaciente extends Model
         'municipio_nascimento',
         'phone',
         'status',
+        'tipo_atendimento',
         'priority_color',
         'arrived_at',
         'triagem_started_at',
