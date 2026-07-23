@@ -32,43 +32,33 @@ class SyncCitizenFromGovAssaiJob implements ShouldQueue
         ];
     }
 
-    public function handle(GovAssaiService $govAssai): void
-    {
+    public function handle(
+        \App\Services\CitizenEligibilityService $eligibilityService, 
+        \App\Services\BethaIntegrationService $bethaService
+    ): void {
         $citizen = Citizen::find($this->citizenId);
 
         if (! $citizen || empty($citizen->cpf)) {
             return;
         }
 
-        $result = $govAssai->fetchCitizenByCpf((string) $citizen->cpf);
+        // Valida e já sincroniza localmente no banco
+        $result = $eligibilityService->validateAndSync((string) $citizen->cpf);
+        
+        $citizen->refresh();
 
-        if (! $result['success']) {
-            return;
+        // Verifica a regra adicional de Menor de Idade
+        $isMinor = false;
+        if ($citizen->birth_date) {
+            $isMinor = \Carbon\Carbon::parse($citizen->birth_date)->age < 18;
         }
-
-        $govCitizen = data_get($result, 'data.cidadao', []);
-        $govHealth = data_get($result, 'data.saude', []);
-        $govContact = data_get($result, 'data.contato', []);
-        $govAddress = data_get($result, 'data.endereco', []);
-
-        $resolvedAddress = trim(implode(', ', array_filter([
-            $govAddress['logradouro'] ?? null,
-            $govAddress['numero'] ?? null,
-            $govAddress['bairro'] ?? null,
-            $govAddress['distrito'] ?? null,
-        ], fn ($value) => $value !== null && $value !== '')));
-
-        $citizen->update([
-            'full_name' => $govCitizen['nome'] ?? $citizen->full_name,
-            'social_name' => $govCitizen['nome_social'] ?? $citizen->social_name,
-            'birth_date' => $govCitizen['data_nascimento'] ?? $citizen->birth_date,
-            'sexo' => $govCitizen['sexo'] ?? $citizen->sexo,
-            'cns' => $govHealth['cns_numero'] ?? $citizen->cns,
-            'phone' => $govContact['celular'] ?? $citizen->phone,
-            'email' => $govContact['email'] ?? $citizen->email,
-            'address' => $resolvedAddress !== '' ? $resolvedAddress : $citizen->address,
-            'is_resident_assai' => true,
-            'residence_validated_at' => now(),
-        ]);
+        
+        // Se a validação padrão passou (N2 ou ACS validado) OU é menor de idade
+        if ($result['eligible'] || $isMinor) {
+            $bethaService->syncClient($citizen, false);
+        } else {
+            // Falhou em todas as validações (N1, não validado pelo ACS, maior de idade)
+            $bethaService->inactivateClient($citizen->cpf, $citizen->cns, $citizen->full_name);
+        }
     }
 }

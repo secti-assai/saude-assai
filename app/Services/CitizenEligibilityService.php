@@ -205,6 +205,7 @@ class CitizenEligibilityService
                 'social_name' => Arr::get($data, 'cidadao.nome_social'),
                 'birth_date' => $birthDate,
                 'sexo' => strtoupper(substr((string) Arr::get($data, 'cidadao.sexo', 'M'), 0, 1)),
+                'raca_cor' => Arr::get($data, 'cidadao.raca', null),
                 'address' => $this->buildAddress($data),
                 'phone' => Arr::get($data, 'contato.celular'),
                 'email' => Arr::get($data, 'contato.email'),
@@ -217,13 +218,19 @@ class CitizenEligibilityService
 
     private function buildAddress(array $data): ?string
     {
-        $address = trim(implode(', ', array_filter([
-            Arr::get($data, 'endereco.logradouro'),
-            Arr::get($data, 'endereco.numero'),
-            Arr::get($data, 'endereco.bairro'),
-            Arr::get($data, 'endereco.distrito'),
-        ], fn ($value) => $value !== null && $value !== '')));
-
-        return $address !== '' ? $address : null;
+        $endereco = [
+            'cep' => Arr::get($data, 'endereco.cep'),
+            'logradouro' => Arr::get($data, 'endereco.logradouro'),
+            'numero' => Arr::get($data, 'endereco.numero'),
+            'bairro' => Arr::get($data, 'endereco.bairro'),
+            'distrito' => Arr::get($data, 'endereco.distrito'),
+            
+            // Campos adicionais vindos do Gov.Assai
+            'nacionalidade_sigla' => Arr::get($data, 'cidadao.nacionalidade_sigla'),
+            'naturalidade' => Arr::get($data, 'cidadao.naturalidade'),
+            'naturalidade_uf' => Arr::get($data, 'cidadao.naturalidade_uf'),
+        ];
+        
+        return json_encode($endereco);
     }
 }

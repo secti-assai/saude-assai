@@ -42,6 +42,13 @@ return [
         'connect_timeout' => env('GOV_ASSAI_CONNECT_TIMEOUT', 5),
     ],
 
+    'betha' => [
+        'client_id' => env('BETHA_CLIENT_ID'),
+        'client_secret' => env('BETHA_CLIENT_SECRET'),
+        'user_access' => env('BETHA_USER_ACCESS', 'ICjj_5LwQW4SAa0d6WjbAyp0MI3zCOi5zYavLMG7wO0='),
+        'bearer_token' => env('BETHA_BEARER_TOKEN', '4103c538-97f9-4da9-9046-c44ef9f2612c'),
+    ],
+
     'notifications' => [
         'base_url' => env('NOTIFICATIONS_BASE_URL', 'http://notificacoes.assai.pr.gov.br'),
         'api_key' => env('NOTIFICATIONS_API_KEY'),
