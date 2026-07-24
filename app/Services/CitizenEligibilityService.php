@@ -215,7 +215,7 @@ class CitizenEligibilityService
                 'social_name' => Arr::get($data, 'cidadao.nome_social'),
                 'birth_date' => $birthDate,
                 'sexo' => strtoupper(substr((string) Arr::get($data, 'cidadao.sexo', 'M'), 0, 1)),
-                'raca_cor' => Arr::get($data, 'cidadao.raca', null),
+                'raca_cor' => $this->mapRacaCorToInt(Arr::get($data, 'cidadao.raca', null)),
                 'address' => $this->buildAddress($data),
                 'phone' => Arr::get($data, 'contato.celular'),
                 'email' => Arr::get($data, 'contato.email'),
@@ -242,5 +242,27 @@ class CitizenEligibilityService
         ];
         
         return json_encode($endereco);
+    }
+
+    private function mapRacaCorToInt($raca): ?int
+    {
+        if (is_numeric($raca)) {
+            return (int) $raca;
+        }
+
+        if (empty($raca) || !is_string($raca)) {
+            return null;
+        }
+
+        $racaStr = strtoupper(trim((string) $raca));
+        
+        return match ($racaStr) {
+            'BRANCA' => 1,
+            'PRETA' => 2,
+            'PARDA' => 3,
+            'AMARELA' => 4,
+            'INDIGENA', 'INDÍGENA' => 5,
+            default => null,
+        };
     }
 }
