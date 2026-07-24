@@ -86,15 +86,8 @@ class SanitizeBethaClients extends Command
                 // Cidadão tem CPF. Vamos validar as regras locais
                 $result = $eligibilityService->validateAndSync($cpf);
 
-                $isMinor = false;
-                // Tentamos pegar a data de nascimento do resultado da integração (já criada/atualizada no banco)
-                $localCitizen = Citizen::where('cpf_hash', hash('sha256', $cpf))->first();
-                if ($localCitizen && $localCitizen->birth_date) {
-                    $isMinor = \Carbon\Carbon::parse($localCitizen->birth_date)->age < 18;
-                }
-
-                if ($result['eligible'] || $isMinor) {
-                    $this->line("Mantido ID {$clientData['id']} ({$cpf}): " . ($isMinor ? "Menor de idade" : "Elegível (N2 ou ACS)"));
+                if ($result['eligible']) {
+                    $this->line("Mantido ID {$clientData['id']} ({$cpf}): Elegível (N2, ACS ou Menor)");
                     // Opcional: já envia o payload mais atualizado para a Betha
                     // $bethaService->syncClient($localCitizen, false);
                 } else {

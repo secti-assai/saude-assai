@@ -79,6 +79,8 @@ class CitizenEligibilityService
                 ];
             }
 
+            \App\Jobs\SyncCitizenToBethaJob::dispatch($citizen->id);
+
             return [
                 'eligible' => true,
                 'message' => 'Cidadao elegivel via integracao e-SUS PEC.',
@@ -93,7 +95,13 @@ class CitizenEligibilityService
 
         $level = $this->extractGovLevel($result['data'] ?? []);
 
-        if ($level === null || (int) $level < 2) {
+        $isMinor = false;
+        $birthDate = Arr::get($result['data'] ?? [], 'cidadao.data_nascimento');
+        if ($birthDate) {
+            $isMinor = \Carbon\Carbon::parse($birthDate)->age < 18;
+        }
+
+        if (!$isMinor && ($level === null || (int) $level < 2)) {
             return [
                 'eligible' => false,
                 'message' => 'Cidadao sem nivel 2 na Consulta à População à descrita de Assaí. Atendimento nao autorizado. Solicitar ao cidadão para que entre em contato com a Secretaria de Ciência, Tecnologia e Inovação para regularizar sua situação.',
@@ -120,6 +128,8 @@ class CitizenEligibilityService
                 'origem' => $origem,
             ];
         }
+
+        \App\Jobs\SyncCitizenToBethaJob::dispatch($citizen->id);
 
         return [
             'eligible' => true,

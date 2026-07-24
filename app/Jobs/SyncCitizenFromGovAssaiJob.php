@@ -47,16 +47,7 @@ class SyncCitizenFromGovAssaiJob implements ShouldQueue
         
         $citizen->refresh();
 
-        // Verifica a regra adicional de Menor de Idade
-        $isMinor = false;
-        if ($citizen->birth_date) {
-            $isMinor = \Carbon\Carbon::parse($citizen->birth_date)->age < 18;
-        }
-        
-        // Se a validação padrão passou (N2 ou ACS validado) OU é menor de idade
-        if ($result['eligible'] || $isMinor) {
-            $bethaService->syncClient($citizen, false);
-        } else {
+        if (! $result['eligible']) {
             // Falhou em todas as validações (N1, não validado pelo ACS, maior de idade)
             $bethaService->inactivateClient($citizen->cpf, $citizen->cns, $citizen->full_name);
         }
