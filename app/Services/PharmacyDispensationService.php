@@ -426,4 +426,26 @@ class PharmacyDispensationService
 
         return $pharmacyRequest;
     }
+
+    private function mapRacaCorToInt(mixed $raca): ?int
+    {
+        if (is_numeric($raca)) {
+            return (int) $raca;
+        }
+
+        if (empty($raca) || ! is_string($raca)) {
+            return null;
+        }
+
+        $racaStr = Str::upper(trim((string) $raca));
+
+        return match ($racaStr) {
+            'BRANCA' => 1,
+            'PRETA' => 2,
+            'PARDA' => 3,
+            'AMARELA' => 4,
+            'INDIGENA', 'INDÍGENA' => 5,
+            default => null,
+        };
+    }
 }
