@@ -321,7 +321,7 @@
                                                         <span class="text-xs text-gray-500 font-mono">
                                                             {{ $row->citizen->cpf ? preg_replace("/(\d{3})(\d{3})(\d{3})(\d{2})/", "$1.$2.$3-$4", $row->citizen->cpf) : 'N/A' }}
                                                         </span>
-                                                        @php($matchingRequest = $row->centralPharmacyRequest)
+                                                        <?php $matchingRequest = $row->centralPharmacyRequest; ?>
                                                         <span class="sa-badge @if((int) ($matchingRequest->gov_assai_level ?? 0) >= 2) sa-badge-primary @else sa-badge-warning @endif">
                                                             Gov N{{ $matchingRequest->gov_assai_level ?? '0' }}
                                                         </span>

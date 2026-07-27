@@ -91,7 +91,7 @@
 
                     <div>
                         <label class="sa-label">Categoria não dispensada *</label>
-                        @php($blockedCategory = old('dispense_category', 'MEDICACAO'))
+                        <?php $blockedCategory = old('dispense_category', 'MEDICACAO'); ?>
                         <select name="dispense_category" class="sa-select" required>
                             <option value="MEDICACAO" {{ $blockedCategory === 'MEDICACAO' ? 'selected' : '' }}>MEDICAÇÃO
                             </option>
@@ -163,7 +163,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
                             <label class="sa-label">Sexo *</label>
-                            @php($sexo = old('sexo', $info['citizen'] ? $info['citizen']->sexo : (Arr::get($info, 'gov_data.cidadao.sexo') ?? '')))
+                            <?php $sexo = old('sexo', $info['citizen'] ? $info['citizen']->sexo : (Arr::get($info, 'gov_data.cidadao.sexo') ?? '')); ?>
                             <select name="sexo" class="sa-select" required>
                                 <option value="" disabled {{ !$sexo ? 'selected' : '' }}>Selecione o sexo</option>
                                 <option value="MASCULINO" {{ $sexo === 'MASCULINO' ? 'selected' : '' }}>MASCULINO</option>
@@ -200,7 +200,7 @@
                         <div>
                             <label class="sa-label">Categoria da dispensação *</label>
                             <select name="dispense_category" class="sa-select" required>
-                                @php($selectedCategory = old('dispense_category', 'MEDICACAO'))
+                                <?php $selectedCategory = old('dispense_category', 'MEDICACAO'); ?>
                                 <option value="MEDICACAO" {{ $selectedCategory === 'MEDICACAO' ? 'selected' : '' }}>
                                     MEDICAÇÃO</option>
                                 <option value="LEITE" {{ $selectedCategory === 'LEITE' ? 'selected' : '' }}>LEITE</option>
