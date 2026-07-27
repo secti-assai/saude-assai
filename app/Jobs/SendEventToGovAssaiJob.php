@@ -81,4 +81,22 @@ class SendEventToGovAssaiJob implements ShouldQueue
             $this->release($this->backoff[$this->attempts() - 1] ?? 600);
         }
     }
+
+    /**
+     * Tratar falha definitiva do job quando atingir o limite de tentativas.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        \Log::error('SendEventToGovAssaiJob: Tentativas esgotadas ao enviar evento.', [
+            'queue_item_id' => $this->queueItemId,
+            'error' => $exception->getMessage(),
+        ]);
+
+        if ($queueItem = \App\Models\GovAssaiEventoQueue::find($this->queueItemId)) {
+            $queueItem->update([
+                'status_envio' => 'falha_definitiva',
+                'ultima_resposta_body' => 'Tentativas esgotadas: ' . $exception->getMessage(),
+            ]);
+        }
+    }
 }

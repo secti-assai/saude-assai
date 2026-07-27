@@ -152,7 +152,7 @@ class BethaIntegrationService
             if (!$this->isValidCns($cns)) $cns = null;
             
             return [
-                'nomeCompleto' => $citizen->full_name,
+                'nomeCompleto' => $this->sanitizeNomeCompleto($citizen->full_name),
                 'cpf' => $citizen->cpf ? preg_replace('/\D/', '', $citizen->cpf) : null,
                 'cns' => $cns,
                 'dataNascimento' => $citizen->birth_date ? $citizen->birth_date->format('Y-m-d') : null,
@@ -173,7 +173,7 @@ class BethaIntegrationService
         if (!$this->isValidCns($cns)) $cns = null;
         
         return [
-            'nomeCompleto' => $citizen['name'] ?? null,
+            'nomeCompleto' => $this->sanitizeNomeCompleto($citizen['name'] ?? $citizen['nomeCompleto'] ?? null),
             'cpf' => isset($citizen['cpf']) ? preg_replace('/\D/', '', $citizen['cpf']) : null,
             'cns' => $cns,
             'dataNascimento' => $citizen['birth_date'] ?? null,
@@ -249,6 +249,24 @@ class BethaIntegrationService
 
             return 4101903; // Assaí Fallback
         });
+    }
+
+    private function sanitizeNomeCompleto(?string $nome): string
+    {
+        if (empty($nome)) {
+            return 'Cidadao Sem Nome';
+        }
+
+        // Remova pontos e abreviações com ponto (ex: DE J. -> DE J)
+        $nome = str_replace('.', '', $nome);
+
+        // Remova caracteres especiais (mantendo apenas letras e espaços)
+        $nome = preg_replace('/[^a-zA-ZÀ-ÖØ-öø-ÿ\s]/u', '', $nome);
+
+        // Remova espaços múltiplos
+        $nome = preg_replace('/\s+/', ' ', trim($nome));
+
+        return mb_strtoupper($nome);
     }
 
     private function removeAccents(string $string): string
