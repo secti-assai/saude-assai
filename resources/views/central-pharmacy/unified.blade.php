@@ -144,6 +144,47 @@
                             @endif
                         </div>
                     </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="sa-label">Cartão do SUS (CNS) *</label>
+                            <input name="cns" class="sa-input"
+                                value="{{ old('cns', $info['citizen'] ? $info['citizen']->cns : (Arr::get($info, 'gov_data.cidadao.cns') ?? '')) }}"
+                                placeholder="Apenas números (15 dígitos)" maxlength="15" inputmode="numeric" required
+                                oninput="this.value = this.value.replace(/\D/g, '').slice(0, 15);">
+                        </div>
+                        <div>
+                            <label class="sa-label">Data de Nascimento *</label>
+                            <input type="date" name="birth_date" class="sa-input"
+                                value="{{ old('birth_date', $info['citizen'] && $info['citizen']->birth_date ? $info['citizen']->birth_date->format('Y-m-d') : (Arr::get($info, 'gov_data.cidadao.data_nascimento') ? date('Y-m-d', strtotime(Arr::get($info, 'gov_data.cidadao.data_nascimento'))) : '')) }}"
+                                required>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="sa-label">Sexo *</label>
+                            @php($sexo = old('sexo', $info['citizen'] ? $info['citizen']->sexo : (Arr::get($info, 'gov_data.cidadao.sexo') ?? '')))
+                            <select name="sexo" class="sa-select" required>
+                                <option value="" disabled {{ !$sexo ? 'selected' : '' }}>Selecione o sexo</option>
+                                <option value="MASCULINO" {{ $sexo === 'MASCULINO' ? 'selected' : '' }}>MASCULINO</option>
+                                <option value="FEMININO" {{ $sexo === 'FEMININO' ? 'selected' : '' }}>FEMININO</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="sa-label">Raça/Cor *</label>
+                            @php($raca = old('raca_cor', $info['citizen'] ? $info['citizen']->raca_cor : (Arr::get($info, 'gov_data.cidadao.raca_cor') ?? '')))
+                            <select name="raca_cor" class="sa-select" required>
+                                <option value="" disabled {{ !$raca ? 'selected' : '' }}>Selecione a raça/cor</option>
+                                <option value="BRANCA" {{ $raca === 'BRANCA' ? 'selected' : '' }}>BRANCA</option>
+                                <option value="PRETA" {{ $raca === 'PRETA' ? 'selected' : '' }}>PRETA</option>
+                                <option value="PARDA" {{ $raca === 'PARDA' ? 'selected' : '' }}>PARDA</option>
+                                <option value="AMARELA" {{ $raca === 'AMARELA' ? 'selected' : '' }}>AMARELA</option>
+                                <option value="INDIGENA" {{ $raca === 'INDIGENA' ? 'selected' : '' }}>INDÍGENA</option>
+                                <option value="SEM INFORMACAO" {{ $raca === 'SEM INFORMACAO' ? 'selected' : '' }}>SEM INFORMAÇÃO</option>
+                            </select>
+                        </div>
+                    </div>
 
                     <h4 class="text-md font-semibold text-gray-700 border-b pb-2 mt-6">Dispensação</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

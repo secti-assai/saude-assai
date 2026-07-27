@@ -113,13 +113,19 @@ class PharmacyDispensationService
                     ?? 'CIDADAO';
                 $citizenData['phone'] = $normalizedPhoneInput
                     ?? $this->normalizePhone((string) Arr::get($govData, 'contato.celular', ''));
-                $citizenData['birth_date'] = $this->resolveBirthDate(Arr::get($govData, 'cidadao.data_nascimento'));
+                $citizenData['birth_date'] = $data['birth_date'] ?? $this->resolveBirthDate(Arr::get($govData, 'cidadao.data_nascimento'));
+                $citizenData['sexo'] = $data['sexo'] ?? Arr::get($govData, 'cidadao.sexo');
+                $citizenData['raca_cor'] = $data['raca_cor'] ?? Arr::get($govData, 'cidadao.raca_cor');
+                $citizenData['cns'] = $data['cns'] ?? Arr::get($govData, 'cidadao.cns');
                 $citizenData['is_resident_assai'] = true;
             } else {
                 // Not found on gov assai, use manual data
                 $citizenData['full_name'] = $normalizedNameInput ?? 'CIDADAO NAO INFORMADO';
                 $citizenData['phone'] = $normalizedPhoneInput;
-                $citizenData['birth_date'] = self::UNKNOWN_BIRTH_DATE;
+                $citizenData['birth_date'] = $data['birth_date'] ?? self::UNKNOWN_BIRTH_DATE;
+                $citizenData['sexo'] = $data['sexo'] ?? null;
+                $citizenData['raca_cor'] = $data['raca_cor'] ?? null;
+                $citizenData['cns'] = $data['cns'] ?? null;
                 $citizenData['is_resident_assai'] = false;
             }
 
@@ -135,6 +141,19 @@ class PharmacyDispensationService
 
             if ($normalizedPhoneInput !== null && $normalizedPhoneInput !== (string) $citizen->phone) {
                 $updates['phone'] = $normalizedPhoneInput;
+            }
+
+            if (isset($data['cns']) && $data['cns'] !== (string) $citizen->cns) {
+                $updates['cns'] = $data['cns'];
+            }
+            if (isset($data['birth_date']) && $data['birth_date'] !== (string) ($citizen->birth_date ? $citizen->birth_date->format('Y-m-d') : null)) {
+                $updates['birth_date'] = $data['birth_date'];
+            }
+            if (isset($data['sexo']) && $data['sexo'] !== (string) $citizen->sexo) {
+                $updates['sexo'] = $data['sexo'];
+            }
+            if (isset($data['raca_cor']) && $data['raca_cor'] !== (string) $citizen->raca_cor) {
+                $updates['raca_cor'] = $data['raca_cor'];
             }
 
             if ($updates !== []) {
