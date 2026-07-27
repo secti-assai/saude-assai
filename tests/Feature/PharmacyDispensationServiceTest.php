@@ -186,4 +186,45 @@ class PharmacyDispensationServiceTest extends TestCase
         $this->assertTrue($secondAttempt['success']);
         $this->assertSame('DISPENSED', $secondAttempt['action']);
     }
+
+    public function test_it_maps_sexo_to_single_character_in_database(): void
+    {
+        config()->set('services.gov_assai.base_url', 'https://gov-assai.test');
+        config()->set('services.gov_assai.api_key', 'test-key');
+
+        Http::fake([
+            'https://gov-assai.test/api/saude/cidadaos/cpf/*' => Http::response([
+                'success' => true,
+                'message' => 'Consulta realizada com sucesso',
+                'data' => [
+                    'cidadao' => [
+                        'nome' => 'TESTE SEXO MASCULINO',
+                        'data_nascimento' => '1990-01-01',
+                    ],
+                    'gov_assai' => [
+                        'nivel' => 2,
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $service = app(PharmacyDispensationService::class);
+        $attendant = User::factory()->create();
+
+        $result = $service->processDispensation([
+            'cpf' => '90012640930',
+            'full_name' => 'Teste Sexo Masculino',
+            'phone' => '(43) 99905-8050',
+            'birth_date' => '1990-01-01',
+            'sexo' => 'MASCULINO',
+            'raca_cor' => 'PARDA',
+            'dispense_category' => 'MEDICACAO',
+        ], (int) $attendant->id, new Request());
+
+        $this->assertTrue($result['success']);
+        $citizen = Citizen::where('cpf_hash', hash('sha256', '90012640930'))->first();
+        $this->assertNotNull($citizen);
+        $this->assertSame('M', $citizen->sexo);
+        $this->assertSame(3, $citizen->raca_cor);
+    }
 }

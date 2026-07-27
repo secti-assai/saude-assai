@@ -163,7 +163,15 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
                             <label class="sa-label">Sexo *</label>
-                            <?php $sexo = old('sexo', $info['citizen'] ? $info['citizen']->sexo : (Arr::get($info, 'gov_data.cidadao.sexo') ?? '')); ?>
+                            @php
+                                $sexoRaw = old('sexo', $info['citizen'] ? $info['citizen']->sexo : (Arr::get($info, 'gov_data.cidadao.sexo') ?? ''));
+                                $sexoChar = strtoupper(substr(trim((string) $sexoRaw), 0, 1));
+                                $sexo = match($sexoChar) {
+                                    'M' => 'MASCULINO',
+                                    'F' => 'FEMININO',
+                                    default => strtoupper(trim((string) $sexoRaw)),
+                                };
+                            @endphp
                             <select name="sexo" class="sa-select" required>
                                 <option value="" disabled {{ !$sexo ? 'selected' : '' }}>Selecione o sexo</option>
                                 <option value="MASCULINO" {{ $sexo === 'MASCULINO' ? 'selected' : '' }}>MASCULINO</option>

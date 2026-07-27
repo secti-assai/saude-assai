@@ -114,7 +114,7 @@ class PharmacyDispensationService
                 $citizenData['phone'] = $normalizedPhoneInput
                     ?? $this->normalizePhone((string) Arr::get($govData, 'contato.celular', ''));
                 $citizenData['birth_date'] = $data['birth_date'] ?? $this->resolveBirthDate(Arr::get($govData, 'cidadao.data_nascimento'));
-                $citizenData['sexo'] = $data['sexo'] ?? Arr::get($govData, 'cidadao.sexo');
+                $citizenData['sexo'] = isset($data['sexo']) ? $this->mapSexoToChar($data['sexo']) : $this->mapSexoToChar(Arr::get($govData, 'cidadao.sexo'));
                 $citizenData['raca_cor'] = isset($data['raca_cor']) ? $this->mapRacaCorToInt($data['raca_cor']) : Arr::get($govData, 'cidadao.raca_cor');
                 $citizenData['cns'] = $data['cns'] ?? Arr::get($govData, 'cidadao.cns');
                 $citizenData['is_resident_assai'] = true;
@@ -123,7 +123,7 @@ class PharmacyDispensationService
                 $citizenData['full_name'] = $normalizedNameInput ?? 'CIDADAO NAO INFORMADO';
                 $citizenData['phone'] = $normalizedPhoneInput;
                 $citizenData['birth_date'] = $data['birth_date'] ?? self::UNKNOWN_BIRTH_DATE;
-                $citizenData['sexo'] = $data['sexo'] ?? null;
+                $citizenData['sexo'] = isset($data['sexo']) ? $this->mapSexoToChar($data['sexo']) : null;
                 $citizenData['raca_cor'] = isset($data['raca_cor']) ? $this->mapRacaCorToInt($data['raca_cor']) : null;
                 $citizenData['cns'] = $data['cns'] ?? null;
                 $citizenData['is_resident_assai'] = false;
@@ -149,8 +149,11 @@ class PharmacyDispensationService
             if (isset($data['birth_date']) && $data['birth_date'] !== (string) ($citizen->birth_date ? $citizen->birth_date->format('Y-m-d') : null)) {
                 $updates['birth_date'] = $data['birth_date'];
             }
-            if (isset($data['sexo']) && $data['sexo'] !== (string) $citizen->sexo) {
-                $updates['sexo'] = $data['sexo'];
+            if (isset($data['sexo'])) {
+                $mappedSexo = $this->mapSexoToChar($data['sexo']);
+                if ($mappedSexo !== (string) $citizen->sexo) {
+                    $updates['sexo'] = $mappedSexo;
+                }
             }
             if (isset($data['raca_cor'])) {
                 $mappedRaca = $this->mapRacaCorToInt($data['raca_cor']);
@@ -447,5 +450,22 @@ class PharmacyDispensationService
             'INDIGENA', 'INDÍGENA' => 5,
             default => null,
         };
+    }
+
+    private function mapSexoToChar(mixed $sexo): ?string
+    {
+        if (empty($sexo) || ! is_string($sexo)) {
+            return null;
+        }
+
+        $upper = Str::upper(trim($sexo));
+        if ($upper === 'MASCULINO' || $upper === 'M') {
+            return 'M';
+        }
+        if ($upper === 'FEMININO' || $upper === 'F') {
+            return 'F';
+        }
+
+        return substr($upper, 0, 1);
     }
 }
