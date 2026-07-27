@@ -28,12 +28,28 @@ class BethaIntegrationService
             ->post("{$this->baseUrl}/dados/v1/clientes/integrar", $payload);
 
         if (!$response->successful()) {
-            Log::error('BethaIntegrationService: Falha ao integrar cidadão.', [
-                'status' => $response->status(),
-                'response' => $response->json(),
-                'payload' => $payload,
-            ]);
-            return false;
+            $responseData = $response->json();
+            $isDuplicate = false;
+            
+            if ($response->status() === 422 && isset($responseData['detail'])) {
+                foreach ($responseData['detail'] as $message) {
+                    if (is_string($message) && str_contains($message, 'Já existe um(a) cliente')) {
+                        $isDuplicate = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($isDuplicate) {
+                Log::info('BethaIntegrationService: Cidadão já existe na base da Betha, ignorando erro.', ['cpf' => $payload['cpf'] ?? null, 'cns' => $payload['cns'] ?? null]);
+            } else {
+                Log::error('BethaIntegrationService: Falha ao integrar cidadão.', [
+                    'status' => $response->status(),
+                    'response' => $responseData,
+                    'payload' => $payload,
+                ]);
+                return false;
+            }
         }
 
         if ($inativo) {
@@ -132,10 +148,13 @@ class BethaIntegrationService
             
             $ibgeNaturalidade = $this->getIbgeCode($address['naturalidade'] ?? null, $address['naturalidade_uf'] ?? null);
             
+            $cns = $citizen->cns ? preg_replace('/\D/', '', $citizen->cns) : null;
+            if ($cns && strlen($cns) !== 15) $cns = null;
+            
             return [
                 'nomeCompleto' => $citizen->full_name,
                 'cpf' => $citizen->cpf ? preg_replace('/\D/', '', $citizen->cpf) : null,
-                'cns' => $citizen->cns ? preg_replace('/\D/', '', $citizen->cns) : null,
+                'cns' => $cns,
                 'dataNascimento' => $citizen->birth_date ? $citizen->birth_date->format('Y-m-d') : null,
                 'sexo' => $this->mapSexo($citizen->sexo),
                 'raca' => $raca,
@@ -149,10 +168,14 @@ class BethaIntegrationService
         $raca = $this->mapRaca($citizen['raca_cor'] ?? null);
         $nacionalidadeSigla = $citizen['nacionalidade_sigla'] ?? 'BR';
         $ibgeNaturalidade = $this->getIbgeCode($citizen['naturalidade'] ?? null, $citizen['naturalidade_uf'] ?? null);
+        
+        $cns = isset($citizen['cns']) ? preg_replace('/\D/', '', $citizen['cns']) : null;
+        if ($cns && strlen($cns) !== 15) $cns = null;
+        
         return [
             'nomeCompleto' => $citizen['name'] ?? null,
             'cpf' => isset($citizen['cpf']) ? preg_replace('/\D/', '', $citizen['cpf']) : null,
-            'cns' => isset($citizen['cns']) ? preg_replace('/\D/', '', $citizen['cns']) : null,
+            'cns' => $cns,
             'dataNascimento' => $citizen['birth_date'] ?? null,
             'sexo' => $this->mapSexo($citizen['sexo'] ?? null),
             'raca' => $raca,
@@ -166,8 +189,11 @@ class BethaIntegrationService
     {
         $address = is_string($addressJson) ? json_decode($addressJson, true) : $addressJson;
         $cep = isset($address['cep']) ? preg_replace('/\D/', '', $address['cep']) : '86220000';
+        if ($cep) {
+            $cep = str_pad($cep, 8, '0', STR_PAD_RIGHT);
+        }
         
-        $semNumero = empty($address['numero']) || $address['numero'] === 'S/N';
+        $semNumero = empty($address['numero']) || $address['numero'] === 'S/N' || $address['numero'] === '000';
         $payload = [
             'cep' => $cep ?: '86220000',
             'municipio' => ['codigoIBGE' => 4101903], // Assaí
