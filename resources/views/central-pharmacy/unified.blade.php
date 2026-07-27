@@ -107,7 +107,6 @@
                 </form>
                 @endif
 
-                @if($canProceedWithDispense)
                 <!-- Form de Cadastro / Dispensação (Se permitido) -->
                 <form method="POST" action="{{ route('central-pharmacy.unified.dispense') }}" class="space-y-4">
                     @csrf
@@ -223,7 +222,6 @@
                         @endif
                     </div>
                 </form>
-                @endif
             </div>
         </div>
         @endif
