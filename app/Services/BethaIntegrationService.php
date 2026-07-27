@@ -262,8 +262,19 @@ class BethaIntegrationService
         ], $string);
     }
 
-    private function mapRaca(?string $raca): string
+    private function mapRaca($raca): string
     {
+        if (is_numeric($raca)) {
+            $mapInt = [
+                1 => 'BRANCA',
+                2 => 'PRETA',
+                3 => 'PARDA',
+                4 => 'AMARELA',
+                5 => 'INDIGENA',
+            ];
+            return $mapInt[(int) $raca] ?? 'PARDA';
+        }
+
         $raca = strtoupper(trim((string) $raca));
         $map = [
             'BRANCA' => 'BRANCA',
@@ -271,6 +282,7 @@ class BethaIntegrationService
             'PARDA' => 'PARDA',
             'AMARELA' => 'AMARELA',
             'INDIGENA' => 'INDIGENA',
+            'INDÍGENA' => 'INDIGENA',
         ];
         
         return $map[$raca] ?? 'PARDA';

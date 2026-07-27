@@ -173,14 +173,24 @@
                         </div>
                         <div>
                             <label class="sa-label">Raça/Cor *</label>
-                            @php($raca = old('raca_cor', $info['citizen'] ? $info['citizen']->raca_cor : (Arr::get($info, 'gov_data.cidadao.raca_cor') ?? '')))
+                            @php
+                                $racaRaw = old('raca_cor', $info['citizen'] ? $info['citizen']->raca_cor : (Arr::get($info, 'gov_data.cidadao.raca_cor') ?? ''));
+                                $racaMap = [
+                                    1 => 'BRANCA',
+                                    2 => 'PRETA',
+                                    3 => 'PARDA',
+                                    4 => 'AMARELA',
+                                    5 => 'INDIGENA',
+                                ];
+                                $raca = is_numeric($racaRaw) ? ($racaMap[(int) $racaRaw] ?? '') : strtoupper(trim((string) $racaRaw));
+                            @endphp
                             <select name="raca_cor" class="sa-select" required>
                                 <option value="" disabled {{ !$raca ? 'selected' : '' }}>Selecione a raça/cor</option>
                                 <option value="BRANCA" {{ $raca === 'BRANCA' ? 'selected' : '' }}>BRANCA</option>
                                 <option value="PRETA" {{ $raca === 'PRETA' ? 'selected' : '' }}>PRETA</option>
                                 <option value="PARDA" {{ $raca === 'PARDA' ? 'selected' : '' }}>PARDA</option>
                                 <option value="AMARELA" {{ $raca === 'AMARELA' ? 'selected' : '' }}>AMARELA</option>
-                                <option value="INDIGENA" {{ $raca === 'INDIGENA' ? 'selected' : '' }}>INDÍGENA</option>
+                                <option value="INDIGENA" {{ $raca === 'INDIGENA' || $raca === 'INDÍGENA' ? 'selected' : '' }}>INDÍGENA</option>
                                 <option value="SEM INFORMACAO" {{ $raca === 'SEM INFORMACAO' ? 'selected' : '' }}>SEM INFORMAÇÃO</option>
                             </select>
                         </div>

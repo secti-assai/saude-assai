@@ -115,7 +115,7 @@ class PharmacyDispensationService
                     ?? $this->normalizePhone((string) Arr::get($govData, 'contato.celular', ''));
                 $citizenData['birth_date'] = $data['birth_date'] ?? $this->resolveBirthDate(Arr::get($govData, 'cidadao.data_nascimento'));
                 $citizenData['sexo'] = $data['sexo'] ?? Arr::get($govData, 'cidadao.sexo');
-                $citizenData['raca_cor'] = $data['raca_cor'] ?? Arr::get($govData, 'cidadao.raca_cor');
+                $citizenData['raca_cor'] = isset($data['raca_cor']) ? $this->mapRacaCorToInt($data['raca_cor']) : Arr::get($govData, 'cidadao.raca_cor');
                 $citizenData['cns'] = $data['cns'] ?? Arr::get($govData, 'cidadao.cns');
                 $citizenData['is_resident_assai'] = true;
             } else {
@@ -124,7 +124,7 @@ class PharmacyDispensationService
                 $citizenData['phone'] = $normalizedPhoneInput;
                 $citizenData['birth_date'] = $data['birth_date'] ?? self::UNKNOWN_BIRTH_DATE;
                 $citizenData['sexo'] = $data['sexo'] ?? null;
-                $citizenData['raca_cor'] = $data['raca_cor'] ?? null;
+                $citizenData['raca_cor'] = isset($data['raca_cor']) ? $this->mapRacaCorToInt($data['raca_cor']) : null;
                 $citizenData['cns'] = $data['cns'] ?? null;
                 $citizenData['is_resident_assai'] = false;
             }
@@ -152,8 +152,11 @@ class PharmacyDispensationService
             if (isset($data['sexo']) && $data['sexo'] !== (string) $citizen->sexo) {
                 $updates['sexo'] = $data['sexo'];
             }
-            if (isset($data['raca_cor']) && $data['raca_cor'] !== (string) $citizen->raca_cor) {
-                $updates['raca_cor'] = $data['raca_cor'];
+            if (isset($data['raca_cor'])) {
+                $mappedRaca = $this->mapRacaCorToInt($data['raca_cor']);
+                if ((string) $mappedRaca !== (string) $citizen->raca_cor) {
+                    $updates['raca_cor'] = $mappedRaca;
+                }
             }
 
             if ($updates !== []) {
