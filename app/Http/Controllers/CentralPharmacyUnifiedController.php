@@ -56,7 +56,7 @@ class CentralPharmacyUnifiedController extends Controller
             'cpf' => ['required', 'string'],
             'full_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'regex:/^\(\d{2}\)\s\d{4,5}-\d{4}$/'],
-            'cns' => ['required', 'string', 'size:15', new \App\Rules\CnsRule],
+            'cns' => ['nullable', 'string', 'size:15', new \App\Rules\CnsRule],
             'birth_date' => ['required', 'date'],
             'sexo' => ['required', 'string', Rule::in(['MASCULINO', 'FEMININO'])],
             'raca_cor' => ['required', 'string', Rule::in(['BRANCA', 'PRETA', 'PARDA', 'AMARELA', 'INDIGENA', 'SEM INFORMACAO'])],

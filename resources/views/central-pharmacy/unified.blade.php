@@ -147,10 +147,10 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
-                            <label class="sa-label">Cartão do SUS (CNS) *</label>
+                            <label class="sa-label">Cartão do SUS (CNS)</label>
                             <input name="cns" class="sa-input"
                                 value="{{ old('cns', $info['citizen'] ? $info['citizen']->cns : (Arr::get($info, 'gov_data.cidadao.cns') ?? '')) }}"
-                                placeholder="Apenas números (15 dígitos)" maxlength="15" inputmode="numeric" required
+                                placeholder="Apenas números (15 dígitos)" maxlength="15" inputmode="numeric"
                                 oninput="this.value = this.value.replace(/\D/g, '').slice(0, 15);">
                         </div>
                         <div>
