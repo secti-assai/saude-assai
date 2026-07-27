@@ -7,10 +7,14 @@ use App\Services\PharmacyDispensationService;
 use App\Models\CentralPharmacyRequest;
 use Illuminate\Validation\Rule;
 
+use App\Services\CitizenEligibilityService;
+
 class CentralPharmacyUnifiedController extends Controller
 {
-    public function __construct(private readonly PharmacyDispensationService $pharmacy)
-    {
+    public function __construct(
+        private readonly PharmacyDispensationService $pharmacy,
+        private readonly CitizenEligibilityService $eligibility
+    ) {
     }
 
     public function index(Request $request)
@@ -39,6 +43,9 @@ class CentralPharmacyUnifiedController extends Controller
         $data = $request->validate([
             'cpf' => ['required', 'string'],
         ]);
+
+        // Validate and sync with Betha when searching
+        $this->eligibility->validateAndSync($data['cpf']);
 
         return redirect()->route('central-pharmacy.unified')->with('pharmacy_unified_cpf', $data['cpf']);
     }

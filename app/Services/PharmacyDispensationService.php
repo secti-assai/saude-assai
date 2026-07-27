@@ -149,6 +149,9 @@ class PharmacyDispensationService
             $pharmacyRequest = $this->logDispensation($citizen, $attendantUserId, $data, $level, $request);
             $this->pharmacyNotifications->sendDispenseFeedback($pharmacyRequest);
 
+            // Sincroniza eventuais edições de nome/telefone feitas pelo atendente no momento da dispensa
+            \App\Jobs\SyncCitizenToBethaJob::dispatch($citizen->id);
+
             $message = $isEsusIntegration
                 ? 'Cidadão localizado na base de dados do município e validado. A dispensa foi realizada e registrada!'
                 : 'O cidadão está regularizado (Nível '.$level.'). A dispensa foi realizada e registrada!';
