@@ -15,6 +15,7 @@ use App\Http\Controllers\WomenClinicController;
 use App\Http\Controllers\WomenClinicPublicController;
 use App\Http\Controllers\WomenClinicReportController;
 use App\Http\Controllers\TriagemController;
+use App\Http\Controllers\DoctorStockController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -83,6 +84,10 @@ Route::middleware(['auth', 'module.context'])->group(function () {
 
         if ($user->hasPermission(User::PERMISSION_TRIAGEM_UBS)) {
             return redirect()->route('triagem.fila');
+        }
+
+        if ($user->hasPermission(User::PERMISSION_DOCTOR_MODULE)) {
+            return redirect()->route('doctor.stock.index');
         }
 
         abort(403, 'Perfil sem area operacional configurada.');
@@ -225,7 +230,14 @@ Route::middleware(['auth', 'module.context'])->group(function () {
         ->middleware('permission:triagem.ubs')
         ->name('triagem.cidadao');
 
-
+    // ─── MÉDICO (ESTOQUE) ────────────────────────────────────────────────────────
+    Route::get('/medico/estoque', [DoctorStockController::class, 'index'])
+        ->middleware('permission:doctor.module')
+        ->name('doctor.stock.index');
+        
+    Route::get('/medico/estoque/pesquisar', [DoctorStockController::class, 'search'])
+        ->middleware('permission:doctor.module')
+        ->name('doctor.stock.search');
 
     Route::post('/triagem/cidadao/cadastrar', [TriagemController::class, 'cadastrarCidadao'])
         ->middleware('permission:triagem.ubs')

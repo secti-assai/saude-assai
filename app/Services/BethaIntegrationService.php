@@ -199,13 +199,13 @@ class BethaIntegrationService
             'municipio' => ['codigoIBGE' => 4101903], // Assaí
             'bairro' => [
                 'municipio' => ['codigoIBGE' => 4101903],
-                'nome' => $address['bairro'] ?? 'Centro'
+                'nome' => mb_substr($address['bairro'] ?? 'Centro', 0, 50, 'UTF-8')
             ],
             'logradouro' => [
                 'municipio' => ['codigoIBGE' => 4101903],
                 'cep' => $cep ?: '86220000',
                 'abreviaturaTipoLogradouro' => 'R',
-                'nome' => $address['logradouro'] ?? 'Sem Logradouro'
+                'nome' => mb_substr($address['logradouro'] ?? 'Sem Logradouro', 0, 50, 'UTF-8')
             ],
             'semNumero' => $semNumero
         ];
@@ -230,7 +230,8 @@ class BethaIntegrationService
 
         return \Illuminate\Support\Facades\Cache::rememberForever($cacheKey, function () use ($cidade, $uf) {
             try {
-                $response = \Illuminate\Support\Facades\Http::timeout(5)
+                $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+                    ->timeout(5)
                     ->get("https://brasilapi.com.br/api/ibge/municipios/v1/{$uf}");
 
                 if ($response->successful()) {

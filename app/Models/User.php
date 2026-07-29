@@ -46,6 +46,7 @@ class User extends Authenticatable
     public const ROLE_MEDICO_POLICLINICA = 'medico_policlinica';
     public const ROLE_FARMACIA = 'farmacia';
     public const ROLE_TRIAGEM = 'triagem';
+    public const ROLE_MEDICO = 'medico';
 
     /** @use HasFactory<UserFactory> */
 
@@ -59,6 +60,7 @@ class User extends Authenticatable
     public const PERMISSION_CENTRAL_PHARMACY = 'central_pharmacy.unified';
     public const PERMISSION_CENTRAL_PHARMACY_REPORTS = 'central_pharmacy.reports';
     public const PERMISSION_TRIAGEM_UBS = 'triagem.ubs';
+    public const PERMISSION_DOCTOR_MODULE = 'doctor.module';
 
     public static function allPermissionOptions(): array
     {
@@ -100,6 +102,7 @@ class User extends Authenticatable
             self::ROLE_MEDICO_POLICLINICA => [self::PERMISSION_POLICLINICA_CHECKOUT],
             self::ROLE_FARMACIA => [self::PERMISSION_CENTRAL_PHARMACY],
             self::ROLE_TRIAGEM => [self::PERMISSION_TRIAGEM_UBS],
+            self::ROLE_MEDICO => [self::PERMISSION_DOCTOR_MODULE],
             default => [],
         };
     }

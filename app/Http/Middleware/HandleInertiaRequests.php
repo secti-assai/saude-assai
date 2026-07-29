@@ -51,7 +51,10 @@ class HandleInertiaRequests extends Middleware
                         'recepcao_farmacia' => 'pharmacy_reception',
                         'atendimento_farmacia' => 'pharmacy_attendant',
                         'triagem' => 'triage_nurse',
-                        default => 'citizen',
+                        'admin' => 'admin',
+                        'farmacia' => 'pharmacist',
+                        'medico' => 'doctor',
+                        default => $request->user()->role,
                     }
                 ] : null,
             ],
