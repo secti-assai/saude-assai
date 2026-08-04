@@ -25,7 +25,7 @@ export default function AuthLayout({ children, header }: AuthLayoutProps) {
     { name: 'Prontuário Hospitalar', href: '/hospital', roles: ['doctor', 'nurse', 'admin'] },
     { name: 'Triagem UBS', href: '/triagem', roles: ['nurse', 'admin', 'triage_nurse'] },
     { name: 'Recepção', href: '/recepcao', roles: ['receptionist', 'admin'] },
-    { name: 'Estoque de Medicamentos', href: '/medico/estoque', roles: ['doctor', 'clinic_doctor', 'policlinic_doctor', 'admin'] },
+    { name: 'Consulta de Medicamentos', href: '/medico/estoque', roles: ['doctor', 'clinic_doctor', 'policlinic_doctor', 'admin'] },
     { name: 'Auditoria e Usuários', href: '/admin/usuarios', roles: ['admin'] },
   ];
 

@@ -234,10 +234,6 @@ Route::middleware(['auth', 'module.context'])->group(function () {
     Route::get('/medico/estoque', [DoctorStockController::class, 'index'])
         ->middleware('permission:doctor.module')
         ->name('doctor.stock.index');
-        
-    Route::get('/medico/estoque/pesquisar', [DoctorStockController::class, 'search'])
-        ->middleware('permission:doctor.module')
-        ->name('doctor.stock.search');
 
     Route::post('/triagem/cidadao/cadastrar', [TriagemController::class, 'cadastrarCidadao'])
         ->middleware('permission:triagem.ubs')

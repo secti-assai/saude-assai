@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
 import AuthLayout from '@/Layouts/AuthLayout';
-import { Input } from '@/Components/ui/input';
-import { Button } from '@/Components/ui/button';
 import { Search } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/Components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
-import { Badge } from '@/Components/ui/badge';
 import axios from 'axios';
 
 interface Medication {
@@ -44,80 +39,80 @@ export default function StockConsultation() {
             <Head title="Consulta de Estoque" />
 
             <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Buscar Medicamentos na Farmácia Central</CardTitle>
-                        <CardDescription>
-                            Consulte a disponibilidade de medicamentos antes de prescrever.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleSearch} className="flex gap-4">
-                            <Input 
-                                type="text"
-                                placeholder="Digite o nome do medicamento (ex: Dipirona)"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="max-w-md"
-                            />
-                            <Button type="submit" disabled={loading}>
-                                <Search className="w-4 h-4 mr-2" />
-                                Pesquisar
-                            </Button>
-                        </form>
-                    </CardContent>
-                </Card>
+                <div className="bg-white shadow rounded-lg p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-2">Buscar Medicamentos na Farmácia Central</h2>
+                    <p className="text-sm text-gray-600 mb-6">
+                        Consulte a disponibilidade de medicamentos antes de prescrever.
+                    </p>
+                    <form onSubmit={handleSearch} className="flex gap-4">
+                        <input 
+                            type="text"
+                            placeholder="Digite o nome do medicamento (ex: Dipirona)"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="flex-1 max-w-md px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button 
+                            type="submit" 
+                            disabled={loading}
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                        >
+                            <Search className="w-4 h-4 mr-2" />
+                            Pesquisar
+                        </button>
+                    </form>
+                </div>
 
-                <Card>
-                    <CardContent className="pt-6">
+                <div className="bg-white shadow rounded-lg overflow-hidden">
+                    <div className="p-6 overflow-x-auto">
                         {loading ? (
-                            <div className="text-center py-8 text-muted-foreground">Buscando...</div>
+                            <div className="text-center py-8 text-gray-500">Buscando...</div>
                         ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Medicamento</TableHead>
-                                        <TableHead>Apresentação / Conc.</TableHead>
-                                        <TableHead>REMUME</TableHead>
-                                        <TableHead className="text-right">Saldo Disponível</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicamento</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apresentação / Conc.</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REMUME</th>
+                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Saldo Disponível</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
                                     {medications.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
                                                 Nenhum medicamento encontrado.
-                                            </TableCell>
-                                        </TableRow>
+                                            </td>
+                                        </tr>
                                     ) : (
                                         medications.map((med) => (
-                                            <TableRow key={med.id}>
-                                                <TableCell className="font-medium">{med.name}</TableCell>
-                                                <TableCell>
+                                            <tr key={med.id}>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{med.name}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {med.presentation} {med.concentration && `- ${med.concentration}`}
-                                                </TableCell>
-                                                <TableCell>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {med.is_remume ? (
-                                                        <Badge variant="default" className="bg-green-600">Sim</Badge>
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Sim</span>
                                                     ) : (
-                                                        <Badge variant="secondary">Não</Badge>
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Não</span>
                                                     )}
-                                                </TableCell>
-                                                <TableCell className="text-right">
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                                                     {med.stock_available > 0 ? (
                                                         <span className="text-green-600 font-bold">{med.stock_available} un</span>
                                                     ) : (
                                                         <span className="text-red-500 font-bold">Sem Estoque</span>
                                                     )}
-                                                </TableCell>
-                                            </TableRow>
+                                                </td>
+                                            </tr>
                                         ))
                                     )}
-                                </TableBody>
-                            </Table>
+                                </tbody>
+                            </table>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
         </AuthLayout>
     );

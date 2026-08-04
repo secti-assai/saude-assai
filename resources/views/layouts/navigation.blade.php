@@ -18,6 +18,7 @@
         ['route' => 'policlinica.reports', 'match' => 'policlinica.reports', 'label' => 'Policlínica - Relatórios', 'icon' => 'chart-bar', 'permission' => \App\Models\User::PERMISSION_POLICLINICA_REPORTS],
         ['route' => 'central-pharmacy.unified', 'match' => 'central-pharmacy.unified*', 'label' => 'Farmácia Central', 'icon' => 'beaker', 'permission' => \App\Models\User::PERMISSION_CENTRAL_PHARMACY],
         ['route' => 'central-pharmacy.reports', 'match' => 'central-pharmacy.reports', 'label' => 'Farmácia - Relatórios', 'icon' => 'chart-bar', 'permission' => \App\Models\User::PERMISSION_CENTRAL_PHARMACY_REPORTS],
+        ['route' => 'doctor.stock.index', 'match' => 'doctor.stock.*', 'label' => 'Consulta de Medicamentos', 'icon' => 'beaker', 'permission' => \App\Models\User::PERMISSION_DOCTOR_MODULE],
         ['route' => 'triagem.fila', 'match' => 'triagem.fila', 'label' => 'Atendimento - Fila', 'icon' => 'clipboard-list', 'permission' => \App\Models\User::PERMISSION_TRIAGEM_UBS],
         ['route' => 'triagem.cidadao', 'match' => 'triagem.cidadao', 'label' => 'Atendimento - Consulta Cidadão', 'icon' => 'users', 'permission' => \App\Models\User::PERMISSION_TRIAGEM_UBS],
     ];

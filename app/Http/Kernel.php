@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureApiKey;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\ResetFlowOnModuleSwitch;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\VerifyGovAssaiWebhookSignature;
 use Illuminate\Auth\Middleware\Authenticate;
@@ -47,6 +48,7 @@ class Kernel extends HttpKernel
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
             SubstituteBindings::class,
+            HandleInertiaRequests::class,
         ],
 
         'api' => [

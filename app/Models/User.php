@@ -75,6 +75,7 @@ class User extends Authenticatable
             self::PERMISSION_CENTRAL_PHARMACY,
             self::PERMISSION_CENTRAL_PHARMACY_REPORTS,
             self::PERMISSION_TRIAGEM_UBS,
+            self::PERMISSION_DOCTOR_MODULE,
         ];
     }
 
