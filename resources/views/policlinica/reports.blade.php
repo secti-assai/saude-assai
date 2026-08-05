@@ -24,17 +24,19 @@
 
             @php
                 $selectedStatus = $filters['status'] ?? 'TODOS';
+                $selectedSpecialty = $filters['specialty'] ?? 'TODOS';
                 $selectedFeedback = $filters['has_feedback'] ?? 'all';
                 $exportFilters = [
                     'date_start' => $filters['date_start'] ?? null,
                     'date_end' => $filters['date_end'] ?? null,
                     'status' => $filters['status'] ?? null,
+                    'specialty' => $filters['specialty'] ?? null,
                     'has_feedback' => $filters['has_feedback'] ?? null,
                     'citizen_name' => $filters['citizen_name'] ?? null,
                 ];
             @endphp
 
-            <form method="GET" action="{{ route('policlinica.reports') }}" class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+            <form method="GET" action="{{ route('policlinica.reports') }}" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3 items-end">
                 <div>
                     <label class="sa-label">Data inicial</label>
                     <input type="date" name="date_start" class="sa-input" value="{{ $filters['date_start'] ?? now()->subDays(30)->toDateString() }}">
@@ -54,6 +56,15 @@
                     </select>
                 </div>
                 <div>
+                    <label class="sa-label">Especialista / Especialidade</label>
+                    <select name="specialty" class="sa-select">
+                        <option value="TODOS" {{ $selectedSpecialty === 'TODOS' ? 'selected' : '' }}>Todas as especialidades</option>
+                        @foreach(($specialtyOptions ?? []) as $val => $lbl)
+                            <option value="{{ $val }}" {{ $selectedSpecialty === $val ? 'selected' : '' }}>{{ $lbl }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
                     <label class="sa-label">Feedback enviado</label>
                     <select name="has_feedback" class="sa-select">
                         <option value="all" {{ $selectedFeedback === 'all' ? 'selected' : '' }}>Todos</option>
@@ -66,7 +77,7 @@
                     <input type="text" name="citizen_name" class="sa-input" value="{{ $filters['citizen_name'] ?? '' }}" placeholder="Buscar por nome">
                 </div>
 
-                <div class="md:col-span-5 flex flex-wrap justify-end gap-2">
+                <div class="md:col-span-3 xl:col-span-6 flex flex-wrap justify-end gap-2">
                     <a href="{{ route('policlinica.reports.export-csv', $exportFilters) }}" class="sa-btn-secondary">Exportar CSV</a>
                     <a href="{{ route('policlinica.reports.export-pdf', $exportFilters) }}" class="sa-btn-secondary">Exportar PDF</a>
                     <a href="{{ route('policlinica.reports') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Limpar</a>
@@ -219,6 +230,7 @@
                     <thead>
                         <tr>
                             <th>Consulta</th>
+                            <th>Especialidade</th>
                             <th>Cidadão</th>
                             <th>Status</th>
                             <th>Check-in</th>
@@ -252,6 +264,7 @@
                             @endphp
                             <tr>
                                 <td>{{ $row->scheduled_for?->format('d/m/Y H:i') ?? '—' }}</td>
+                                <td>{{ \App\Models\WomenClinicAppointment::specialtyLabel($row->specialty) }}</td>
                                 <td>{{ $row->citizen->full_name ?? '—' }}</td>
                                 <td>
                                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $statusClass }}">{{ $row->status }}</span>
@@ -275,7 +288,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="9" class="text-center text-gray-500 py-6">Nenhum atendimento encontrado para os filtros informados.</td></tr>
+                            <tr><td colspan="10" class="text-center text-gray-500 py-6">Nenhum atendimento encontrado para os filtros informados.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

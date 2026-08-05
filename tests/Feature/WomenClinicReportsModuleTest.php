@@ -168,4 +168,60 @@ class WomenClinicReportsModuleTest extends TestCase
         $response->assertSee('CIDADAO FILTRO FEEDBACK');
         $response->assertDontSee('CIDADAO FILTRO SEM FEEDBACK');
     }
+
+    public function test_reports_filter_by_specialty(): void
+    {
+        $viewer = User::factory()->create([
+            'role' => User::ROLE_AGENDADOR,
+            'permissions' => [User::PERMISSION_WOMEN_CLINIC_REPORTS],
+            'email_verified_at' => now(),
+        ]);
+
+        $scheduler = User::factory()->create();
+
+        $cardioCitizen = Citizen::create([
+            'cpf' => '90012640964',
+            'cpf_hash' => hash('sha256', '90012640964'),
+            'full_name' => 'PACIENTE CARDIOLOGIA',
+            'birth_date' => '1990-01-01',
+            'is_resident_assai' => true,
+        ]);
+
+        $ortoCitizen = Citizen::create([
+            'cpf' => '90012640965',
+            'cpf_hash' => hash('sha256', '90012640965'),
+            'full_name' => 'PACIENTE ORTOPEDIA',
+            'birth_date' => '1991-01-01',
+            'is_resident_assai' => true,
+        ]);
+
+        WomenClinicAppointment::create([
+            'citizen_id' => $cardioCitizen->id,
+            'scheduler_user_id' => $scheduler->id,
+            'scheduled_for' => now()->subDay(),
+            'specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
+            'status' => 'AGENDADO',
+            'residence_status' => 'RESIDENTE',
+            'gov_assai_level' => '2',
+        ]);
+
+        WomenClinicAppointment::create([
+            'citizen_id' => $ortoCitizen->id,
+            'scheduler_user_id' => $scheduler->id,
+            'scheduled_for' => now()->subDay(),
+            'specialty' => WomenClinicAppointment::SPECIALTY_ORTOPEDIA,
+            'status' => 'AGENDADO',
+            'residence_status' => 'RESIDENTE',
+            'gov_assai_level' => '2',
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('women-clinic.reports', [
+            'specialty' => WomenClinicAppointment::SPECIALTY_CARDIOLOGIA,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('PACIENTE CARDIOLOGIA');
+        $response->assertDontSee('PACIENTE ORTOPEDIA');
+        $response->assertSee('Especialista / Especialidade');
+    }
 }

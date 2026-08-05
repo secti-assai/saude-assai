@@ -26,6 +26,7 @@
         <thead>
             <tr>
                 <th>Data Agendada</th>
+                <th>Especialidade</th>
                 <th>Cidadão</th>
                 <th>Status</th>
                 <th>Agendador</th>
@@ -38,6 +39,7 @@
             @foreach($rows as $row)
             <tr>
                 <td>{{ $row->scheduled_for?->format('d/m/Y H:i') }}</td>
+                <td>{{ \App\Models\WomenClinicAppointment::specialtyLabel($row->specialty) }}</td>
                 <td>{{ $row->citizen->full_name ?? '' }}</td>
                 <td>{{ $row->status }}</td>
                 <td>{{ $row->scheduler->name ?? '' }}</td>

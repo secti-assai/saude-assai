@@ -27,6 +27,7 @@ class WomenClinicReportService
         $this->applyClinicFilter($rowsQuery, $filters['clinic_type']);
         $this->applyDateFilter($rowsQuery, $filters);
         $this->applyStatusFilter($rowsQuery, $filters['status']);
+        $this->applySpecialtyFilter($rowsQuery, $filters['specialty']);
         $this->applyTextFilters($rowsQuery, $filters);
 
         $rows = $rowsQuery
@@ -39,6 +40,7 @@ class WomenClinicReportService
                     $row->checked_in_at?->format('d/m/Y H:i') ?? '',
                     $row->checked_out_at?->format('d/m/Y H:i') ?? '',
                     (string) ($row->citizen->full_name ?? ''),
+                    (string) WomenClinicAppointment::specialtyLabel($row->specialty),
                     (string) ($row->status ?? ''),
                     (string) ($row->scheduler->name ?? ''),
                     (string) ($row->reception->name ?? ''),
@@ -66,6 +68,7 @@ class WomenClinicReportService
                 'data_checkin',
                 'data_checkout',
                 'cidadao',
+                'especialidade',
                 'status',
                 'agendador',
                 'recepcao',
@@ -88,6 +91,7 @@ class WomenClinicReportService
         $this->applyClinicFilter($rowsQuery, $filters['clinic_type']);
         $this->applyDateFilter($rowsQuery, $filters);
         $this->applyStatusFilter($rowsQuery, $filters['status']);
+        $this->applySpecialtyFilter($rowsQuery, $filters['specialty']);
         $this->applyTextFilters($rowsQuery, $filters);
 
         $rows = $rowsQuery
@@ -127,6 +131,7 @@ class WomenClinicReportService
         $this->applyClinicFilter($rowsQuery, $filters['clinic_type']);
         $this->applyDateFilter($rowsQuery, $filters);
         $this->applyStatusFilter($rowsQuery, $filters['status']);
+        $this->applySpecialtyFilter($rowsQuery, $filters['specialty']);
         $this->applyTextFilters($rowsQuery, $filters);
 
         $rows = $rowsQuery
@@ -137,6 +142,7 @@ class WomenClinicReportService
         $periodQuery = WomenClinicAppointment::query();
         $this->applyClinicFilter($periodQuery, $filters['clinic_type']);
         $this->applyDateFilter($periodQuery, $filters);
+        $this->applySpecialtyFilter($periodQuery, $filters['specialty']);
 
         $totalAppointments = (clone $periodQuery)->count();
         $totalScheduled = (clone $periodQuery)->where('status', 'AGENDADO')->count();
@@ -218,6 +224,7 @@ class WomenClinicReportService
 
         return [
             'filters' => $filters,
+            'specialtyOptions' => WomenClinicAppointment::specialtyOptionsForClinic($filters['clinic_type']),
             'summary' => [
                 'total_appointments' => $totalAppointments,
                 'total_scheduled' => $totalScheduled,
@@ -263,6 +270,11 @@ class WomenClinicReportService
             $status = 'TODOS';
         }
 
+        $specialty = Str::upper(trim((string) ($input['specialty'] ?? 'TODOS')));
+        if (! in_array($specialty, WomenClinicAppointment::specialtyValues(), true)) {
+            $specialty = 'TODOS';
+        }
+
         $hasFeedback = (string) ($input['has_feedback'] ?? 'all');
         if (! in_array($hasFeedback, ['all', 'yes', 'no'], true)) {
             $hasFeedback = 'all';
@@ -275,6 +287,7 @@ class WomenClinicReportService
             'date_start' => $dateStart,
             'date_end' => $dateEnd,
             'status' => $status,
+            'specialty' => $specialty,
             'has_feedback' => $hasFeedback,
             'citizen_name' => $citizenName,
             'clinic_type' => $clinicType,
@@ -314,6 +327,15 @@ class WomenClinicReportService
         }
 
         $query->where('status', $status);
+    }
+
+    private function applySpecialtyFilter(Builder $query, string $specialty): void
+    {
+        if ($specialty === 'TODOS') {
+            return;
+        }
+
+        $query->where('specialty', $specialty);
     }
 
     private function applyTextFilters(Builder $query, array $filters): void
