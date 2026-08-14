@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 use App\Models\WomenClinicAppointment;
 use App\Models\CentralPharmacyRequest;
 use App\Observers\WomenClinicAppointmentObserver;
@@ -23,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        URL::forceScheme('https');
         WomenClinicAppointment::observe(WomenClinicAppointmentObserver::class);
         CentralPharmacyRequest::observe(CentralPharmacyRequestObserver::class);
     }
