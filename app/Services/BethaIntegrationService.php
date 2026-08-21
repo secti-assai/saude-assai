@@ -24,6 +24,33 @@ class BethaIntegrationService
             return false;
         }
 
+        if (!empty($payload['cpf']) && !$inativo) {
+            $cpf = $payload['cpf'];
+            // Consulta o status atual usando a nova rota buscarPorCpf
+            $checkResponse = Http::withHeaders($this->getHeaders())
+                ->get("{$this->baseUrl}/dados/v1/clientes/buscarPorCpf/{$cpf}");
+
+            if ($checkResponse->successful()) {
+                $clienteBetha = $checkResponse->json();
+                
+                // Tenta identificar se o paciente está inativo na base deles
+                $isInactive = false;
+                if (isset($clienteBetha['inativo']) && $clienteBetha['inativo'] === true) {
+                    $isInactive = true;
+                } elseif (isset($clienteBetha['situacao']) && strtoupper(strval($clienteBetha['situacao'])) === 'INATIVO') {
+                    $isInactive = true;
+                } elseif (isset($clienteBetha['status']) && strtoupper(strval($clienteBetha['status'])) === 'INATIVO') {
+                    $isInactive = true;
+                }
+
+                // Se identificamos que está inativo e a intenção (N2/ACS) é deixá-lo ativo, chamamos o ativar
+                if ($isInactive) {
+                    Http::withHeaders($this->getHeaders())
+                        ->patch("{$this->baseUrl}/dados/v1/clientes/ativar/{$cpf}");
+                }
+            }
+        }
+
         $response = Http::withHeaders($this->getHeaders())
             ->post("{$this->baseUrl}/dados/v1/clientes/integrar", $payload);
 
@@ -40,7 +67,28 @@ class BethaIntegrationService
                 }
             }
 
-            if ($isDuplicate) {
+            // Fallback: se deu erro de duplicidade e nós queremos que ele seja ativo, 
+            // tentamos forçar o ativar caso a checagem acima não tenha pego
+            if ($isDuplicate && !$inativo && !empty($payload['cpf'])) {
+                $activateResponse = Http::withHeaders($this->getHeaders())
+                    ->patch("{$this->baseUrl}/dados/v1/clientes/ativar/{$payload['cpf']}");
+                
+                if ($activateResponse->successful()) {
+                    // Tenta integrar novamente após forçar a ativação
+                    $response = Http::withHeaders($this->getHeaders())
+                        ->post("{$this->baseUrl}/dados/v1/clientes/integrar", $payload);
+                    
+                    if ($response->successful()) {
+                        $isDuplicate = false;
+                    } else {
+                        $responseData = $response->json(); // Atualiza com o novo erro
+                    }
+                }
+            }
+
+            if ($response->successful()) {
+                // Sucesso no retry
+            } elseif ($isDuplicate) {
                 Log::info('BethaIntegrationService: Cidadão já existe na base da Betha, ignorando erro.', ['cpf' => $payload['cpf'] ?? null, 'cns' => $payload['cns'] ?? null]);
             } else {
                 Log::error('BethaIntegrationService: Falha ao integrar cidadão.', [
@@ -69,59 +117,12 @@ class BethaIntegrationService
         $cpf = preg_replace('/\D/', '', (string) $cpf);
         $cns = preg_replace('/\D/', '', (string) $cns);
 
-        if (empty($cpf) && !empty($cns)) {
-            // Manobra do CPF sintético
-            $syntheticCpf = $this->generateValidSyntheticCpf();
-            
-            // Passo 1: Atualiza o cidadão na Betha via CNS injetando o CPF sintético
-            $payload = [
-                'id' => $id,
-                'idBetha' => $id,
-                'cns' => $cns,
-                'cpf' => $syntheticCpf,
-                'nomeCompleto' => $name ?? 'Cidadao Sem CPF (Inativacao automatica)',
-                'raca' => 'PARDA',
-                'sexo' => 'MASCULINO',
-                'dataNascimento' => '1900-01-01',
-                'paisNacionalidade' => ['iso2' => 'BR'],
-                'municipioNaturalidade' => ['codigoIBGE' => 3550308], // Usando SP para não ter erro
-                'endereco' => [
-                    'cep' => '01001000',
-                    'municipio' => ['codigoIBGE' => 3550308],
-                    'bairro' => [
-                        'municipio' => ['codigoIBGE' => 3550308],
-                        'nome' => 'Centro'
-                    ],
-                    'logradouro' => [
-                        'municipio' => ['codigoIBGE' => 3550308],
-                        'cep' => '01001000',
-                        'abreviaturaTipoLogradouro' => 'R',
-                        'nome' => 'Direita'
-                    ],
-                    'semNumero' => true
-                ],
-            ];
-
-            $syncResponse = Http::withHeaders($this->getHeaders())
-                ->post("{$this->baseUrl}/dados/v1/clientes/integrar", $payload);
-
-            if (!$syncResponse->successful()) {
-                Log::error('BethaIntegrationService: Falha ao injetar CPF sintético.', [
-                    'cns' => $cns,
-                    'status' => $syncResponse->status(),
-                    'response' => $syncResponse->json(),
-                    'payload' => $payload
-                ]);
-                return false;
-            }
-
-            $cpf = $syntheticCpf; // Agora temos um CPF que está atrelado ao registro para o PATCH
-        } elseif (empty($cpf) && empty($cns)) {
-            // Se não tem nem CPF nem CNS não temos como buscar na API, então não faz nada.
+        if (empty($cpf)) {
+            Log::warning('BethaIntegrationService: Impossível inativar cidadão sem CPF na Betha (novas rotas exigem CPF).', ['cns' => $cns]);
             return false;
         }
 
-        // Passo 2: Executa o PATCH usando o CPF (real ou sintético)
+        // Executa o PATCH usando o CPF diretamente
         $response = Http::withHeaders($this->getHeaders())
             ->patch("{$this->baseUrl}/dados/v1/clientes/inativar/{$cpf}");
 
