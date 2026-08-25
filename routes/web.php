@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminManagementController;
+use App\Http\Controllers\AdminScheduleRuleController;
 use App\Http\Controllers\CallController;
 use App\Http\Controllers\CentralPharmacyPublicController;
 use App\Http\Controllers\CentralPharmacyController;
@@ -372,6 +373,30 @@ Route::middleware(['auth', 'module.context'])->group(function () {
     Route::get('/admin/farmacia-central/analise-estoque', [StockAnalysisController::class, 'index'])
         ->middleware('role:admin')
         ->name('admin.stock.analysis');
+
+    Route::get('/admin/escolas-e-horarios', [AdminScheduleRuleController::class, 'index'])
+        ->middleware('role:admin')
+        ->name('admin.schedules.index');
+        
+    Route::get('/admin/escolas-e-horarios/novo', [AdminScheduleRuleController::class, 'create'])
+        ->middleware('role:admin')
+        ->name('admin.schedules.create');
+        
+    Route::post('/admin/escolas-e-horarios', [AdminScheduleRuleController::class, 'store'])
+        ->middleware('role:admin')
+        ->name('admin.schedules.store');
+        
+    Route::get('/admin/escolas-e-horarios/{schedule}/editar', [AdminScheduleRuleController::class, 'edit'])
+        ->middleware('role:admin')
+        ->name('admin.schedules.edit');
+        
+    Route::put('/admin/escolas-e-horarios/{schedule}', [AdminScheduleRuleController::class, 'update'])
+        ->middleware('role:admin')
+        ->name('admin.schedules.update');
+        
+    Route::delete('/admin/escolas-e-horarios/{schedule}', [AdminScheduleRuleController::class, 'destroy'])
+        ->middleware('role:admin')
+        ->name('admin.schedules.destroy');
 
     Route::fallback(function () {
         return redirect()->route('dashboard');

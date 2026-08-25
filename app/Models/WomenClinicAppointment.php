@@ -188,30 +188,27 @@ class WomenClinicAppointment extends Model
 
     public static function getSlotCapacity(string $clinicType, string $specialty, \Carbon\Carbon $date, string $timeStr): int
     {
-        if ($clinicType === self::CLINIC_WOMEN) {
-            if ($specialty === self::SPECIALTY_ORTOPEDIA) {
-                $weekOfMonth = (int) ceil($date->day / 7);
-                if ($date->dayOfWeek === \Carbon\Carbon::MONDAY) {
-                    if ($timeStr === '07:30') return 25;
-                }
-                if ($date->dayOfWeek === \Carbon\Carbon::WEDNESDAY) {
-                    if ($weekOfMonth <= 2) {
-                        if ($timeStr === '07:30') return 17;
-                        if ($timeStr === '13:00') return 17;
-                    } elseif ($weekOfMonth === 3) {
-                        if ($timeStr === '07:30') return 16;
-                        if ($timeStr === '13:00') return 16;
-                    }
-                }
-            }
-            if ($specialty === self::SPECIALTY_PSIQUIATRIA && $timeStr === '08:00') {
-                return 25;
-            }
-            if ($specialty === self::SPECIALTY_CARDIOLOGIA && $timeStr === '14:00' && $date->dayOfWeek === \Carbon\Carbon::TUESDAY) {
-                return 50;
-            }
+        $weekOfMonth = (int) ceil($date->day / 7);
+        $dayOfWeek = $date->dayOfWeek;
+
+        $rules = \App\Models\ClinicScheduleRule::where('clinic_type', $clinicType)
+            ->where('specialty', $specialty)
+            ->where('day_of_week', $dayOfWeek)
+            ->where('is_active', true)
+            ->get();
+
+        $matchedRule = $rules->first(function ($rule) use ($weekOfMonth, $timeStr) {
+            $ruleTime = substr($rule->time, 0, 5); // ex: "07:30"
+            $searchTime = substr($timeStr, 0, 5);
+            return $ruleTime === $searchTime && in_array($weekOfMonth, $rule->weeks_of_month ?? []);
+        });
+
+        if ($matchedRule) {
+            return $matchedRule->capacity;
         }
-        return 1;
+
+        // Horários não cadastrados não devem permitir novos agendamentos
+        return 0;
     }
 
     public function citizen(): BelongsTo
