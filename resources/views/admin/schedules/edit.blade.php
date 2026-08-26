@@ -1,4 +1,4 @@
-<x-layouts.app>
+<x-app-layout>
     <x-slot name="header">
         <div class="flex items-center gap-4">
             <a href="{{ route('admin.schedules.index') }}" class="p-2 -ml-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition">
@@ -117,4 +117,4 @@
             </div>
         </form>
     </div>
-</x-layouts.app>
+</x-app-layout>
