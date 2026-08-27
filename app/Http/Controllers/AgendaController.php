@@ -4,54 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\WomenClinicAppointment;
+use App\Models\ClinicScheduleRule;
 use Carbon\Carbon;
 
 class AgendaController extends Controller
 {
-    private function getSpecialAgendaRules(string $clinicType, string $specialty, Carbon $date): ?array
-    {
-        if ($clinicType === WomenClinicAppointment::CLINIC_WOMEN) {
-            if ($specialty === WomenClinicAppointment::SPECIALTY_ORTOPEDIA) {
-                $weekOfMonth = (int) ceil($date->day / 7);
-
-                // MARCIO ORTOPEDISTA - TODA SEGUNDA-FEIRA, max 4 segundas (max 100 pacientes/mes)
-                if ($date->dayOfWeek === Carbon::MONDAY && $weekOfMonth <= 4) {
-                    return [
-                        ['time' => '07:30', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '07:30')],
-                    ];
-                }
-
-                // BRUNO ORTOPEDISTA - 3 primeiras QUARTAs do mes a partir de Julho/2026
-                if ($date->format('Y-m') >= '2026-07') {
-                    if ($date->dayOfWeek === Carbon::WEDNESDAY && $weekOfMonth <= 3) {
-                        return [
-                            ['time' => '07:30', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '07:30')],
-                            ['time' => '13:00', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '13:00')],
-                        ];
-                    }
-                }
-
-                return []; // Bloqueia nos outros dias ou alem do limite de semanas
-            }
-            if ($specialty === WomenClinicAppointment::SPECIALTY_PSIQUIATRIA) {
-                // 25 pessoas das 08h00 as 13h00
-                return [
-                    ['time' => '08:00', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '08:00')],
-                ];
-            }
-            if ($specialty === WomenClinicAppointment::SPECIALTY_CARDIOLOGIA) {
-                // 50 pessoas das 14 as 17h, somente a terca-feira
-                if ($date->dayOfWeek === Carbon::TUESDAY) {
-                    return [
-                        ['time' => '14:00', 'capacity' => WomenClinicAppointment::getSlotCapacity($clinicType, $specialty, $date, '14:00')],
-                    ];
-                }
-                return []; // Vazio nos outros dias para bloquear agendamentos
-            }
-        }
-        return null;
-    }
-
     public function getSlots(Request $request)
     {
         $date = $request->get('date', date('Y-m-d'));
@@ -63,9 +20,22 @@ class AgendaController extends Controller
         }
 
         $dateObj = Carbon::parse($date);
-        $specialRules = $this->getSpecialAgendaRules($clinicType, $specialty, $dateObj);
+        $weekOfMonth = (int) ceil($dateObj->day / 7);
+        $dayOfWeek = $dateObj->dayOfWeek;
 
-        // Busca registros ignorando CANCELADOS e agrupa TODOS por horario
+        // Busca as regras cadastradas e ativas para a clínica, especialidade e dia da semana
+        $rules = ClinicScheduleRule::where('clinic_type', $clinicType)
+            ->where('specialty', $specialty)
+            ->where('day_of_week', $dayOfWeek)
+            ->where('is_active', true)
+            ->orderBy('time')
+            ->get();
+
+        $matchedRules = $rules->filter(function ($rule) use ($weekOfMonth) {
+            return in_array($weekOfMonth, $rule->weeks_of_month ?? []);
+        });
+
+        // Busca registros agendados ignorando CANCELADOS e agrupa por horário
         $busySlots = WomenClinicAppointment::where('clinic_type', $clinicType)
             ->where('specialty', $specialty)
             ->whereDate('scheduled_for', $dateObj)
@@ -76,88 +46,36 @@ class AgendaController extends Controller
 
         $slots = [];
 
-        if ($specialRules !== null) {
-            // Usa as regras customizadas (agendamento em massa / encaixe configurado)
-            foreach ($specialRules as $rule) {
-                $timeStr = $rule['time'];
-                $capacity = $rule['capacity'];
-                $busyArray = $busySlots->get($timeStr) ?? [];
+        foreach ($matchedRules as $rule) {
+            $timeStr = substr($rule->time, 0, 5);
+            $capacity = (int) $rule->capacity;
+            $busyArray = $busySlots->get($timeStr) ?? [];
 
-                // Emite os ocupados primeiro
-                foreach ($busyArray as $busy) {
-                    $slots[] = [
-                        'time' => $timeStr,
-                        'available' => false,
-                        'appointment_id' => $busy->id,
-                        'appointment_status' => $busy->status,
-                        'patient_name' => $busy->citizen->full_name ?? 'Cidadão',
-                        'patient_phone' => $busy->citizen->phone ?? '',
-                        'is_conected_sus' => true,
-                    ];
-                }
-
-                // Emite os slots livres restantes
-                $remaining = $capacity - count($busyArray);
-                for ($i = 0; $i < $remaining; $i++) {
-                    $slots[] = [
-                        'time' => $timeStr,
-                        'available' => true,
-                        'appointment_id' => null,
-                        'appointment_status' => null,
-                        'patient_name' => null,
-                        'patient_phone' => null,
-                        'is_conected_sus' => false,
-                    ];
-                }
+            // Emite os ocupados primeiro
+            foreach ($busyArray as $busy) {
+                $slots[] = [
+                    'time' => $timeStr,
+                    'available' => false,
+                    'appointment_id' => $busy->id,
+                    'appointment_status' => $busy->status,
+                    'patient_name' => $busy->citizen->full_name ?? 'Cidadão',
+                    'patient_phone' => $busy->citizen->phone ?? '',
+                    'is_conected_sus' => true,
+                ];
             }
-        } else {
-            // Regra comum baseada em minutos por paciente
-            $duration = config("clinic.durations.{$specialty}", config('clinic.durations.DEFAULT'));
-            
-            $start = Carbon::parse($date . ' ' . config('clinic.work_hours.start'));
-            $end = Carbon::parse($date . ' ' . config('clinic.work_hours.end'));
-            $lunchStart = Carbon::parse($date . ' ' . config('clinic.work_hours.lunch_start'));
-            $lunchEnd = Carbon::parse($date . ' ' . config('clinic.work_hours.lunch_end'));
 
-            $current = $start->copy();
-
-            while ($current->lt($end)) {
-                // Pular o almoco
-                if ($current->gte($lunchStart) && $current->lt($lunchEnd)) {
-                    $current->addMinutes($duration);
-                    continue;
-                }
-
-                $timeStr = $current->format('H:i');
-                $busyArray = $busySlots->get($timeStr) ?? [];
-                $capacity = 1; // Default: 1 pessoa por slot especifico
-                
-                foreach ($busyArray as $busy) {
-                    $slots[] = [
-                        'time' => $timeStr,
-                        'available' => false,
-                        'appointment_id' => $busy->id,
-                        'appointment_status' => $busy->status,
-                        'patient_name' => $busy->citizen->full_name ?? 'Cidadão',
-                        'patient_phone' => $busy->citizen->phone ?? '',
-                        'is_conected_sus' => true,
-                    ];
-                }
-
-                $remaining = $capacity - count($busyArray);
-                for ($i = 0; $i < $remaining; $i++) {
-                    $slots[] = [
-                        'time' => $timeStr,
-                        'available' => true,
-                        'appointment_id' => null,
-                        'appointment_status' => null,
-                        'patient_name' => null,
-                        'patient_phone' => null,
-                        'is_conected_sus' => false,
-                    ];
-                }
-
-                $current->addMinutes($duration);
+            // Emite os slots livres restantes
+            $remaining = max(0, $capacity - count($busyArray));
+            for ($i = 0; $i < $remaining; $i++) {
+                $slots[] = [
+                    'time' => $timeStr,
+                    'available' => true,
+                    'appointment_id' => null,
+                    'appointment_status' => null,
+                    'patient_name' => null,
+                    'patient_phone' => null,
+                    'is_conected_sus' => false,
+                ];
             }
         }
 

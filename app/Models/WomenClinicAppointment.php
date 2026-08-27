@@ -188,6 +188,15 @@ class WomenClinicAppointment extends Model
 
     public static function getSlotCapacity(string $clinicType, string $specialty, \Carbon\Carbon $date, string $timeStr): int
     {
+        $hasRules = \App\Models\ClinicScheduleRule::where('clinic_type', $clinicType)
+            ->where('specialty', $specialty)
+            ->where('is_active', true)
+            ->exists();
+
+        if (! $hasRules) {
+            return 1;
+        }
+
         $weekOfMonth = (int) ceil($date->day / 7);
         $dayOfWeek = $date->dayOfWeek;
 
@@ -207,7 +216,7 @@ class WomenClinicAppointment extends Model
             return $matchedRule->capacity;
         }
 
-        // Horários não cadastrados não devem permitir novos agendamentos
+        // Horários não cadastrados não devem permitir novos agendamentos quando há regras configuradas
         return 0;
     }
 
