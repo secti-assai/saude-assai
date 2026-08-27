@@ -35,26 +35,25 @@ class AgendaController extends Controller
             return in_array($weekOfMonth, $rule->weeks_of_month ?? []);
         });
 
-        // Busca registros agendados ignorando CANCELADOS e agrupa por horário
-        $busySlots = WomenClinicAppointment::where('clinic_type', $clinicType)
+        // Busca todos os registros agendados para o dia (ignorando cancelados)
+        $busyAppointments = WomenClinicAppointment::where('clinic_type', $clinicType)
             ->where('specialty', $specialty)
             ->whereDate('scheduled_for', $dateObj)
             ->whereNotIn('status', ['CANCELADO'])
             ->with('citizen:id,full_name,phone')
-            ->get()
-            ->groupBy(fn ($app) => $app->scheduled_for->format('H:i'));
+            ->get();
 
         $slots = [];
-        $processedTimes = [];
 
         foreach ($matchedRules as $rule) {
             $timeStr = substr($rule->time, 0, 5);
             $capacity = (int) $rule->capacity;
-            $busyArray = $busySlots->get($timeStr) ?? [];
-            $processedTimes[] = $timeStr;
 
-            // Emite os ocupados primeiro
-            foreach ($busyArray as $busy) {
+            // Retira até $capacity agendamentos da lista de ocupados para preencher esta regra
+            $busyForThisRule = $busyAppointments->splice(0, $capacity);
+
+            // Emite os ocupados preenchendo a regra atual
+            foreach ($busyForThisRule as $busy) {
                 $slots[] = [
                     'time' => $timeStr,
                     'available' => false,
@@ -66,8 +65,8 @@ class AgendaController extends Controller
                 ];
             }
 
-            // Emite os slots livres restantes
-            $remaining = max(0, $capacity - count($busyArray));
+            // Emite os slots livres restantes para esta regra
+            $remaining = max(0, $capacity - $busyForThisRule->count());
             for ($i = 0; $i < $remaining; $i++) {
                 $slots[] = [
                     'time' => $timeStr,
@@ -81,22 +80,20 @@ class AgendaController extends Controller
             }
         }
 
-        // Adiciona horários que possuem agendamentos mas não estão nas regras atuais
-        foreach ($busySlots as $timeStr => $busyArray) {
-            if (!in_array($timeStr, $processedTimes)) {
-                foreach ($busyArray as $busy) {
-                    $slots[] = [
-                        'time' => $timeStr,
-                        'available' => false,
-                        'appointment_id' => $busy->id,
-                        'appointment_status' => $busy->status,
-                        'patient_name' => $busy->citizen->full_name ?? 'Cidadão',
-                        'patient_phone' => $busy->citizen->phone ?? '',
-                        'is_conected_sus' => true,
-                        'out_of_rule' => true,
-                    ];
-                }
-            }
+        // Caso haja mais agendamentos do que a capacidade total de todas as regras somadas,
+        // nós os adicionamos ao final com seu horário original para não "esconder" os excedentes.
+        foreach ($busyAppointments as $busy) {
+            $timeStr = $busy->scheduled_for->format('H:i');
+            $slots[] = [
+                'time' => $timeStr,
+                'available' => false,
+                'appointment_id' => $busy->id,
+                'appointment_status' => $busy->status,
+                'patient_name' => $busy->citizen->full_name ?? 'Cidadão',
+                'patient_phone' => $busy->citizen->phone ?? '',
+                'is_conected_sus' => true,
+                'out_of_rule' => true,
+            ];
         }
 
         // Ordena todos os slots pelo horário para manter a ordem cronológica
