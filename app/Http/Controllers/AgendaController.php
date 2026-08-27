@@ -45,11 +45,13 @@ class AgendaController extends Controller
             ->groupBy(fn ($app) => $app->scheduled_for->format('H:i'));
 
         $slots = [];
+        $processedTimes = [];
 
         foreach ($matchedRules as $rule) {
             $timeStr = substr($rule->time, 0, 5);
             $capacity = (int) $rule->capacity;
             $busyArray = $busySlots->get($timeStr) ?? [];
+            $processedTimes[] = $timeStr;
 
             // Emite os ocupados primeiro
             foreach ($busyArray as $busy) {
@@ -78,6 +80,29 @@ class AgendaController extends Controller
                 ];
             }
         }
+
+        // Adiciona horários que possuem agendamentos mas não estão nas regras atuais
+        foreach ($busySlots as $timeStr => $busyArray) {
+            if (!in_array($timeStr, $processedTimes)) {
+                foreach ($busyArray as $busy) {
+                    $slots[] = [
+                        'time' => $timeStr,
+                        'available' => false,
+                        'appointment_id' => $busy->id,
+                        'appointment_status' => $busy->status,
+                        'patient_name' => $busy->citizen->full_name ?? 'Cidadão',
+                        'patient_phone' => $busy->citizen->phone ?? '',
+                        'is_conected_sus' => true,
+                        'out_of_rule' => true,
+                    ];
+                }
+            }
+        }
+
+        // Ordena todos os slots pelo horário para manter a ordem cronológica
+        usort($slots, function($a, $b) {
+            return strcmp($a['time'], $b['time']);
+        });
 
         return response()->json($slots);
     }
