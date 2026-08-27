@@ -34,20 +34,13 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Especialidade</label>
                     <select name="specialty" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm">
                         <!-- Women Clinic -->
-                        <template x-if="clinic === '{{ \App\Models\WomenClinicAppointment::CLINIC_WOMEN }}'">
-                            <>
-                                <option value="{{ \App\Models\WomenClinicAppointment::SPECIALTY_CARDIOLOGIA }}" {{ old('specialty', $schedule->specialty) == \App\Models\WomenClinicAppointment::SPECIALTY_CARDIOLOGIA ? 'selected' : '' }}>Cardiologia</option>
-                                <option value="{{ \App\Models\WomenClinicAppointment::SPECIALTY_ORTOPEDIA }}" {{ old('specialty', $schedule->specialty) == \App\Models\WomenClinicAppointment::SPECIALTY_ORTOPEDIA ? 'selected' : '' }}>Ortopedia</option>
-                                <option value="{{ \App\Models\WomenClinicAppointment::SPECIALTY_PSIQUIATRIA }}" {{ old('specialty', $schedule->specialty) == \App\Models\WomenClinicAppointment::SPECIALTY_PSIQUIATRIA ? 'selected' : '' }}>Psiquiatria</option>
-                            </>
-                        </template>
+                        <option value="{{ \App\Models\WomenClinicAppointment::SPECIALTY_CARDIOLOGIA }}" x-show="clinic === '{{ \App\Models\WomenClinicAppointment::CLINIC_WOMEN }}'" {{ old('specialty', $schedule->specialty) == \App\Models\WomenClinicAppointment::SPECIALTY_CARDIOLOGIA ? 'selected' : '' }}>Cardiologia</option>
+                        <option value="{{ \App\Models\WomenClinicAppointment::SPECIALTY_ORTOPEDIA }}" x-show="clinic === '{{ \App\Models\WomenClinicAppointment::CLINIC_WOMEN }}'" {{ old('specialty', $schedule->specialty) == \App\Models\WomenClinicAppointment::SPECIALTY_ORTOPEDIA ? 'selected' : '' }}>Ortopedia</option>
+                        <option value="{{ \App\Models\WomenClinicAppointment::SPECIALTY_PSIQUIATRIA }}" x-show="clinic === '{{ \App\Models\WomenClinicAppointment::CLINIC_WOMEN }}'" {{ old('specialty', $schedule->specialty) == \App\Models\WomenClinicAppointment::SPECIALTY_PSIQUIATRIA ? 'selected' : '' }}>Psiquiatria</option>
+
                         <!-- Policlinica -->
-                        <template x-if="clinic === '{{ \App\Models\WomenClinicAppointment::CLINIC_POLICLINICA }}'">
-                            <>
-                                <option value="{{ \App\Models\WomenClinicAppointment::SPECIALTY_ODONTOLOGIA }}" {{ old('specialty', $schedule->specialty) == \App\Models\WomenClinicAppointment::SPECIALTY_ODONTOLOGIA ? 'selected' : '' }}>Odontologia</option>
-                                <option value="{{ \App\Models\WomenClinicAppointment::SPECIALTY_FISIOTERAPIA }}" {{ old('specialty', $schedule->specialty) == \App\Models\WomenClinicAppointment::SPECIALTY_FISIOTERAPIA ? 'selected' : '' }}>Fisioterapia</option>
-                            </>
-                        </template>
+                        <option value="{{ \App\Models\WomenClinicAppointment::SPECIALTY_ODONTOLOGIA }}" x-show="clinic === '{{ \App\Models\WomenClinicAppointment::CLINIC_POLICLINICA }}'" {{ old('specialty', $schedule->specialty) == \App\Models\WomenClinicAppointment::SPECIALTY_ODONTOLOGIA ? 'selected' : '' }}>Odontologia</option>
+                        <option value="{{ \App\Models\WomenClinicAppointment::SPECIALTY_FISIOTERAPIA }}" x-show="clinic === '{{ \App\Models\WomenClinicAppointment::CLINIC_POLICLINICA }}'" {{ old('specialty', $schedule->specialty) == \App\Models\WomenClinicAppointment::SPECIALTY_FISIOTERAPIA ? 'selected' : '' }}>Fisioterapia</option>
                     </select>
                     @error('specialty') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
