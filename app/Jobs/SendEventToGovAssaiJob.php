@@ -53,7 +53,7 @@ class SendEventToGovAssaiJob implements ShouldQueue
                 'X-API-Key' => $apiKey,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-            ])->timeout(config('services.gov_assai.timeout', 15))
+            ])->timeout(config('services.gov_assai.timeout', 30))
               ->post(rtrim($baseUrl, '/') . '/api/saude/servicos', $queueItem->payload_json);
 
             $queueItem->update([

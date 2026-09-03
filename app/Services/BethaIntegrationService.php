@@ -28,6 +28,7 @@ class BethaIntegrationService
             $cpf = $payload['cpf'];
             // Consulta o status atual usando a nova rota buscarPorCpf
             $checkResponse = Http::withHeaders($this->getHeaders())
+                ->timeout(30)
                 ->get("{$this->baseUrl}/dados/v1/clientes/buscarPorCpf/{$cpf}");
 
             if ($checkResponse->successful()) {
@@ -46,12 +47,14 @@ class BethaIntegrationService
                 // Se identificamos que está inativo e a intenção (N2/ACS) é deixá-lo ativo, chamamos o ativar
                 if ($isInactive) {
                     Http::withHeaders($this->getHeaders())
+                        ->timeout(30)
                         ->patch("{$this->baseUrl}/dados/v1/clientes/ativar/{$cpf}");
                 }
             }
         }
 
         $response = Http::withHeaders($this->getHeaders())
+            ->timeout(30)
             ->post("{$this->baseUrl}/dados/v1/clientes/integrar", $payload);
 
         if (!$response->successful()) {
@@ -71,11 +74,13 @@ class BethaIntegrationService
             // tentamos forçar o ativar caso a checagem acima não tenha pego
             if ($isDuplicate && !$inativo && !empty($payload['cpf'])) {
                 $activateResponse = Http::withHeaders($this->getHeaders())
+                    ->timeout(30)
                     ->patch("{$this->baseUrl}/dados/v1/clientes/ativar/{$payload['cpf']}");
                 
                 if ($activateResponse->successful()) {
                     // Tenta integrar novamente após forçar a ativação
                     $response = Http::withHeaders($this->getHeaders())
+                        ->timeout(30)
                         ->post("{$this->baseUrl}/dados/v1/clientes/integrar", $payload);
                     
                     if ($response->successful()) {
@@ -124,6 +129,7 @@ class BethaIntegrationService
 
         // Executa o PATCH usando o CPF diretamente
         $response = Http::withHeaders($this->getHeaders())
+            ->timeout(30)
             ->patch("{$this->baseUrl}/dados/v1/clientes/inativar/{$cpf}");
 
         if (!$response->successful()) {
@@ -232,7 +238,7 @@ class BethaIntegrationService
         return \Illuminate\Support\Facades\Cache::rememberForever($cacheKey, function () use ($cidade, $uf) {
             try {
                 $response = \Illuminate\Support\Facades\Http::withoutVerifying()
-                    ->timeout(5)
+                    ->timeout(15)
                     ->get("https://brasilapi.com.br/api/ibge/municipios/v1/{$uf}");
 
                 if ($response->successful()) {
