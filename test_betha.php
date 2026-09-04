@@ -1,40 +1,49 @@
 <?php
-require __DIR__ . '/vendor/autoload.php';
-$app = require_once __DIR__ . '/bootstrap/app.php';
+require __DIR__.'/vendor/autoload.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-$service = app(\App\Services\BethaIntegrationService::class);
-$baseUrl = 'https://saude.suite.betha.cloud';
-$headers = [
-    'Authorization' => 'Bearer ' . config('services.betha.bearer_token'),
-    'User-Access' => config('services.betha.user_access'),
-    'Accept' => 'application/json',
-    'Content-Type' => 'application/json',
-];
+$service = app(App\Services\BethaIntegrationService::class);
+$headers = (new ReflectionClass($service))->getMethod('getHeaders')->invoke($service);
 
-echo "1. Buscando CPF...\n";
-$resp = \Illuminate\Support\Facades\Http::withHeaders($headers)->get("$baseUrl/dados/v1/clientes/buscarPorCpf/49025313566");
+$cns = '704002866127665';
+
+echo "Testing buscarPorCns...\n";
+$resp = Illuminate\Support\Facades\Http::withHeaders($headers)
+    ->get("https://saude.suite.betha.cloud/dados/v1/clientes/buscarPorCns/{$cns}");
+
 echo "Status: " . $resp->status() . "\n";
-echo "Body:\n" . json_encode($resp->json(), JSON_PRETTY_PRINT) . "\n\n";
+echo "Body: " . $resp->body() . "\n\n";
 
-$citizen = [
-    'name' => 'Teste Integracao Gov Assai',
-    'cpf' => '49025313566',
-    'cns' => '718009519680001',
-    'birth_date' => '1990-01-01',
-    'sexo' => 'M',
-    'raca_cor' => 'BRANCA',
-    'nacionalidade_sigla' => 'BR',
-    'naturalidade' => 'Assaí',
-    'naturalidade_uf' => 'PR',
-    'address' => [
+echo "Testing buscarPorCpf with dummy CPF...\n";
+$resp2 = Illuminate\Support\Facades\Http::withHeaders($headers)
+    ->get("https://saude.suite.betha.cloud/dados/v1/clientes/buscarPorCpf/00000000000");
+
+echo "Status: " . $resp2->status() . "\n";
+echo "Body: " . $resp2->body() . "\n\n";
+
+// Also test the response of the /integrar when it fails with 422 for this CNS
+$payload = [
+    'nomeCompleto' => 'MARCELLA DIAS CARVALHO',
+    'cpf' => '10799316946',
+    'cns' => $cns,
+    'dataNascimento' => '1999-07-21',
+    'sexo' => 'FEMININO',
+    'raca' => 'BRANCA',
+    'paisNacionalidade' => ['iso2' => 'BR'],
+    'municipioNaturalidade' => ['codigoIBGE' => 4101903],
+    'endereco' => [
         'cep' => '86220000',
-        'numero' => 'S/N',
-        'logradouro' => 'Rua Teste',
-        'bairro' => 'Centro',
+        'municipio' => ['codigoIBGE' => 4101903],
+        'bairro' => ['municipio' => ['codigoIBGE' => 4101903], 'nome' => 'Centro'],
+        'logradouro' => ['municipio' => ['codigoIBGE' => 4101903], 'cep' => '86220000', 'abreviaturaTipoLogradouro' => 'R', 'nome' => 'Sem Logradouro'],
+        'semNumero' => true
     ]
 ];
 
-echo "2. Executando syncClient...\n";
-$result = $service->syncClient($citizen, false);
-echo "Resultado syncClient: " . var_export($result, true) . "\n";
+echo "Testing integrar...\n";
+$resp3 = Illuminate\Support\Facades\Http::withHeaders($headers)
+    ->post("https://saude.suite.betha.cloud/dados/v1/clientes/integrar", $payload);
+
+echo "Status: " . $resp3->status() . "\n";
+echo "Body: " . $resp3->body() . "\n";
