@@ -91,10 +91,38 @@ class BethaIntegrationService
                 }
             }
 
+            // Fallback 2: Se o erro for de CNS duplicado, significa que há um cadastro antigo sem CPF que detém o CNS.
+            // Para não travar a integração, nós removemos o CNS e tentamos criar o cadastro novo apenas com o CPF.
+            $isCnsDuplicate = false;
+            if ($isDuplicate && isset($responseData['detail'])) {
+                foreach ($responseData['detail'] as $message) {
+                    if (is_string($message) && stripos($message, 'CNS informado') !== false) {
+                        $isCnsDuplicate = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($isCnsDuplicate && !empty($payload['cpf']) && !empty($payload['cns'])) {
+                Log::warning('BethaIntegrationService: CNS duplicado encontrado. Tentando recriar o cidadão apenas com o CPF.', ['cpf' => $payload['cpf'], 'cns' => $payload['cns']]);
+                $payloadWithoutCns = $payload;
+                $payloadWithoutCns['cns'] = null;
+
+                $response = Http::withHeaders($this->getHeaders())
+                    ->timeout(30)
+                    ->post("{$this->baseUrl}/dados/v1/clientes/integrar", $payloadWithoutCns);
+
+                if ($response->successful()) {
+                    $isDuplicate = false; // Sucesso na criação do novo paciente!
+                } else {
+                    $responseData = $response->json();
+                }
+            }
+
             if ($response->successful()) {
                 // Sucesso no retry
             } elseif ($isDuplicate) {
-                Log::info('BethaIntegrationService: Cidadão já existe na base da Betha, ignorando erro.', ['cpf' => $payload['cpf'] ?? null, 'cns' => $payload['cns'] ?? null]);
+                Log::info('BethaIntegrationService: Cidadão já existe na base da Betha e não pôde ser atualizado. Ignorando erro.', ['cpf' => $payload['cpf'] ?? null, 'cns' => $payload['cns'] ?? null, 'response' => $responseData]);
             } else {
                 Log::error('BethaIntegrationService: Falha ao integrar cidadão.', [
                     'status' => $response->status(),
