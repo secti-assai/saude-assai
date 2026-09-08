@@ -69,13 +69,18 @@ class GovAssaiService
         }
 
         if ($response->successful()) {
-            $payload = $response->json();
+            $body = $response->body();
 
-            if (! is_array($payload)) {
+            // Remove BOM UTF-8 caso a API retorne o JSON com BOM
+            $body = preg_replace('/^ï»¿/', '', $body);
+
+            $payload = json_decode($body, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE || ! is_array($payload)) {
                 return [
                     'status' => $response->status(),
                     'success' => false,
-                    'message' => 'Consulta Ã  PopulaÃ§Ã£o Ã  descrita de AssaÃ­ retornou resposta invalida (nao JSON). Verifique autenticacao/endpoint da API.',
+                    'message' => 'Consulta à População de Assaí retornou resposta invalida (nao JSON). Verifique autenticacao/endpoint da API.',
                     'error_code' => 'GOV_ASSAI_INVALID_RESPONSE',
                     'data' => null,
                 ];
