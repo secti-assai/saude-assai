@@ -54,7 +54,7 @@ class SendEventToGovAssaiJob implements ShouldQueue
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])->timeout(config('services.gov_assai.timeout', 30))
-              ->post(rtrim($baseUrl, '/') . '/api/saude/servicos', $queueItem->payload_json);
+                ->post(rtrim($baseUrl, '/') . '/api/saude/servicos', $queueItem->payload_json);
 
             $queueItem->update([
                 'ultima_resposta_http' => $response->status(),
@@ -66,9 +66,33 @@ class SendEventToGovAssaiJob implements ShouldQueue
                     'status_envio' => 'enviado',
                     'enviado_em' => now(),
                 ]);
+            } elseif ($response->status() === 404) {
+                $responseJson = $response->json();
+
+                if (($responseJson['error_code'] ?? null) === 'CITIZEN_NOT_FOUND') {
+                    $queueItem->update([
+                        'status_envio' => 'nao_cadastrado',
+                    ]);
+
+                    \Log::warning('GovAssai: cidadão não cadastrado para receber evento.', [
+                        'queue_item_id' => $queueItem->id,
+                        'cpf' => $queueItem->cpf,
+                        'error_code' => $responseJson['error_code'] ?? null,
+                        'response' => $responseJson,
+                    ]);
+
+                    return;
+                }
+
+                $queueItem->update(['status_envio' => 'erro_http']);
+                $this->release($this->backoff[$this->attempts() - 1] ?? 600);
             } elseif ($response->status() === 422) {
                 $queueItem->update(['status_envio' => 'erro_validacao']);
-                \Log::error('Validation error when sending to GovAssai', ['payload' => $queueItem->payload_json, 'response' => $response->json()]);
+
+                \Log::error('Validation error when sending to GovAssai', [
+                    'payload' => $queueItem->payload_json,
+                    'response' => $response->json(),
+                ]);
             } else {
                 $queueItem->update(['status_envio' => 'erro_http']);
                 $this->release($this->backoff[$this->attempts() - 1] ?? 600);
